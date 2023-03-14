@@ -3,6 +3,8 @@
 This mod aims to add a bit more life to the scavs by enhancing some of the bot's base looting behaviors. 
 
 **Base game behavior:**
+  - Scavs start a raid on patrol, when they finish a combat engagement they will return to patrol mode after the amount of seconds specified in the `Mind.TIME_TO_FORGOR_ABOUT_ENEMY_SEC` bot config property
+  - Scavs by default have their `Patrol.CAN_LOOK_TO_DEADBODIES` property set to `true` which allows them to check dead bodies during patrols
   - When scavs are on patrol, they have a chance to inspect a nearby corpse and only loot their primary weapon
   - When scavs are on patrol, sometimes they stop in front of a lootable container and pretend to loot it
   
