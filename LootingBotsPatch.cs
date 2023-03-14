@@ -14,11 +14,19 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass452).GetMethod("PickupAction", BindingFlags.Public | BindingFlags.Instance);
+            return typeof(GClass452).GetMethod(
+                "PickupAction",
+                BindingFlags.Public | BindingFlags.Instance
+            );
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(Player owner, GInterface264 possibleAction, Item rootItem, Player lootItemLastOwner)
+        private static bool PatchPrefix(
+            Player owner,
+            GInterface264 possibleAction,
+            Item rootItem,
+            Player lootItemLastOwner
+        )
         {
             Logger.LogDebug($"Someone is picking up: {rootItem.Name.Localized()}");
             return true;
@@ -30,17 +38,48 @@ namespace LootingBots.Patch
         private static MethodInfo _method_7;
         private static ItemAdder itemAdder;
 
+        public static bool isDebug()
+        {
+            return LootingBots.enableLogging.Value;
+        }
+
+        public static void logDebug(object data)
+        {
+            if (isDebug())
+            {
+                Logger.LogDebug(data);
+            }
+        }
+
+        public static void logWarning(object data)
+        {
+            if (isDebug())
+            {
+                Logger.LogWarning(data);
+            }
+        }
+
         protected override MethodBase GetTargetMethod()
         {
-            _method_7 = typeof(GClass325).GetMethod("method_7", BindingFlags.NonPublic | BindingFlags.Instance);
+            _method_7 = typeof(GClass325).GetMethod(
+                "method_7",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
 
-            return typeof(GClass325).GetMethod("method_6", BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeof(GClass325).GetMethod(
+                "method_6",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(ref GClass325 __instance, ref BotOwner ___botOwner_0, ref GClass263 ___gclass263_0)
+        private static bool PatchPrefix(
+            ref GClass325 __instance,
+            ref BotOwner ___botOwner_0,
+            ref GClass263 ___gclass263_0
+        )
         {
-            Logger.LogDebug($"In corpse method");
+            logDebug($"In corpse method");
             itemAdder = new ItemAdder(___botOwner_0);
 
             try
@@ -59,12 +98,26 @@ namespace LootingBots.Patch
         {
             Player corpse = ___gclass263_0.Player;
             Type corpseType = corpse.GetType();
-            FieldInfo corpseInventory = corpseType.BaseType.GetField("_inventoryController", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance);
-            InventoryControllerClass corpseInventoryController = (InventoryControllerClass)corpseInventory.GetValue(corpse);
+            FieldInfo corpseInventory = corpseType.BaseType.GetField(
+                "_inventoryController",
+                BindingFlags.NonPublic
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.Instance
+            );
+            InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
+                corpseInventory.GetValue(corpse);
 
             // Get the backpack, tacvest, and armorvest slots to check first to ensure nice flow of loot to newly equipped containers
             Item[] priorityLoot = new Item[3] { null, null, null };
-            Item[] priorityItems = corpseInventoryController.ContainedItems.Where(item => item?.Parent?.Container?.ID?.ToLower() == "backpack" || item?.Parent?.Container?.ID?.ToLower() == "tacticalvest" || item?.Parent?.Container?.ID?.ToLower() == "armorvest").ToArray();
+            Item[] priorityItems = corpseInventoryController.ContainedItems
+                .Where(
+                    item =>
+                        item?.Parent?.Container?.ID?.ToLower() == "backpack"
+                        || item?.Parent?.Container?.ID?.ToLower() == "tacticalvest"
+                        || item?.Parent?.Container?.ID?.ToLower() == "armorvest"
+                )
+                .ToArray();
 
             foreach (Item proritizedItem in priorityItems)
             {
@@ -87,12 +140,15 @@ namespace LootingBots.Patch
             await itemAdder.tryAddItemsToBot(priorityLoot);
 
             // TODO: Filter out items marked as "untakable"
-            Item[] containedItems = corpseInventoryController.ContainedItems.Where(item =>
-                item?.Parent?.Container?.ID?.ToLower() != "backpack" &&
-                item?.Parent?.Container?.ID?.ToLower() != "tacticalvest" &&
-                item?.Parent?.Container?.ID?.ToLower() != "armorvest" &&
-                item?.IsUnremovable == false
-            ).ToArray();
+            Item[] containedItems = corpseInventoryController.ContainedItems
+                .Where(
+                    item =>
+                        item?.Parent?.Container?.ID?.ToLower() != "backpack"
+                        && item?.Parent?.Container?.ID?.ToLower() != "tacticalvest"
+                        && item?.Parent?.Container?.ID?.ToLower() != "armorvest"
+                        && item?.IsUnremovable == false
+                )
+                .ToArray();
             await itemAdder.tryAddItemsToBot(containedItems);
         }
 
@@ -119,17 +175,29 @@ namespace LootingBots.Patch
                 try
                 {
                     Type botOwnerType = botOwner_0.GetPlayer.GetType();
-                    FieldInfo botInventory = botOwnerType.BaseType.GetField("_inventoryController", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance);
+                    FieldInfo botInventory = botOwnerType.BaseType.GetField(
+                        "_inventoryController",
+                        BindingFlags.NonPublic
+                            | BindingFlags.Static
+                            | BindingFlags.Public
+                            | BindingFlags.Instance
+                    );
 
                     this.botOwner_0 = botOwner_0;
-                    this.botInventoryController = (InventoryControllerClass)botInventory.GetValue(botOwner_0.GetPlayer);
+                    this.botInventoryController = (InventoryControllerClass)
+                        botInventory.GetValue(botOwner_0.GetPlayer);
 
-                    Item chest = this.botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.ArmorVest).ContainedItem;
-                    Item tacVest = this.botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
+                    Item chest = this.botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.ArmorVest)
+                        .ContainedItem;
+                    Item tacVest = this.botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.TacticalVest)
+                        .ContainedItem;
                     ArmorComponent currentArmor = chest?.GetItemComponent<ArmorComponent>();
                     ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
 
-                    this.currentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
+                    this.currentBodyArmorClass =
+                        currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
                 }
                 catch (Exception e)
                 {
@@ -137,7 +205,7 @@ namespace LootingBots.Patch
                 }
             }
 
-            /** 
+            /**
             * Main driving method which kicks off the logic for what a bot will do with the loot found on a corpse.
             * If bots are looting something that is equippable and they have nothing equipped in that slot, they will always equip it.
             * If the bot decides not to equip the item then it will attempt to put in an available container slot
@@ -148,46 +216,52 @@ namespace LootingBots.Patch
                 {
                     if (item != null && item.Name != null)
                     {
-                        Logger.LogDebug($"Loot found on corpse: {item.Name.Localized()}");
+                        logDebug($"Loot found on corpse: {item.Name.Localized()}");
                         ThrowEquipment betterItem = betterEquipmentCheck(item);
                         if (betterItem.toThrow != null)
                         {
-                            await throwAndEquip(betterItem.toThrow, betterItem.toPickUp, betterItem.onThrowCallback);
+                            await throwAndEquip(
+                                betterItem.toThrow,
+                                betterItem.toPickUp,
+                                betterItem.onThrowCallback
+                            );
                             continue;
                         }
 
                         GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
                         if (ableToEquip != null)
                         {
-                            Logger.LogWarning($"Someone is equipping: {item.Name.Localized()}");
+                            logWarning($"Someone is equipping: {item.Name.Localized()}");
                             await moveItem(item, ableToEquip);
                             continue;
                         }
-                        // else
-                        // {
-                        //     Logger.LogDebug($"Cannot equip: {item.Name.Localized()}");
-                        // }
+                        else
+                        {
+                            logDebug($"Cannot equip: {item.Name.Localized()}");
+                        }
 
-                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(item, botInventoryController);
+                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(
+                            item,
+                            botInventoryController
+                        );
 
                         if (ableToPickUp != null)
                         {
-                            Logger.LogWarning($"Someone is picking up: {item.Name.Localized()}");
+                            logWarning($"Someone is picking up: {item.Name.Localized()}");
                             await moveItem(item, ableToPickUp);
                             continue;
                         }
-                        // else
-                        // {
-                        //     Logger.LogDebug($"No valid slot found for: {item.Name.Localized()}");
-                        // }
+                        else
+                        {
+                            logDebug($"No valid slot found for: {item.Name.Localized()}");
+                        }
 
                         Item[] nestedItems = item.GetAllItems().ToArray();
                         if (nestedItems.Length > 1)
                         {
-
-                            // Logger.LogDebug($"Searching through {nestedItems.Length} items in: {item.Name.Localized()}");
-
-                            Item[] containerItems = nestedItems.Where(nestedItem => nestedItem.Id != item.Id).ToArray();
+                            Item[] containerItems = nestedItems
+                                .Where(nestedItem => nestedItem.Id != item.Id)
+                                .ToArray();
 
                             if (containerItems.Length > 0)
                             {
@@ -195,54 +269,68 @@ namespace LootingBots.Patch
                             }
                         }
                     }
-                    // else
-                    // {
-                    //     Logger.LogDebug("Item was null");
-                    // }
+                    else
+                    {
+                        logDebug("Item was null");
+                    }
                 }
             }
 
-            /** 
+            /**
             * Checks certain slots to see if the item we are looting is "better" than what is currently equipped. View shouldSwapGear for criteria.
             * Gear is checked in a specific order so that bots will try to swap gear that is a "container" first like backpacks and tacVests to make sure
             * they arent putting loot in an item they will ultimately decide to drop
             */
             public ThrowEquipment betterEquipmentCheck(Item itemToCheck)
             {
-                // TODO: Try to combine this into one call to get all 4 slots 
-                Item helmet = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Headwear).ContainedItem;
-                Item chest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.ArmorVest).ContainedItem;
-                Item tacVest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
-                Item backpack = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
+                // TODO: Try to combine this into one call to get all 4 slots
+                Item helmet = botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Headwear)
+                    .ContainedItem;
+                Item chest = botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.ArmorVest)
+                    .ContainedItem;
+                Item tacVest = botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem;
+                Item backpack = botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem;
 
                 string lootID = itemToCheck?.Parent?.Container?.ID;
                 ThrowEquipment equipment = new ThrowEquipment();
 
-                // Logger.LogDebug($"itemToCheck: {lootID}");
-                // Logger.LogDebug($"itemToCheck: {itemToCheck?.Parent?.Item?.Name?.Localized()}");
-
-                if (backpack?.Parent?.Container.ID == lootID && shouldSwapGear(backpack, itemToCheck))
+                if (
+                    backpack?.Parent?.Container.ID == lootID
+                    && shouldSwapGear(backpack, itemToCheck)
+                )
                 {
                     equipment.toThrow = backpack;
                     equipment.toPickUp = itemToCheck;
                 }
-                else if (helmet?.Parent?.Container?.ID == lootID && shouldSwapGear(helmet, itemToCheck))
+                else if (
+                    helmet?.Parent?.Container?.ID == lootID && shouldSwapGear(helmet, itemToCheck)
+                )
                 {
                     equipment.toThrow = helmet;
                     equipment.toPickUp = itemToCheck;
                 }
-                else if (chest?.Parent?.Container?.ID == lootID && shouldSwapGear(chest, itemToCheck))
+                else if (
+                    chest?.Parent?.Container?.ID == lootID && shouldSwapGear(chest, itemToCheck)
+                )
                 {
                     equipment.toThrow = chest;
                     equipment.toPickUp = itemToCheck;
                 }
-                else if (tacVest?.Parent?.Container?.ID == lootID && shouldSwapGear(tacVest, itemToCheck))
+                else if (
+                    tacVest?.Parent?.Container?.ID == lootID && shouldSwapGear(tacVest, itemToCheck)
+                )
                 {
                     if (considerArmorClass(tacVest, itemToCheck) && chest != null)
                     {
-                        // botInventoryController.ThrowItem(chest, null, new Callback((IResult result) => dropAndEquip(tacVest, itemToCheck)), false);
                         equipment.toThrow = chest;
-                        equipment.onThrowCallback = async () => await throwAndEquip(tacVest, itemToCheck);
+                        equipment.onThrowCallback = async () =>
+                            await throwAndEquip(tacVest, itemToCheck);
                     }
                     else
                     {
@@ -254,9 +342,9 @@ namespace LootingBots.Patch
                 return equipment;
             }
 
-            /** 
+            /**
             * Checks to see if the bot should swap its currently equipped gear with the item to loot. Bot will swap under the following criteria:
-            * 1. The item is a container and its larger than what is equipped. 
+            * 1. The item is a container and its larger than what is equipped.
             *   - Tactical rigs have an additional check, will not switch out if the rig we are looting is lower armor class than what is equipped
             * 2. The item has an armor rating, and its higher than what is currently equipped.
             */
@@ -267,9 +355,8 @@ namespace LootingBots.Patch
                 if (equipped.IsContainer)
                 {
                     int equippedSize = getContainerSize(equipped as SearchableItemClass);
-                    // Logger.LogDebug($"Current equipment has size: {equippedSize}");
                     int itemToLootSize = getContainerSize(itemToLoot as SearchableItemClass);
-                    // Logger.LogDebug($"Item to loot has size: {itemToLootSize}");
+
                     foundBiggerContainer = equippedSize < itemToLootSize;
                 }
 
@@ -279,7 +366,14 @@ namespace LootingBots.Patch
 
                 // Equip if we found item with a better item class.
                 // Equip if we found an item with more slots only if what we have equipped is the same or worse armor class
-                return foundBetterArmor || (foundBiggerContainer && (equippedArmor == null || equippedArmor.ArmorClass <= lootArmor.ArmorClass));
+                return foundBetterArmor
+                    || (
+                        foundBiggerContainer
+                        && (
+                            equippedArmor == null
+                            || equippedArmor.ArmorClass <= lootArmor.ArmorClass
+                        )
+                    );
             }
 
             /** Calculate the size of a container */
@@ -294,11 +388,10 @@ namespace LootingBots.Patch
                 }
 
                 return gridSize;
-
             }
 
-            /** 
-            * Checks to see if the item we are looting has higher armor value than what is currently equipped. For chests/vests, make sure we compare against the  
+            /**
+            * Checks to see if the item we are looting has higher armor value than what is currently equipped. For chests/vests, make sure we compare against the
             * currentBodyArmorClass and update the value if a higher armor class is found.
             */
             public bool considerArmorClass(Item equipped, Item itemToLoot)
@@ -324,9 +417,7 @@ namespace LootingBots.Patch
                 {
                     // If we are looting chest/rig with armor, check to see if it has a better armor class than what is equipped
                     foundBetterArmor = currentBodyArmorClass <= lootArmor.ArmorClass;
-                    // Logger.LogDebug($"Loot has armor class: {lootArmor.ArmorClass}");
-                    // Logger.LogDebug($"Loot has durability: {lootArmor.Repairable.Durability}");
-                    // Logger.LogDebug($"Loot has max durability: {lootArmor.Repairable.MaxDurability}");
+
                     if (foundBetterArmor)
                     {
                         this.currentBodyArmorClass = lootArmor.ArmorClass;
@@ -336,30 +427,46 @@ namespace LootingBots.Patch
                 return foundBetterArmor;
             }
 
-            public Task throwAndEquip(Item toThrow, Item toEquip, OnThrowCallback onThrowCallback = null)
+            public Task throwAndEquip(
+                Item toThrow,
+                Item toEquip,
+                OnThrowCallback onThrowCallback = null
+            )
             {
                 TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
 
-                Logger.LogWarning($"Throwing item: {toThrow}");
-                botInventoryController.ThrowItem(toThrow, null, new Callback(async (IResult result) =>
-                {
-                    if (onThrowCallback != null)
-                    {
-                        await onThrowCallback();
-                    }
-                    else
-                    {
-                        await tryAddItemsToBot(new Item[1] { toEquip });
-                    }
-                    promise.TrySetResult(result);
-                }), false);
+                logWarning($"Throwing item: {toThrow}");
+                botInventoryController.ThrowItem(
+                    toThrow,
+                    null,
+                    new Callback(
+                        async (IResult result) =>
+                        {
+                            if (onThrowCallback != null)
+                            {
+                                await onThrowCallback();
+                            }
+                            else
+                            {
+                                await tryAddItemsToBot(new Item[1] { toEquip });
+                            }
+                            promise.TrySetResult(result);
+                        }
+                    ),
+                    false
+                );
 
                 return Task.WhenAny(promise.Task);
             }
 
             public Task moveItem(Item item, ItemAddress place)
             {
-                GStruct322<GClass2438> value = GClass2426.Move(item, place, botInventoryController, true);
+                GStruct322<GClass2438> value = GClass2426.Move(
+                    item,
+                    place,
+                    botInventoryController,
+                    true
+                );
                 return botInventoryController.TryRunNetworkTransaction(value, null);
             }
         }
