@@ -2,6 +2,7 @@ using Aki.Reflection.Patching;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using Comfort.Common;
 using EFT;
@@ -72,7 +73,12 @@ namespace LootingBots.Patch
                 itemAdder.tryAddItemsToBot(priorityLoot);
 
                 // TODO: Filter out items marked as "untakable"
-                Item[] containedItems = corpseInventoryController.ContainedItems.Where(item => item?.Parent?.Container?.ID?.ToLower() != "backpack" && item?.Parent?.Container?.ID?.ToLower() != "tacticalvest" && item?.Parent?.Container?.ID?.ToLower() != "armorvest").ToArray();
+                Item[] containedItems = corpseInventoryController.ContainedItems.Where(item =>
+                    item?.Parent?.Container?.ID?.ToLower() != "backpack" &&
+                    item?.Parent?.Container?.ID?.ToLower() != "tacticalvest" &&
+                    item?.Parent?.Container?.ID?.ToLower() != "armorvest" &&
+                    item?.IsUnremovable == false
+                ).ToArray();
                 itemAdder.tryAddItemsToBot(containedItems);
                 return false;
             }
@@ -82,6 +88,15 @@ namespace LootingBots.Patch
             }
             return true;
         }
+
+        public class ThrowEquipment
+        {
+            public Item toThrow;
+            public Item toPickUp;
+            public OnThrowCallback onThrowCallback;
+        }
+
+        public delegate void OnThrowCallback();
 
         // TODO: When picking up guns, see if you can get them to switch weapons after equipping
         public class ItemAdder
@@ -106,20 +121,144 @@ namespace LootingBots.Patch
                     ArmorComponent currentArmor = chest?.GetItemComponent<ArmorComponent>();
                     ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
 
-                    if (currentArmor != null)
-                    {
-                        this.currentBodyArmorClass = currentArmor.ArmorClass;
-                    }
-                    else if (currentVest != null)
-                    {
-                        this.currentBodyArmorClass = currentVest.ArmorClass;
-                    }
-
+                    this.currentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
                 }
                 catch (Exception e)
                 {
                     Logger.LogError(e);
                 }
+            }
+
+            public void tryAddItemsToBot(Item[] items)
+            {
+                foreach (Item item in items)
+                {
+                    if (item != null && item.Name != null)
+                    {
+                        Logger.LogDebug($"Loot found on corpse: {item.Name.Localized()}");
+                        ThrowEquipment betterItem = betterEquipmentCheck(item);
+                        if (betterItem.toThrow != null)
+                        {
+                            throwAndEquip(betterItem.toThrow, betterItem.toPickUp, betterItem.onThrowCallback);
+                        }
+
+                        GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
+                        if (ableToEquip != null)
+                        {
+                            Logger.LogWarning($"Someone is equipping: {item.Name.Localized()}");
+                            moveItem(item, ableToEquip);
+                            continue;
+                        }
+                        // else
+                        // {
+                        //     Logger.LogDebug($"Cannot equip: {item.Name.Localized()}");
+                        // }
+
+                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(item, botInventoryController);
+
+                        if (ableToPickUp != null)
+                        {
+                            Logger.LogWarning($"Someone is picking up: {item.Name.Localized()}");
+                            moveItem(item, ableToPickUp);
+                            continue;
+                        }
+                        // else
+                        // {
+                        //     Logger.LogDebug($"No valid slot found for: {item.Name.Localized()}");
+                        // }
+
+                        Item[] nestedItems = item.GetAllItems().ToArray();
+                        if (nestedItems.Length > 1)
+                        {
+
+                            // Logger.LogDebug($"Searching through {nestedItems.Length} items in: {item.Name.Localized()}");
+
+                            Item[] containerItems = nestedItems.Where(nestedItem => nestedItem.Id != item.Id).ToArray();
+
+                            if (containerItems.Length > 0)
+                            {
+                                tryAddItemsToBot(containerItems);
+                            }
+                        }
+                    }
+                    // else
+                    // {
+                    //     Logger.LogDebug("Item was null");
+                    // }
+                }
+            }
+
+            public ThrowEquipment betterEquipmentCheck(Item itemToCheck)
+            {
+                // TODO: Try to combine this into one call to get all 4 slots 
+                Item helmet = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Headwear).ContainedItem;
+                Item chest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.ArmorVest).ContainedItem;
+                Item tacVest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
+                Item backpack = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
+
+                string lootID = itemToCheck?.Parent?.Container?.ID;
+                ThrowEquipment equipment = new ThrowEquipment();
+
+                // Logger.LogDebug($"itemToCheck: {lootID}");
+                // Logger.LogDebug($"itemToCheck: {itemToCheck?.Parent?.Item?.Name?.Localized()}");
+
+                if (backpack?.Parent?.Container.ID == lootID && shouldSwapGear(backpack, itemToCheck))
+                {
+                    // dropAndEquip(backpack, itemToCheck);
+                    equipment.toThrow = backpack;
+                    equipment.toPickUp = itemToCheck;
+                }
+                else if (helmet?.Parent?.Container?.ID == lootID && shouldSwapGear(helmet, itemToCheck))
+                {
+                    // dropAndEquip(helmet, itemToCheck);
+                    equipment.toThrow = helmet;
+                    equipment.toPickUp = itemToCheck;
+                }
+                else if (chest?.Parent?.Container?.ID == lootID && shouldSwapGear(chest, itemToCheck))
+                {
+                    // dropAndEquip(chest, itemToCheck);
+                    equipment.toThrow = chest;
+                    equipment.toPickUp = itemToCheck;
+                }
+                else if (tacVest?.Parent?.Container?.ID == lootID && shouldSwapGear(tacVest, itemToCheck))
+                {
+                    if (considerArmorClass(tacVest, itemToCheck) && chest != null)
+                    {
+                        // botInventoryController.ThrowItem(chest, null, new Callback((IResult result) => dropAndEquip(tacVest, itemToCheck)), false);
+                        equipment.toThrow = chest;
+                        equipment.onThrowCallback = () => throwAndEquip(tacVest, itemToCheck);
+                    }
+                    else
+                    {
+                        // dropAndEquip(tacVest, itemToCheck);
+                        equipment.toThrow = tacVest;
+                        equipment.toPickUp = itemToCheck;
+                    }
+                }
+
+                return equipment;
+            }
+
+            public bool shouldSwapGear(Item equipped, Item itemToLoot)
+            {
+                bool foundBiggerContainer = false;
+                // If the item is a container, calculate the size and see if its bigger than what is equipped
+                if (equipped.IsContainer)
+                {
+                    int equippedSize = getContainerSize(equipped as SearchableItemClass);
+                    // Logger.LogDebug($"Current equipment has size: {equippedSize}");
+                    int itemToLootSize = getContainerSize(itemToLoot as SearchableItemClass);
+                    // Logger.LogDebug($"Item to loot has size: {itemToLootSize}");
+                    foundBiggerContainer = equippedSize < itemToLootSize;
+                }
+
+                bool foundBetterArmor = considerArmorClass(equipped, itemToLoot);
+                ArmorComponent lootArmor = itemToLoot.GetItemComponent<ArmorComponent>();
+                ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
+
+                // Equip if we found item with a better item class.
+                // Equip if we found an item with more slots only if what we have equipped is the same or worse armor class
+                return foundBetterArmor || (foundBiggerContainer && (equippedArmor == null || equippedArmor.ArmorClass <= lootArmor.ArmorClass));
             }
 
             public int getContainerSize(SearchableItemClass container)
@@ -171,148 +310,34 @@ namespace LootingBots.Patch
                     }
                 }
 
-
-
                 return foundBetterArmor;
             }
 
-            public bool shouldSwapGear(Item equipped, Item itemToLoot)
+            public async void throwAndEquip(Item toThrow, Item toEquip, OnThrowCallback onThrowCallback = null)
             {
-                bool foundBiggerContainer = false;
-                // If the item is a container, calculate the size and see if its bigger than what is equipped
-                if (equipped.IsContainer)
+                TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
+
+                Logger.LogWarning($"Throwing item: {toThrow}");
+                botInventoryController.ThrowItem(toThrow, null, new Callback((IResult result) =>
                 {
-                    int equippedSize = getContainerSize(equipped as SearchableItemClass);
-                    // Logger.LogDebug($"Current equipment has size: {equippedSize}");
-                    int itemToLootSize = getContainerSize(itemToLoot as SearchableItemClass);
-                    // Logger.LogDebug($"Item to loot has size: {itemToLootSize}");
-                    foundBiggerContainer = equippedSize < itemToLootSize;
-                }
+                    if (onThrowCallback != null)
+                    {
+                        onThrowCallback();
+                    }
+                    else
+                    {
+                        tryAddItemsToBot(new Item[1] { toEquip });
+                    }
+                    promise.TrySetResult(result);
+                }), false);
 
-                bool foundBetterArmor = considerArmorClass(equipped, itemToLoot);
-                ArmorComponent lootArmor = itemToLoot.GetItemComponent<ArmorComponent>();
-                ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
-
-                // Equip if we found item with a better item class.
-                // Equip if we found an item with more slots only if what we have equipped is the same or worse armor class
-                return foundBetterArmor || (foundBiggerContainer && (equippedArmor == null || equippedArmor.ArmorClass <= lootArmor.ArmorClass));
-            }
-
-            public void dropAndEquip(Item toDrop, Item toEquip)
-            {
-                Logger.LogWarning($"Throwing item: {toDrop}");
-                botInventoryController.ThrowItem(toDrop, null, new Callback((IResult result) => tryAddItemsToBot(new Item[1] { toEquip })), false);
+                await Task.WhenAny(promise.Task);
             }
 
             public void moveItem(Item item, ItemAddress place)
             {
                 GStruct322<GClass2438> value = GClass2426.Move(item, place, botInventoryController, true);
                 botInventoryController.TryRunNetworkTransaction(value, null);
-            }
-
-            public bool betterEquipmentCheck(Item itemToCheck)
-            {
-                // TODO: Try to combine this into one call to get all 4 slots 
-                Item helmet = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Headwear).ContainedItem;
-                Item chest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.ArmorVest).ContainedItem;
-                Item tacVest = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
-                Item backpack = botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
-
-                string lootID = itemToCheck?.Parent?.Container?.ID;
-                // Logger.LogDebug($"itemToCheck: {lootID}");
-                // Logger.LogDebug($"itemToCheck: {itemToCheck?.Parent?.Item?.Name?.Localized()}");
-
-                if (backpack != null && backpack.Parent.Container.ID == lootID && shouldSwapGear(backpack, itemToCheck))
-                {
-                    dropAndEquip(backpack, itemToCheck);
-                    return true;
-                }
-                else if (helmet != null && helmet.Parent.Container.ID == lootID && shouldSwapGear(helmet, itemToCheck))
-                {
-                    dropAndEquip(helmet, itemToCheck);
-                    return true;
-                }
-                else if (chest != null && chest.Parent.Container.ID == lootID && shouldSwapGear(chest, itemToCheck))
-                {
-                    dropAndEquip(chest, itemToCheck);
-                    return true;
-                }
-                else if (tacVest != null && tacVest.Parent.Container.ID == lootID && shouldSwapGear(tacVest, itemToCheck))
-                {
-                    if (considerArmorClass(tacVest, itemToCheck) && chest != null)
-                    {
-                        botInventoryController.ThrowItem(chest, null, new Callback((IResult result) => dropAndEquip(tacVest, itemToCheck)), false);
-                    }
-                    else
-                    {
-                        dropAndEquip(tacVest, itemToCheck);
-                    }
-                    return true;
-                }
-
-                return false;
-            }
-
-            public void tryAddItemsToBot(Item[] items)
-            {
-                foreach (Item item in items)
-                {
-                    if (item != null && item.Name != null)
-                    {
-                        Logger.LogDebug($"Loot found on corpse: {item.Name.Localized()}");
-
-                        if (betterEquipmentCheck(item))
-                        {
-                            continue;
-                        }
-
-                        if (!item.IsUnremovable)
-                        {
-                            GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
-                            if (ableToEquip != null)
-                            {
-                                Logger.LogWarning($"Someone is equipping: {item.Name.Localized()}");
-                                moveItem(item, ableToEquip);
-                                continue;
-                            }
-                            // else
-                            // {
-                            //     Logger.LogDebug($"Cannot equip: {item.Name.Localized()}");
-                            // }
-                        }
-
-                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(item, botInventoryController);
-
-                        if (ableToPickUp != null)
-                        {
-                            Logger.LogWarning($"Someone is picking up: {item.Name.Localized()}");
-                            moveItem(item, ableToPickUp);
-                            continue;
-                        }
-                        // else
-                        // {
-                        //     Logger.LogDebug($"No valid slot found for: {item.Name.Localized()}");
-                        // }
-
-                        Item[] nestedItems = item.GetAllItems().ToArray();
-                        if (nestedItems.Length > 1)
-                        {
-
-                            // Logger.LogDebug($"Searching through {nestedItems.Length} items in: {item.Name.Localized()}");
-
-                            Item[] containerItems = nestedItems.Where(nestedItem => nestedItem.Id != item.Id).ToArray();
-
-                            if (containerItems.Length > 0)
-                            {
-                                tryAddItemsToBot(containerItems);
-                            }
-                        }
-                    }
-                    // else
-                    // {
-                    //     Logger.LogDebug("Item was null");
-                    // }
-                }
             }
         }
     }

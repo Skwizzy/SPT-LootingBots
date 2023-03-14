@@ -87,6 +87,6 @@ ping -n  2 127.0.0.1 &gt;NUL
 )</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\SPT\3.5.2\BepInEx\plugins\skwizzy.looting-bots.dll"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\SPT\3.5.2\BepInEx\plugins\skwizzy.LootingBots.dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>
