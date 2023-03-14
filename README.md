@@ -23,5 +23,6 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
 - [ ] Loose loot detection
 
 ## Unknowns:
+- Sometimes bots will not loot corpses even after a large amount of time has passed. Need to investigate the base EFT logic and see if I can improve this check
 - Do bots despawn after a certain amount of time has passed? Could be problematic if bots with loot randomly disappear mid raid
     
