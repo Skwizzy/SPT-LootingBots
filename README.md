@@ -13,6 +13,9 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
     - Backpack will be swapped if backpack being looted has more slots
     - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
     - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
+
+**Mod Settings (F12)**
+- Enable Debug - Enables logging in the plugin, does not require restart
     
 
 ## Planned features:
@@ -24,6 +27,8 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
 - [ ] Enhance base logic for adding corpses to loot pool
 - [ ] Apply same looting logic to patrol patterns where scavs stop in front of lootable containers
 - [ ] Loose loot detection
+- [ ] Customizable params in mod settings
+
 
 ## Unknowns:
 - Sometimes bots will not loot corpses even after a large amount of time has passed. Need to investigate the base EFT logic and see if I can improve this check
