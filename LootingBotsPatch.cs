@@ -110,7 +110,7 @@ namespace LootingBots.Patch
             InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
                 corpseInventory.GetValue(corpse);
 
-            logDebug($"{___botOwner_0.name} is looting corpse: {corpse.name}");
+            logDebug($"{___botOwner_0.Profile.Info.Settings.Role} is looting corpse: {corpse.Profile?.Info?.Settings?.Role}");
 
             Item[] priorityItems =
                 corpseInventoryController.Inventory.Equipment
@@ -215,7 +215,7 @@ namespace LootingBots.Patch
                         GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
                         if (ableToEquip != null)
                         {
-                            logWarning($"{botOwner_0.name} is equipping: {item.Name.Localized()}");
+                            logWarning($"{botOwner_0.Profile.Info.Settings.Role} is equipping: {item.Name.Localized()}");
                             await moveItem(item, ableToEquip);
                             continue;
                         }
@@ -231,7 +231,7 @@ namespace LootingBots.Patch
 
                         if (ableToPickUp != null)
                         {
-                            logWarning($"{botOwner_0.name} is picking up: {item.Name.Localized()}");
+                            logWarning($"{botOwner_0.Profile.Info.Settings.Role} is picking up: {item.Name.Localized()}");
                             await moveItem(item, ableToPickUp);
                             continue;
                         }
