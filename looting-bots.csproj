@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A4E590D6-3C04-419D-A00D-B0A7E6C9BD7D}</ProjectGuid>
+    <ProjectGuid>{4623cfd4-155e-40b9-a6ff-b07401f66cb9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>skwizzy.LootingBots</RootNamespace>

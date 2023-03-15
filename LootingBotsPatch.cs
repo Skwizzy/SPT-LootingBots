@@ -79,7 +79,6 @@ namespace LootingBots.Patch
             ref GClass263 ___gclass263_0
         )
         {
-            logDebug($"In corpse method");
             itemAdder = new ItemAdder(___botOwner_0);
 
             try
@@ -93,6 +92,9 @@ namespace LootingBots.Patch
             }
             return true;
         }
+
+
+                    // botOwner_0.WeaponManager.Selector.TryChangeWeapon() How to change weps
 
         public static async void lootCorpse(BotOwner ___botOwner_0, GClass263 ___gclass263_0)
         {
@@ -108,48 +110,30 @@ namespace LootingBots.Patch
             InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
                 corpseInventory.GetValue(corpse);
 
-            // Get the backpack, tacvest, and armorvest slots to check first to ensure nice flow of loot to newly equipped containers
-            Item[] priorityLoot = new Item[3] { null, null, null };
-            Item[] priorityItems = corpseInventoryController.ContainedItems
-                .Where(
-                    item =>
-                        item?.Parent?.Container?.ID?.ToLower() == "backpack"
-                        || item?.Parent?.Container?.ID?.ToLower() == "tacticalvest"
-                        || item?.Parent?.Container?.ID?.ToLower() == "armorvest"
-                )
-                .ToArray();
+            logDebug($"{___botOwner_0.name} is looting corpse: {corpse.name}");
 
-            foreach (Item proritizedItem in priorityItems)
-            {
-                bool isBackpack = proritizedItem.Parent.Container.ID.ToLower() == "backpack";
-                bool isChest = proritizedItem.Parent.Container.ID.ToLower() == "armorvest";
-                if (isBackpack)
-                {
-                    priorityLoot[0] = proritizedItem;
-                }
-                else if (isChest)
-                {
-                    priorityLoot[1] = proritizedItem;
-                }
-                else
-                {
-                    priorityLoot[2] = proritizedItem;
-                }
-            }
+            Item[] priorityItems =
+                corpseInventoryController.Inventory.Equipment
+                    .GetSlotsByName(
+                        new EquipmentSlot[]
+                        {
+                            EquipmentSlot.Backpack,
+                            EquipmentSlot.ArmorVest,
+                            EquipmentSlot.TacticalVest,
+                            EquipmentSlot.Headwear,
+                            EquipmentSlot.Earpiece,
+                            EquipmentSlot.FirstPrimaryWeapon,
+                            EquipmentSlot.SecondPrimaryWeapon,
+                            EquipmentSlot.Holster,
+                            EquipmentSlot.Dogtag,
+                            EquipmentSlot.Pockets,
+                            EquipmentSlot.Scabbard,
+                            EquipmentSlot.FaceCover
+                        }
+                    )
+                    .Select(slot => slot.ContainedItem).ToArray();
 
-            await itemAdder.tryAddItemsToBot(priorityLoot);
-
-            // TODO: Filter out items marked as "untakable"
-            Item[] containedItems = corpseInventoryController.ContainedItems
-                .Where(
-                    item =>
-                        item?.Parent?.Container?.ID?.ToLower() != "backpack"
-                        && item?.Parent?.Container?.ID?.ToLower() != "tacticalvest"
-                        && item?.Parent?.Container?.ID?.ToLower() != "armorvest"
-                        && item?.IsUnremovable == false
-                )
-                .ToArray();
-            await itemAdder.tryAddItemsToBot(containedItems);
+            await itemAdder.tryAddItemsToBot(priorityItems);
         }
 
         public class ThrowEquipment
@@ -231,7 +215,7 @@ namespace LootingBots.Patch
                         GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
                         if (ableToEquip != null)
                         {
-                            logWarning($"Someone is equipping: {item.Name.Localized()}");
+                            logWarning($"{botOwner_0.name} is equipping: {item.Name.Localized()}");
                             await moveItem(item, ableToEquip);
                             continue;
                         }
@@ -247,7 +231,7 @@ namespace LootingBots.Patch
 
                         if (ableToPickUp != null)
                         {
-                            logWarning($"Someone is picking up: {item.Name.Localized()}");
+                            logWarning($"{botOwner_0.name} is picking up: {item.Name.Localized()}");
                             await moveItem(item, ableToPickUp);
                             continue;
                         }
