@@ -21,7 +21,7 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
 ## Planned features:
 - [x] Looting of every item on corpses
 - [x] Equipment swapping
-- [ ] Bot preference to use looted weapons that are "better"
+- [ ] Bot preference to use looted weapons that are "better" (**In progress**)
 - [ ] When swapping rigs/bags, transfer items from old item into new item
 - [ ] Add corpse looting to pmc bots
 - [ ] Enhance base logic for adding corpses to loot pool
