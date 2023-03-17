@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using EFT.InventoryLogic;
 using Comfort.Common;
 using EFT;
@@ -79,11 +80,11 @@ namespace LootingBots.Patch
             ref GClass263 ___gclass263_0
         )
         {
-            itemAdder = new ItemAdder(___botOwner_0);
+            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0);
 
             try
             {
-                lootCorpse(___botOwner_0, ___gclass263_0);
+                lootCorpse();
                 return false;
             }
             catch (Exception e)
@@ -93,25 +94,13 @@ namespace LootingBots.Patch
             return true;
         }
 
-        public static async void lootCorpse(BotOwner ___botOwner_0, GClass263 ___gclass263_0)
+        public static async void lootCorpse()
         {
-            Player corpse = ___gclass263_0.Player;
-            Type corpseType = corpse.GetType();
-            FieldInfo corpseInventory = corpseType.BaseType.GetField(
-                "_inventoryController",
-                BindingFlags.NonPublic
-                    | BindingFlags.Static
-                    | BindingFlags.Public
-                    | BindingFlags.Instance
-            );
-            InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                corpseInventory.GetValue(corpse);
-
             logDebug(
-                $"{___botOwner_0.Profile.Info.Settings.Role} is looting corpse: {corpse.Profile?.Info?.Settings?.Role}"
+                $"{itemAdder.botOwner_0.Profile.Info.Settings.Role} is looting corpse: {itemAdder.corpse.Profile?.Info?.Settings?.Role}"
             );
 
-            Item[] priorityItems = corpseInventoryController.Inventory.Equipment
+            Item[] priorityItems = itemAdder.corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(
                     new EquipmentSlot[]
                     {
@@ -146,16 +135,19 @@ namespace LootingBots.Patch
             public Item toThrow;
             public Item toEquip;
             public ActionCallback callback;
+            public bool tranferItems = false;
 
             public SwapAction(
                 Item toThrow = null,
                 Item toEquip = null,
-                ActionCallback callback = null
+                ActionCallback callback = null,
+                bool tranferItems = false
             )
             {
                 this.toThrow = toThrow;
                 this.toEquip = toEquip;
                 this.callback = callback;
+                this.tranferItems = tranferItems;
             }
         }
 
@@ -184,14 +176,17 @@ namespace LootingBots.Patch
         {
             public BotOwner botOwner_0;
             public InventoryControllerClass botInventoryController;
+            public Player corpse;
+            public InventoryControllerClass corpseInventoryController;
 
             // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
             public int currentBodyArmorClass = 0;
 
-            public ItemAdder(BotOwner botOwner_0)
+            public ItemAdder(BotOwner botOwner_0, GClass263 ___gclass263_0)
             {
                 try
                 {
+                    // Initialize bot inventory controller
                     Type botOwnerType = botOwner_0.GetPlayer.GetType();
                     FieldInfo botInventory = botOwnerType.BaseType.GetField(
                         "_inventoryController",
@@ -204,6 +199,20 @@ namespace LootingBots.Patch
                     this.botOwner_0 = botOwner_0;
                     this.botInventoryController = (InventoryControllerClass)
                         botInventory.GetValue(botOwner_0.GetPlayer);
+
+                    // Initialize corpse inventory controller
+                    Player corpse = ___gclass263_0.Player;
+                    Type corpseType = corpse.GetType();
+                    FieldInfo corpseInventory = corpseType.BaseType.GetField(
+                        "_inventoryController",
+                        BindingFlags.NonPublic
+                            | BindingFlags.Static
+                            | BindingFlags.Public
+                            | BindingFlags.Instance
+                    );
+                    this.corpse = corpse;
+                    this.corpseInventoryController = (InventoryControllerClass)
+                        corpseInventory.GetValue(corpse);
 
                     Item chest = this.botInventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.ArmorVest)
@@ -239,20 +248,12 @@ namespace LootingBots.Patch
                         EquipAction action = getEquipAction(item);
                         if (action.swap != null)
                         {
-                            await throwAndEquip(
-                                action.swap.toThrow,
-                                action.swap.toEquip,
-                                action.swap.callback
-                            );
+                            await throwAndEquip(action.swap);
                             continue;
                         }
                         else if (action.move != null)
                         {
-                            await moveItem(
-                                action.move.toMove,
-                                action.move.place,
-                                action.move.callback
-                            );
+                            await moveItem(action.move);
                             continue;
                         }
 
@@ -263,7 +264,7 @@ namespace LootingBots.Patch
                             logWarning(
                                 $"{botOwner_0.Profile.Info.Settings.Role} is equipping: {item.Name.Localized()}"
                             );
-                            await moveItem(item, ableToEquip);
+                            await moveItem(new MoveAction(item, ableToEquip));
                             continue;
                         }
                         else
@@ -282,7 +283,7 @@ namespace LootingBots.Patch
                             logWarning(
                                 $"{botOwner_0.Profile.Info.Settings.Role} is picking up: {item.Name.Localized()}"
                             );
-                            await moveItem(item, ableToPickUp);
+                            await moveItem(new MoveAction(item, ableToPickUp));
                             continue;
                         }
                         else
@@ -291,18 +292,7 @@ namespace LootingBots.Patch
                         }
 
                         // If we cant pick up the item and it has nested slots, loot the items from the container
-                        Item[] nestedItems = item.GetAllItems().ToArray();
-                        if (nestedItems.Length > 1)
-                        {
-                            Item[] containerItems = nestedItems
-                                .Where(nestedItem => nestedItem.Id != item.Id)
-                                .ToArray();
-
-                            if (containerItems.Length > 0)
-                            {
-                                await tryAddItemsToBot(containerItems);
-                            }
-                        }
+                        await lootNestedItems(item);
                     }
                     else
                     {
@@ -343,7 +333,7 @@ namespace LootingBots.Patch
 
                 if (backpack?.Parent?.Container.ID == lootID && shouldSwapGear(backpack, lootItem))
                 {
-                    swapAction = new SwapAction(backpack, lootItem);
+                    swapAction = new SwapAction(backpack, lootItem, null, true);
                 }
                 else if (
                     helmet?.Parent?.Container?.ID == lootID && shouldSwapGear(helmet, lootItem)
@@ -366,12 +356,13 @@ namespace LootingBots.Patch
                         swapAction = new SwapAction(
                             chest,
                             null,
-                            async () => await throwAndEquip(tacVest, lootItem)
+                            async () =>
+                                await throwAndEquip(new SwapAction(tacVest, lootItem, null, true))
                         );
                     }
                     else
                     {
-                        swapAction = new SwapAction(tacVest, lootItem);
+                        swapAction = new SwapAction(tacVest, lootItem, null, true);
                     }
                 }
 
@@ -412,7 +403,7 @@ namespace LootingBots.Patch
                             primary,
                             canEquipToSecondary,
                             async () =>
-                            {   
+                            {
                                 await Task.Delay(1500);
                                 await tryAddItemsToBot(new Item[] { lootWeapon });
                                 await Task.Delay(1000);
@@ -521,29 +512,47 @@ namespace LootingBots.Patch
                 return foundBetterArmor;
             }
 
-            public Task throwAndEquip(
-                Item toThrow,
-                Item toEquip,
-                ActionCallback onThrowCallback = null
-            )
+            public async Task lootNestedItems(Item parentItem)
+            {
+                Item[] nestedItems = parentItem.GetAllItems().ToArray();
+                if (nestedItems.Length > 1)
+                {
+                    Item[] containerItems = nestedItems
+                        .Where(nestedItem => nestedItem.Id != parentItem.Id)
+                        .ToArray();
+
+                    if (containerItems.Length > 0)
+                    {
+                        await tryAddItemsToBot(containerItems);
+                    }
+                }
+            }
+
+            /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
+            public async Task throwAndEquip(SwapAction swapAction)
             {
                 TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
+                Item toThrow = swapAction.toThrow;
+
+                // Potentially use GClass2426.Swap instead?
 
                 logWarning($"Throwing item: {toThrow}");
-                // Potentially use GClass2426.Swap instead?
+
                 botInventoryController.ThrowItem(
                     toThrow,
                     null,
                     new Callback(
                         async (IResult result) =>
                         {
-                            if (onThrowCallback != null)
+                            // If the swap action has a custom callback, do not execute the default behavior
+                            if (swapAction.callback != null)
                             {
-                                await onThrowCallback();
+                                await swapAction.callback();
                             }
                             else
                             {
-                                await tryAddItemsToBot(new Item[1] { toEquip });
+                                // Try to equip the item after throwing
+                                await tryAddItemsToBot(new Item[1] { swapAction.toEquip });
                                 if (toThrow is Weapon)
                                 {
                                     if (
@@ -561,21 +570,28 @@ namespace LootingBots.Patch
                     false
                 );
 
-                return Task.WhenAny(promise.Task);
+                await Task.WhenAny(promise.Task);
+                
+                // If marked for transfer of items, recover any items from the thrown container
+                if (swapAction.tranferItems)
+                {
+                    await lootNestedItems(toThrow);
+                }
             }
 
-            public Task moveItem(Item item, ItemAddress place, ActionCallback callback = null)
+            /** Moves an item to a specified item address. Supports executing a callback */
+            public Task moveItem(MoveAction moveAction)
             {
                 // GClass2426.
-                logDebug($"Moving item to: {place?.Container?.ID}");
+                logDebug($"Moving item to: {moveAction.place.Container?.ID}");
                 GStruct322<GClass2438> value = GClass2426.Move(
-                    item,
-                    place,
+                    moveAction.toMove,
+                    moveAction.place,
                     botInventoryController,
                     true
                 );
 
-                if (callback == null)
+                if (moveAction.callback == null)
                 {
                     return botInventoryController.TryRunNetworkTransaction(value, null);
                 }
@@ -587,7 +603,7 @@ namespace LootingBots.Patch
                     new Callback(
                         async (IResult result) =>
                         {
-                            await callback();
+                            await moveAction.callback();
                             promise.TrySetResult(result);
                         }
                     )
@@ -595,6 +611,9 @@ namespace LootingBots.Patch
 
                 return Task.WhenAny(promise.Task);
             }
+
+
+
         }
     }
 }
