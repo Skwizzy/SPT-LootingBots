@@ -344,7 +344,7 @@ namespace LootingBots.Patch
                     log.logDebug(
                         $"Trying to swap {holster.Name.Localized()} with {lootWeapon.Name.Localized()}"
                     );
-                    action.swap = new TransactionController.SwapAction(holster, lootWeapon);
+                    action.swap = getSwapAction(holster, lootWeapon);
                 }
                 else if (!isPistol && primary != null)
                 {
@@ -493,10 +493,12 @@ namespace LootingBots.Patch
                 bool tranferItems = false
             )
             {
-                TransactionController.ActionCallback onTransferComplete = null;
+                TransactionController.ActionCallback onSwapComplete = null;
+                // If we want to transfer items after the throw and equip fully completes, call the lootNestedItems method 
+                // on the item that was just thrown
                 if (tranferItems)
                 {
-                    onTransferComplete = async () =>
+                    onSwapComplete = async () =>
                     {
                         await lootNestedItems(toThrow);
                     };
@@ -506,11 +508,11 @@ namespace LootingBots.Patch
                     toThrow,
                     toEquip,
                     async () =>
-                    {
+                    {   
                         // Try to equip the item after throwing
                         await tryAddItemsToBot(new Item[1] { toEquip });
                     },
-                    onTransferComplete
+                    onSwapComplete
                 );
             }
         }

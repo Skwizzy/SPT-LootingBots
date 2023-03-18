@@ -124,7 +124,11 @@ namespace LootingBots.Patch.Util
                 new Callback(
                     async (IResult result) =>
                     {
-                        await swapAction.callback();
+                        if (result.Succeed)
+                        {
+                            await swapAction.callback();
+                        }
+
                         promise.TrySetResult(result);
                     }
                 ),
