@@ -104,7 +104,8 @@ namespace LootingBots.Patch
             await itemAdder.tryAddItemsToBot(priorityItems);
 
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
-            itemAdder.botOwner_0.WeaponManager.Selector.TryChangeToMain();
+            log.logDebug("Changing to main wep");
+            itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
         }
 
         // TODO: When picking up guns, see if you can get them to switch weapons after equipping
@@ -359,7 +360,7 @@ namespace LootingBots.Patch
                             async () =>
                             {
                                 // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
-                                await Task.Delay(1500);
+                                await Task.Delay(1000);
                                 await tryAddItemsToBot(new Item[] { lootWeapon });
                             }
                         );
@@ -507,7 +508,7 @@ namespace LootingBots.Patch
                 return new TransactionController.SwapAction(
                     toThrow,
                     toEquip,
-                    async () =>
+                    callback != null ? callback : async () =>
                     {   
                         // Try to equip the item after throwing
                         await tryAddItemsToBot(new Item[1] { toEquip });
