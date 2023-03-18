@@ -13,6 +13,8 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
     - Backpack will be swapped if backpack being looted has more slots
     - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
     - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
+      - When throwing old backpacks/tactical rigs, bots try to take all the loot from the container thrown
+    - When bots pick up a new weapon, they will equip it as their primary and attempt to use it if the bot has ammo
 
 **Mod Settings (F12)**
 - Enable Debug - Enables logging in the plugin, does not require restart
