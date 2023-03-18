@@ -9,7 +9,8 @@ This mod aims to add a bit more life to the scavs by enhancing some of the bot's
   - When scavs are on patrol, sometimes they stop in front of a lootable container and pretend to loot it
   
 **Modded behavior:**
-  - When a scav goes to loot the primary weapon of a corpse they now attempt to loot everything from the corpse, equipping things in empty slots and swapping out gear for better gear
+  - Base game corpse looting behavior added to all bot types (option for pmc)
+  - When a bot goes to loot the primary weapon of a corpse they now attempt to loot everything from the corpse, equipping things in empty slots and swapping out gear for better gear
     - Backpack will be swapped if backpack being looted has more slots
     - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
     - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
