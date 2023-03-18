@@ -87,11 +87,11 @@ namespace LootingBots.Patch
                         EquipmentSlot.Backpack,
                         EquipmentSlot.ArmorVest,
                         EquipmentSlot.TacticalVest,
-                        EquipmentSlot.Headwear,
-                        EquipmentSlot.Earpiece,
                         EquipmentSlot.FirstPrimaryWeapon,
                         EquipmentSlot.SecondPrimaryWeapon,
                         EquipmentSlot.Holster,
+                        EquipmentSlot.Headwear,
+                        EquipmentSlot.Earpiece,
                         EquipmentSlot.Dogtag,
                         EquipmentSlot.Pockets,
                         EquipmentSlot.Scabbard,
@@ -102,6 +102,9 @@ namespace LootingBots.Patch
                 .ToArray();
 
             await itemAdder.tryAddItemsToBot(priorityItems);
+
+            // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
+            itemAdder.botOwner_0.WeaponManager.Selector.TryChangeToMain();
         }
 
         // TODO: When picking up guns, see if you can get them to switch weapons after equipping
@@ -141,7 +144,7 @@ namespace LootingBots.Patch
                     this.botInventoryController = (InventoryControllerClass)
                         botInventory.GetValue(botOwner_0.GetPlayer);
                     this.transactionController = new TransactionController(
-                        botInventoryController,
+                        this.botInventoryController,
                         Logger
                     );
 
@@ -250,34 +253,6 @@ namespace LootingBots.Patch
                 }
             }
 
-            /** Gets the default callback for a swap action. If transferItems is true, attempt to take all the items out of the item thrown after the new item is equipped */
-            public TransactionController.ActionCallback getSwapCallback(
-                Item toThrow,
-                Item toEquip,
-                bool tranferItems
-            )
-            {
-                return async () =>
-                {
-                    // Try to equip the item after throwing
-                    await tryAddItemsToBot(new Item[1] { toEquip });
-
-                    // If we just threw/equipped a primary weapon, try to switch back to it after the item has been equipped
-                    if (toThrow is Weapon)
-                    {
-                        if (toThrow.Parent.Container.ID.ToLower() == "firstprimaryweapon")
-                        {
-                            botOwner_0.WeaponManager.Selector.ChangeToMain();
-                        }
-                    }
-
-                    if (tranferItems)
-                    {
-                        await lootNestedItems(toThrow);
-                    }
-                };
-            }
-
             /**
             * Checks certain slots to see if the item we are looting is "better" than what is currently equipped. View shouldSwapGear for criteria.
             * Gear is checked in a specific order so that bots will try to swap gear that is a "container" first like backpacks and tacVests to make sure
@@ -383,10 +358,9 @@ namespace LootingBots.Patch
                             canEquipToSecondary,
                             async () =>
                             {
+                                // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
                                 await Task.Delay(1500);
                                 await tryAddItemsToBot(new Item[] { lootWeapon });
-                                await Task.Delay(1000);
-                                botOwner_0.WeaponManager.Selector.TryChangeToMain();
                             }
                         );
                         log.logDebug(
@@ -497,6 +471,9 @@ namespace LootingBots.Patch
                 Item[] nestedItems = parentItem.GetAllItems().ToArray();
                 if (nestedItems.Length > 1)
                 {
+                    log.logDebug(
+                        $"looting nested {nestedItems.Length} items from {parentItem.Name.Localized()}"
+                    );
                     Item[] containerItems = nestedItems
                         .Where(nestedItem => nestedItem.Id != parentItem.Id)
                         .ToArray();
@@ -508,7 +485,7 @@ namespace LootingBots.Patch
                 }
             }
 
-            /** Generates a SwapAction to send to the transaction controller. If no callback was specified, call getSwapCallback to generate the default callback */
+            /** Generates a SwapAction to send to the transaction controller*/
             public TransactionController.SwapAction getSwapAction(
                 Item toThrow,
                 Item toEquip,
@@ -516,10 +493,24 @@ namespace LootingBots.Patch
                 bool tranferItems = false
             )
             {
+                TransactionController.ActionCallback onTransferComplete = null;
+                if (tranferItems)
+                {
+                    onTransferComplete = async () =>
+                    {
+                        await lootNestedItems(toThrow);
+                    };
+                }
+
                 return new TransactionController.SwapAction(
                     toThrow,
                     toEquip,
-                    callback ?? getSwapCallback(toThrow, toEquip, tranferItems)
+                    async () =>
+                    {
+                        // Try to equip the item after throwing
+                        await tryAddItemsToBot(new Item[1] { toEquip });
+                    },
+                    onTransferComplete
                 );
             }
         }

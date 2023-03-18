@@ -29,16 +29,19 @@ namespace LootingBots.Patch.Util
             public Item toThrow;
             public Item toEquip;
             public ActionCallback callback;
+            public ActionCallback onComplete;
 
             public SwapAction(
                 Item toThrow = null,
                 Item toEquip = null,
-                ActionCallback callback = null
+                ActionCallback callback = null,
+                ActionCallback onComplete = null
             )
             {
                 this.toThrow = toThrow;
                 this.toEquip = toEquip;
                 this.callback = callback;
+                this.onComplete = onComplete;
             }
         }
 
@@ -47,26 +50,29 @@ namespace LootingBots.Patch.Util
             public Item toMove;
             public ItemAddress place;
             public ActionCallback callback;
+            public ActionCallback onComplete;
 
             public MoveAction(
                 Item toMove = null,
                 ItemAddress place = null,
-                ActionCallback callback = null
+                ActionCallback callback = null,
+                ActionCallback onComplete = null
             )
             {
                 this.toMove = toMove;
                 this.place = place;
                 this.callback = callback;
+                this.onComplete = onComplete;
             }
         }
 
         public delegate Task ActionCallback();
 
         /** Moves an item to a specified item address. Supports executing a callback */
-        public Task moveItem(MoveAction moveAction)
+        public async Task moveItem(MoveAction moveAction)
         {
             // GClass2426.
-            log.logDebug($"Moving item to: {moveAction.place.Item.Name.Localized()}");
+            log.logDebug($"Moving item to: {moveAction.place.Container.ID}");
             GStruct322<GClass2438> value = GClass2426.Move(
                 moveAction.toMove,
                 moveAction.place,
@@ -76,23 +82,30 @@ namespace LootingBots.Patch.Util
 
             if (moveAction.callback == null)
             {
-                return inventoryController.TryRunNetworkTransaction(value, null);
+                await inventoryController.TryRunNetworkTransaction(value, null);
+            }
+            else
+            {
+                TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
+
+                await inventoryController.TryRunNetworkTransaction(
+                    value,
+                    new Callback(
+                        async (IResult result) =>
+                        {
+                            await moveAction.callback();
+                            promise.TrySetResult(result);
+                        }
+                    )
+                );
+
+                await Task.WhenAny(promise.Task);
             }
 
-            TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
-
-            inventoryController.TryRunNetworkTransaction(
-                value,
-                new Callback(
-                    async (IResult result) =>
-                    {
-                        await moveAction.callback();
-                        promise.TrySetResult(result);
-                    }
-                )
-            );
-
-            return Task.WhenAny(promise.Task);
+            if (moveAction.onComplete != null)
+            {
+                await moveAction.onComplete();
+            }
         }
 
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
@@ -119,6 +132,11 @@ namespace LootingBots.Patch.Util
             );
 
             await Task.WhenAny(promise.Task);
+
+            if (swapAction.onComplete != null)
+            {
+                await swapAction.onComplete();
+            }
         }
     }
 }
