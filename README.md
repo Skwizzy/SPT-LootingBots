@@ -19,8 +19,11 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 
 **Mod Settings (F12)**
 - Enable Debug - Enables logging in the plugin, does not require restart
+- PMCs can loot (experimental) - Enables config changes to allow looting behavior. Weapon switching logic needs to be enhanced before experimental tag can be removed
+- Distance to see body - Distance in meters to body until it can be "seen" by a bot
+- Distance to forget body - Distance in meters from a body until its "forgotten" by a bot
+- Looting time (warning) - Time in seconds the bot will stand over a corpse. Changing lower than 8 seconds may result in issues
     
-
 ## Planned features:
 - [x] Looting of every item on corpses
 - [x] Equipment swapping
