@@ -77,6 +77,7 @@
   <ItemGroup>
     <Compile Include="LootingBotsController.cs" />
     <Compile Include="LootingBotsPatch.cs" />
+    <Compile Include="utils\*.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
