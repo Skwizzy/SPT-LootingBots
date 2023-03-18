@@ -1,6 +1,6 @@
 # SPT-LootingBots
 
-This mod aims to add a bit more life to the scavs by enhancing some of the bot's base looting behaviors. 
+This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
 
 **Base game behavior:**
   - Scavs start a raid on patrol, when they finish a combat engagement they will return to patrol mode after the amount of seconds specified in the `Mind.TIME_TO_FORGOR_ABOUT_ENEMY_SEC` bot config property

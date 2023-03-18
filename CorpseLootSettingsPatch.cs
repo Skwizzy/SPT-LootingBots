@@ -29,12 +29,10 @@ namespace LootingBots.Patch
 
                 if ((isPMC) && LootingBots.pmcLootingEnabled.Value)
                 {
-                    Logger.LogDebug("Setting config for PMC");
                     enableLooting(__instance);
                 }
                 else if (!isPMC)
                 {
-                    Logger.LogDebug("Setting config for bot");
                     enableLooting(__instance);
                 }
             }
@@ -45,7 +43,7 @@ namespace LootingBots.Patch
             float seeDist = LootingBots.bodySeeDist.Value;
             float leaveDist = LootingBots.bodyLeaveDist.Value;
             float lookPeriod = LootingBots.bodyLookPeriod.Value;
-            
+
             __instance.FileSettings.Patrol.CAN_LOOK_TO_DEADBODIES = true;
             __instance.FileSettings.Mind.HOW_WORK_OVER_DEAD_BODY = 2;
             __instance.FileSettings.Patrol.DEAD_BODY_SEE_DIST = seeDist;
