@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT;
+using EFT.UI.Ragfair;
+using EFT.SynchronizableObjects;
+using UnityEngine;
+using System.Collections;
+using Comfort.Common;
 
 namespace LootingBots.Patch
 {
@@ -108,7 +113,6 @@ namespace LootingBots.Patch
             itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
         }
 
-        // TODO: When picking up guns, see if you can get them to switch weapons after equipping
         public class ItemAdder
         {
             public Log log;
@@ -339,6 +343,15 @@ namespace LootingBots.Patch
 
                 TransactionController.EquipAction action = new TransactionController.EquipAction();
                 bool isPistol = lootWeapon.WeapClass.Equals("pistol");
+                
+                log.logDebug("Attempting to get price of weapon");
+                // Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession().GetMarketPrices()
+                Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession().GetMarketPrices(
+                    lootWeapon.TemplateId,
+                    new Callback<ItemMarketPrices>(
+                        (Result<ItemMarketPrices> result) => { log.logDebug(result.ToJson()); } 
+                    )
+                );
 
                 if (isPistol && holster != null)
                 {
@@ -410,7 +423,7 @@ namespace LootingBots.Patch
                         foundBiggerContainer
                         && (
                             equippedArmor == null
-                            || equippedArmor.ArmorClass <= lootArmor.ArmorClass
+                            || equippedArmor.ArmorClass <= lootArmor?.ArmorClass
                         )
                     );
             }
@@ -495,7 +508,7 @@ namespace LootingBots.Patch
             )
             {
                 TransactionController.ActionCallback onSwapComplete = null;
-                // If we want to transfer items after the throw and equip fully completes, call the lootNestedItems method 
+                // If we want to transfer items after the throw and equip fully completes, call the lootNestedItems method
                 // on the item that was just thrown
                 if (tranferItems)
                 {
@@ -508,11 +521,13 @@ namespace LootingBots.Patch
                 return new TransactionController.SwapAction(
                     toThrow,
                     toEquip,
-                    callback != null ? callback : async () =>
-                    {   
-                        // Try to equip the item after throwing
-                        await tryAddItemsToBot(new Item[1] { toEquip });
-                    },
+                    callback != null
+                        ? callback
+                        : async () =>
+                        {
+                            // Try to equip the item after throwing
+                            await tryAddItemsToBot(new Item[1] { toEquip });
+                        },
                     onSwapComplete
                 );
             }
