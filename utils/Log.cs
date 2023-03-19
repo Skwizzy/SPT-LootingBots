@@ -29,5 +29,13 @@ namespace LootingBots.Patch.Util
                 Logger.LogWarning(data);
             }
         }
+
+        public void logError(object data)
+        {
+            if (isDebug())
+            {
+                Logger.LogError(data);
+            }
+        }
     }
 }

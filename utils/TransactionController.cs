@@ -1,6 +1,7 @@
 using EFT.InventoryLogic;
 using System.Threading.Tasks;
 using Comfort.Common;
+using System;
 
 namespace LootingBots.Patch.Util
 {
@@ -71,75 +72,88 @@ namespace LootingBots.Patch.Util
         /** Moves an item to a specified item address. Supports executing a callback */
         public async Task moveItem(MoveAction moveAction)
         {
-            // GClass2426.
-            log.logDebug($"Moving item to: {moveAction.place.Container.ID}");
-            GStruct322<GClass2438> value = GClass2426.Move(
-                moveAction.toMove,
-                moveAction.place,
-                inventoryController,
-                true
-            );
-
-            if (moveAction.callback == null)
+            try
             {
-                await inventoryController.TryRunNetworkTransaction(value, null);
-            }
-            else
-            {
-                TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
-
-                await inventoryController.TryRunNetworkTransaction(
-                    value,
-                    new Callback(
-                        async (IResult result) =>
-                        {
-                            await moveAction.callback();
-                            promise.TrySetResult(result);
-                        }
-                    )
+                log.logDebug($"Moving item to: {moveAction.place.Container.ID}");
+                GStruct322<GClass2438> value = GClass2426.Move(
+                    moveAction.toMove,
+                    moveAction.place,
+                    inventoryController,
+                    true
                 );
 
-                await Task.WhenAny(promise.Task);
-            }
+                if (moveAction.callback == null)
+                {
+                    await inventoryController.TryRunNetworkTransaction(value, null);
+                }
+                else
+                {
+                    TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
 
-            if (moveAction.onComplete != null)
+                    await inventoryController.TryRunNetworkTransaction(
+                        value,
+                        new Callback(
+                            async (IResult result) =>
+                            {
+                                await moveAction.callback();
+                                promise.TrySetResult(result);
+                            }
+                        )
+                    );
+
+                    await Task.WhenAny(promise.Task);
+                }
+
+                if (moveAction.onComplete != null)
+                {
+                    await moveAction.onComplete();
+                }
+            }
+            catch (Exception e)
             {
-                await moveAction.onComplete();
+                log.logError(e);
             }
         }
 
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
         public async Task throwAndEquip(SwapAction swapAction)
         {
-            TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
-            Item toThrow = swapAction.toThrow;
-
-            // Potentially use GClass2426.Swap instead?
-
-            log.logWarning($"Throwing item: {toThrow}");
-
-            inventoryController.ThrowItem(
-                toThrow,
-                null,
-                new Callback(
-                    async (IResult result) =>
-                    {
-                        if (result.Succeed)
-                        {
-                            await swapAction.callback();
-                        }
-
-                        promise.TrySetResult(result);
-                    }
-                ),
-                false
-            );
-
-            await Task.WhenAny(promise.Task);
-
-            if (swapAction.onComplete != null)
+            try
             {
-                await swapAction.onComplete();
+                TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
+                Item toThrow = swapAction.toThrow;
+
+                // Potentially use GClass2426.Swap instead?
+
+                log.logWarning($"Throwing item: {toThrow}");
+
+                inventoryController.ThrowItem(
+                    toThrow,
+                    null,
+                    new Callback(
+                        async (IResult result) =>
+                        {
+                            if (result.Succeed)
+                            {
+                                await swapAction.callback();
+                            }
+
+                            promise.TrySetResult(result);
+                        }
+                    ),
+                    false
+                );
+
+                await Task.WhenAny(promise.Task);
+
+                if (swapAction.onComplete != null)
+                {
+                    await swapAction.onComplete();
+                }
+            }
+            catch (Exception e)
+            {
+                log.logError(e);
             }
         }
     }
