@@ -101,7 +101,7 @@ namespace LootingBots.Patch.Util
                         )
                     );
 
-                    await Task.WhenAny(promise.Task);
+                    await promise.Task;
                 }
 
                 if (moveAction.onComplete != null)
@@ -144,7 +144,7 @@ namespace LootingBots.Patch.Util
                     false
                 );
 
-                await Task.WhenAny(promise.Task);
+                await promise.Task;
 
                 if (swapAction.onComplete != null)
                 {
