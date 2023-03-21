@@ -108,7 +108,7 @@ namespace LootingBots.Patch
                     $"Secondary weapon {secondary.Name.Localized()} worth {value.avg} roubles"
                 );
 
-                gearValue.secondary = new ValuePair(primary.Id, value.avg);
+                gearValue.secondary = new ValuePair(secondary.Id, value.avg);
             }
             if (holster != null && gearValue.holster.Id != holster.Id)
             {
@@ -117,7 +117,7 @@ namespace LootingBots.Patch
                     $"Holster weapon {holster.Name.Localized()} worth {value.avg} roubles"
                 );
 
-                gearValue.holster = new ValuePair(primary.Id, value.avg);
+                gearValue.holster = new ValuePair(holster.Id, value.avg);
             }
         }
 
