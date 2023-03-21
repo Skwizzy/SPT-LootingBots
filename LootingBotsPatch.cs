@@ -82,7 +82,8 @@ namespace LootingBots.Patch
         public static async void lootCorpse()
         {
             log.logDebug(
-                $"{itemAdder.botOwner_0.Profile.Info.Settings.Role} is looting corpse: {itemAdder.corpse.Profile?.Info?.Settings?.Role}"
+                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
+                
             );
 
             Item[] priorityItems = itemAdder.corpseInventoryController.Inventory.Equipment
