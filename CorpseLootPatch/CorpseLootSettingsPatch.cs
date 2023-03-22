@@ -5,24 +5,6 @@ using EFT;
 
 namespace LootingBots.Patch
 {
-    /** Disable discard limits (RMT protection) for all bots. Affects bots being able to drop items in raid */
-    public class DisableDiscardLimitPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(GClass2401).GetMethod(
-                "AffectsDiscardLimits",
-                BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public
-            );
-        }
-
-        [PatchPrefix]
-        private static bool PatchPrefix()
-        {
-            return false;
-        }
-    }
-
     public class CorpseLootSettingsPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

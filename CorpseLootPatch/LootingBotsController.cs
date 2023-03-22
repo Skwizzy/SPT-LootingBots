@@ -32,7 +32,6 @@ namespace LootingBots
                 false,
                 "Enables log messages to be printed");
 
-                // new DisableDiscardLimitPatch().Enable();
                 new CorpseLootSettingsPatch().Enable();
                 new LootCorpsePatch().Enable();
             }
