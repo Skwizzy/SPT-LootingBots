@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // This is a simple script used to build a mod package. The script will copy necessary files to the build directory
 // and compress the build directory into a zip file that can be easily shared.
 
@@ -49,24 +47,24 @@ fs.copySync(__dirname, path.normalize(`${__dirname}/../~${modName}`), {filter:(f
 {
     return !exclude.includes(filePath);
 }});
-fs.moveSync(path.normalize(`${__dirname}/../~${modName}`), path.normalize(`${__dirname}/${modName}`), { overwrite: true });
-fs.copySync(path.normalize(`${__dirname}/${modName}`), path.normalize(`${__dirname}/dist`));
+fs.moveSync(path.normalize(`${__dirname}/../~${modName}`), path.normalize(`${__dirname}/../Build/user/mods/${modName}`), { overwrite: true });
+// fs.copySync(path.normalize(`${__dirname}/${modName}`), path.normalize(`${__dirname}/../Build/user/mods`));
 console.log("Build files copied.");
 
 // Compress the files for easy distribution. The compressed file is saved into the dist directory. When uncompressed we
 // need to be sure that it includes a directory that the user can easily copy into their game mods directory.
-zip({
-    source: modName,
-    destination: `dist/${modName}.zip`,
-    cwd: __dirname
-}).catch(function(err)
-{
-    console.error("A bestzip error has occurred: ", err.stack);
-}).then(function()
-{
-    console.log(`Compressed mod package to: /dist/${modName}.zip`);
+// zip({
+//     source: modName,
+//     destination: `dist/${modName}.zip`,
+//     cwd: __dirname
+// }).catch(function(err)
+// {
+//     console.error("A bestzip error has occurred: ", err.stack);
+// }).then(function()
+// {
+//     console.log(`Compressed mod package to: /dist/${modName}.zip`);
 
     // Now that we're done with the compression we can delete the temporary build directory.
     fs.rmSync(`${__dirname}/${modName}`, { force: true, recursive: true });
     console.log("Build successful! your zip file has been created and is ready to be uploaded to hub.sp-tarkov.com/files/");
-});
+// });
