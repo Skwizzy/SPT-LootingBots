@@ -1,16 +1,16 @@
 {
-    "name": "EditDatabase",
+    "name": "NoDiscardLimit",
     "version": "1.0.0",
     "main": "src/mod.js",
     "license": "MIT",
-    "author": "Chomp",
+    "author": "Skwizzy",
     "akiVersion": "~3.5",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"
     },
     "devDependencies": {
-        "@types/node": "16.18.10",
+        "@types/node": "^16.18.18",
         "@typescript-eslint/eslint-plugin": "5.46.1",
         "@typescript-eslint/parser": "5.46.1",
         "bestzip": "2.2.1",
