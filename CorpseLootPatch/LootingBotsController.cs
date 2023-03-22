@@ -22,7 +22,7 @@ namespace LootingBots
 
         public void Awake()
             {
-                pmcLootingEnabled = Config.Bind("Corpse Loot Settings", "PMCs can loot (experimental)", false, "Allows PMC bots to loot corpses. Experimental: poor behavior with weapon swapping currently as they will always use scav weapons when picked up");
+                pmcLootingEnabled = Config.Bind("Corpse Loot Settings", "PMCs can loot", true, "Allows PMC bots to loot corpses");
                 bodySeeDist = Config.Bind("Corpse Loot Settings", "Distance to see body", 25f, "If the bot is with X meters, it can see the body");
                 bodyLeaveDist = Config.Bind("Corpse Loot Settings", "Distance to forget body", 50f, "If the bot is further than X meters, it will forget about the body");
                 bodyLookPeriod = Config.Bind("Corpse Loot Settings", "Looting time (warning)", 8.0f, "Time bot stands at corpse looting. Shorter times may display strange behavior");
