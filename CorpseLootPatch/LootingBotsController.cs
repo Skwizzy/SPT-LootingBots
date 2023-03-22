@@ -11,7 +11,7 @@ namespace LootingBots
     {
         private const String MOD_GUID = "me.skwizzy.lootingbots";
         private const String MOD_NAME = "LootingBots";
-        private const String MOD_VERSION = "0.1";
+        private const String MOD_VERSION = "1.0.0";
 
         public static ConfigEntry<bool> enableLogging;
 
