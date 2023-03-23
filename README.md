@@ -29,6 +29,18 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
 - `Looting time (warning)` - Time in seconds the bot will stand over a corpse. Changing lower than 8 seconds may result in issues
     
+## Conflicts
+This mod may conflict with any client mod that attempts to alter the following bot settings: (bots may not exhibit base EFT looting behavior)
+```
+Patrol.CAN_LOOK_TO_DEADBODIES
+Mind.HOW_WORK_OVER_DEAD_BODY
+Patrol.DEAD_BODY_SEE_DIST
+Patrol.DEAD_BODY_LEAVE_DIST
+Patrol.DEAD_BODY_LOOK_PERIOD
+```
+
+This mod will conflict with any server mod that sets the `globals.config.DiscardLimitsEnabled` to true. PMC bots will throw exceptions when attempting to discard gear with DiscardLimits set. This needs to be false for the mod to function properly with pmc looting.
+
 ## Planned features:
 - [x] Looting of every item on corpses
 - [x] Equipment swapping
@@ -43,6 +55,12 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - [ ] Container nesting
 - [ ] Customizable params in mod settings
 
+## Package Contents
+- `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
+- `user/mods/Skwizzy-NoDiscardLimits-1.0.0` - Small server plugin that sets DiscardLimitsEnabled to false in the server/globals/config. Fixes issues with PMC bots throwing exceptions when discarding items with DiscardLimits (this is the EFT live RMT protection logic)
+
+## Install instructions
+Simply extract the contents of the .rar file into your SPT directory.
 
 ## Unknowns:
 - Sometimes bots will not loot corpses even after a large amount of time has passed. Need to investigate the base EFT logic and see if I can improve this check
