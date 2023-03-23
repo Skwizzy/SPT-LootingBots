@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT;
-using EFT.UI.Ragfair;
-using EFT.SynchronizableObjects;
-using UnityEngine;
-using System.Collections;
-using Comfort.Common;
+
 
 namespace LootingBots.Patch
 {
@@ -44,6 +40,7 @@ namespace LootingBots.Patch
         private static ItemAdder itemAdder;
 
         private static GearValue gearValue = new GearValue();
+        private static ItemAppraiser itemAppraiser;
         private static Log log;
 
         protected override MethodBase GetTargetMethod()
@@ -66,8 +63,12 @@ namespace LootingBots.Patch
             ref GClass263 ___gclass263_0
         )
         {
+            if (log == null)
+            {
+                log = new Log(Logger);
+            }
+
             itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, Logger);
-            log = new Log(Logger);
 
             try
             {
@@ -84,6 +85,14 @@ namespace LootingBots.Patch
         public static async Task calculateGearValue()
         {
             log.logDebug("Calculating gear value...");
+
+            if (itemAppraiser == null)
+            {
+                itemAppraiser = new ItemAppraiser(log);
+            }
+
+            await itemAppraiser.init();
+
             Item primary = itemAdder.botInventoryController.Inventory.Equipment
                 .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
                 .ContainedItem;
@@ -96,18 +105,18 @@ namespace LootingBots.Patch
 
             if (primary != null && gearValue.primary.Id != primary.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(primary);
-                gearValue.primary = new ValuePair(primary.Id, value.avg);
+                float value = await itemAppraiser.getItemPrice(primary);
+                gearValue.primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && gearValue.secondary.Id != secondary.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(secondary);
-                gearValue.secondary = new ValuePair(secondary.Id, value.avg);
+                float value = await itemAppraiser.getItemPrice(secondary);
+                gearValue.secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && gearValue.holster.Id != holster.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(holster);
-                gearValue.holster = new ValuePair(holster.Id, value.avg);
+                float value = await itemAppraiser.getItemPrice(holster);
+                gearValue.holster = new ValuePair(holster.Id, value);
             }
         }
 
@@ -399,9 +408,9 @@ namespace LootingBots.Patch
                 TransactionController.EquipAction action = new TransactionController.EquipAction();
                 bool isPistol = lootWeapon.WeapClass.Equals("pistol");
 
-                ItemMarketPrices lootValue = await getItemMarketPrice(lootWeapon);
+                float lootValue = await itemAppraiser.getItemPrice(lootWeapon);
 
-                if (isPistol && holster != null && gearValue.holster.value < lootValue.avg)
+                if (isPistol && holster != null && gearValue.holster.value < lootValue)
                 {
                     log.logDebug(
                         $"Trying to swap {holster.Name.Localized()} with {lootWeapon.Name.Localized()}"
@@ -412,7 +421,7 @@ namespace LootingBots.Patch
                 {
                     // If we have a primary that is worth less than the looted weapon, move the primary to the secondary slot and equp the looted weapon.
                     // Otherwise just swap the primary wepon with the looted weapon
-                    if (gearValue.primary.value < lootValue.avg)
+                    if (gearValue.primary.value < lootValue)
                     {
                         if (secondary == null)
                         {
@@ -441,7 +450,7 @@ namespace LootingBots.Patch
                         }
                     }
                     // If the secondary is worth less than the looted weapon, swap the secondary
-                    else if (secondary != null && gearValue.secondary.value < lootValue.avg)
+                    else if (secondary != null && gearValue.secondary.value < lootValue)
                     {
                         log.logDebug(
                             $"Trying to swap {secondary.Name.Localized()} with {lootWeapon.Name.Localized()}"
@@ -589,33 +598,6 @@ namespace LootingBots.Patch
                         },
                     onSwapComplete
                 );
-            }
-
-            public Task<ItemMarketPrices> getItemMarketPrice(Item lootItem)
-            {
-                log.logDebug($"Attempting to get price of: {lootItem.Name.Localized()}");
-                TaskCompletionSource<ItemMarketPrices> promise =
-                    new TaskCompletionSource<ItemMarketPrices>();
-
-                Task.Factory.StartNew(
-                    () =>
-                        Singleton<ClientApplication<ISession>>.Instance
-                            .GetClientBackEndSession()
-                            .GetMarketPrices(
-                                lootItem.TemplateId,
-                                new Callback<ItemMarketPrices>(
-                                    (Result<ItemMarketPrices> result) =>
-                                    {
-                                        log.logDebug(
-                                            $"Price of {lootItem.Name.Localized()}: {result.Value?.avg}"
-                                        );
-                                        promise.TrySetResult(result.Value);
-                                    }
-                                )
-                            )
-                );
-
-                return promise.Task;
             }
         }
     }
