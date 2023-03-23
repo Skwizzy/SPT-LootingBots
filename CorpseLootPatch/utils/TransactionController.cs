@@ -69,13 +69,53 @@ namespace LootingBots.Patch.Util
 
         public delegate Task ActionCallback();
 
+        /** Tries to find an open slot to equip the current item to. If a slot is found, issue a move action to equip the item */
+        public async Task<bool> tryEquipItem(Item item)
+        {
+            // Check to see if we can equip the item
+            GClass2419 ableToEquip = inventoryController.FindSlotToPickUp(item);
+            if (ableToEquip != null)
+            {
+                log.logWarning($"Equipping to {ableToEquip.Container.ID.Localized()}: {item.Name.Localized()}");
+                await moveItem(new MoveAction(item, ableToEquip));
+
+                return true;
+            }
+
+            log.logDebug($"Cannot equip: {item.Name.Localized()}");
+
+            return false;
+        }
+
+        /** Tries to find a valid grid for the item being looted. If there is a valid grid to place the item inside of, issue a move action to pick up the item */
+        public async Task<bool> tryPickupItem(Item item)
+        {
+            GClass2421 ableToPickUp = inventoryController.FindGridToPickUp(
+                item,
+                inventoryController
+            );
+
+            if (ableToPickUp != null)
+            {
+                log.logWarning($"Placing item {item.Name.Localized()} in {ableToPickUp.Container.ID.Localized()}");
+                await moveItem(new MoveAction(item, ableToPickUp));
+                return true;
+            }
+
+            log.logDebug($"No valid slot found for: {item.Name.Localized()}");
+
+            return false;
+        }
+
         /** Moves an item to a specified item address. Supports executing a callback */
         public async Task moveItem(MoveAction moveAction)
         {
             try
             {
-                log.logDebug($"Moving item to: {moveAction.place?.Item?.Name?.Localized() ?? moveAction.place?.Container?.ID?.Localized()}");
-                GStruct322<GClass2438> value = GClass2426.Move(
+                log.logDebug(
+                    $"Moving item to: {moveAction.place?.Container?.ID?.Localized()}"
+                );
+                GStruct321 value = GClass2426.Move(
                     moveAction.toMove,
                     moveAction.place,
                     inventoryController,
@@ -125,8 +165,7 @@ namespace LootingBots.Patch.Util
 
                 // Potentially use GClass2426.Swap instead?
 
-                log.logWarning($"Throwing item: {toThrow}");
-
+                log.logWarning($"Throwing item: {toThrow.Name.Localized()}");
                 inventoryController.ThrowItem(
                     toThrow,
                     null,

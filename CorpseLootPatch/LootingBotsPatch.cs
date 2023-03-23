@@ -7,7 +7,6 @@ using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT;
 
-
 namespace LootingBots.Patch
 {
     /** For Debugging */
@@ -273,41 +272,19 @@ namespace LootingBots.Patch
                         }
 
                         // Check to see if we can equip the item
-                        GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
-                        if (ableToEquip != null)
+                        bool ableToEquip = await transactionController.tryEquipItem(item);
+
+                        if (ableToEquip)
                         {
-                            log.logWarning(
-                                $"{botOwner_0.Profile.Info.Settings.Role} is equipping: {item.Name.Localized()}"
-                            );
-                            await transactionController.moveItem(
-                                new TransactionController.MoveAction(item, ableToEquip)
-                            );
                             continue;
-                        }
-                        else
-                        {
-                            log.logDebug($"Cannot equip: {item.Name.Localized()}");
                         }
 
                         // Check to see if we can pick up the item
-                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(
-                            item,
-                            botInventoryController
-                        );
+                        bool ableToPickUp = await transactionController.tryPickupItem(item);
 
-                        if (ableToPickUp != null)
+                        if (ableToPickUp)
                         {
-                            log.logWarning(
-                                $"{botOwner_0.Profile.Info.Settings.Role} is picking up: {item.Name.Localized()}"
-                            );
-                            await transactionController.moveItem(
-                                new TransactionController.MoveAction(item, ableToPickUp)
-                            );
                             continue;
-                        }
-                        else
-                        {
-                            log.logDebug($"No valid slot found for: {item.Name.Localized()}");
                         }
 
                         // If we cant pick up the item and it has nested slots, loot the items from the container
@@ -434,7 +411,7 @@ namespace LootingBots.Patch
                                 {
                                     // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
                                     await Task.Delay(1000);
-                                    await tryAddItemsToBot(new Item[] { lootWeapon });
+                                    await transactionController.tryEquipItem(lootWeapon);
                                 }
                             );
                             log.logDebug(
@@ -553,15 +530,20 @@ namespace LootingBots.Patch
                 Item[] nestedItems = parentItem.GetAllItems().ToArray();
                 if (nestedItems.Length > 1)
                 {
-                    log.logDebug(
-                        $"looting nested {nestedItems.Length} items from {parentItem.Name.Localized()}"
-                    );
+                    // Filter out the parent item from the list, filter out any items that are children of another container like a magazine, backpack, rig
                     Item[] containerItems = nestedItems
-                        .Where(nestedItem => nestedItem.Id != parentItem.Id)
+                        .Where(
+                            nestedItem =>
+                                nestedItem.Id != parentItem.Id
+                                && nestedItem.Id == nestedItem.GetRootItem().Id
+                        )
                         .ToArray();
 
                     if (containerItems.Length > 0)
                     {
+                        log.logDebug(
+                            $"looting nested {containerItems.Length} items from {parentItem.Name.Localized()}"
+                        );
                         await tryAddItemsToBot(containerItems);
                     }
                 }
@@ -594,7 +576,7 @@ namespace LootingBots.Patch
                         : async () =>
                         {
                             // Try to equip the item after throwing
-                            await tryAddItemsToBot(new Item[1] { toEquip });
+                            await transactionController.tryEquipItem(toEquip);
                         },
                     onSwapComplete
                 );

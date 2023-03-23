@@ -32,7 +32,7 @@ namespace LootingBots.Patch.Util
 
         public Task<GClass2530<EFT.HandBook.HandbookData>> getHandbookData()
         {
-            log.logWarning($"Getting handbook data. Should only happen once per raid");
+            log.logWarning($"Getting handbook data. Should only happen once per application session");
             return beSession.RequestHandbookInfo();
         }
 
