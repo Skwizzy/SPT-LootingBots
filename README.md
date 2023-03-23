@@ -18,7 +18,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - Backpack will be swapped if backpack being looted has more slots
 - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
 - When throwing old backpacks/tactical rigs, bots try to take all the loot from the container thrown
-- When looting weapons, bots will compare the item's value in roubles to the value of the weapons currently equipped. 
+- When looting weapons, bots will compare the item's Handbook value in rubles to the value of the weapons currently equipped. 
   - Looted weapons with higer value will replace an equipped weapon with the lowest value
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
@@ -27,7 +27,8 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `PMCs can loot` - Enables config changes to allow looting behavior
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
-- `Looting time (warning)` - Time in seconds the bot will stand over a corpse. Changing lower than 8 seconds may result in issues
+- `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
+- `Use flea market prices (*)` - Change bots to query items against the ragfair service instead of using the handbook prices. *Warning - Users have reported some performance issues on mid/lower end PCs, defaults to false
     
 ## Conflicts
 This mod may conflict with any client mod that attempts to alter the following bot settings: (bots may not exhibit base EFT looting behavior)

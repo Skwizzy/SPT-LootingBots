@@ -122,7 +122,7 @@ namespace LootingBots.Patch
         public static async void lootCorpse()
         {
             log.logWarning(
-                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
+                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
             );
 
             await calculateGearValue();
@@ -210,6 +210,7 @@ namespace LootingBots.Patch
                     this.botInventoryController = (InventoryControllerClass)
                         botInventory.GetValue(botOwner_0.GetPlayer);
                     this.transactionController = new TransactionController(
+                        this.botOwner_0,
                         this.botInventoryController,
                         Logger
                     );
@@ -257,7 +258,7 @@ namespace LootingBots.Patch
                 {
                     if (item != null && item.Name != null)
                     {
-                        log.logDebug($"Loot found on corpse: {item.Name.Localized()}");
+                        log.logDebug($"Loot found: {item.Name.Localized()}");
                         // Check to see if we need to swap gear
                         TransactionController.EquipAction action = await getEquipAction(item);
                         if (action.swap != null)
@@ -542,7 +543,7 @@ namespace LootingBots.Patch
                     if (containerItems.Length > 0)
                     {
                         log.logDebug(
-                            $"looting nested {containerItems.Length} items from {parentItem.Name.Localized()}"
+                            $"Looting {containerItems.Length} items from {parentItem.Name.Localized()}"
                         );
                         await tryAddItemsToBot(containerItems);
                     }
