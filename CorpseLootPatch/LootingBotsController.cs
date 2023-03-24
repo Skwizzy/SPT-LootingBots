@@ -29,11 +29,15 @@ namespace LootingBots
 
         public void Update()
         {
+            bool shoultInitAppraiser =
+                (!useMarketPrices.Value && itemAppraiser.handbookData == null)
+                || (useMarketPrices.Value && !itemAppraiser.marketInitialized);
+
             // Initialize the itemAppraiser when the BE instance comes online
             if (
                 Singleton<ClientApplication<ISession>>.Instance != null
                 && Singleton<GClass2529>.Instance != null
-                && itemAppraiser.handbookData == null
+                && shoultInitAppraiser
             )
             {
                 log.logWarning($"Initializing item appraiser");
@@ -78,13 +82,13 @@ namespace LootingBots
                 "Weapon Looting",
                 "Use flea market prices",
                 false,
-                "Bots will query the ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started"
+                "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times."
             );
             valueFromMods = Config.Bind(
                 "Weapon Looting",
                 "Calculate value from attachments",
-                false,
-                "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Keep disabled if experiencing performance issues"
+                true,
+                "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues"
             );
 
             log = new Log(Logger);

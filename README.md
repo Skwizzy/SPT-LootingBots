@@ -18,7 +18,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - Backpack will be swapped if backpack being looted has more slots
 - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
 - When throwing old backpacks/tactical rigs, bots try to take all the loot from the container thrown
-- When looting weapons, bots will compare the item's Handbook value in rubles to the value of the weapons currently equipped. 
+- When looting weapons, bots will compare the item's Handbook(default) or Flea market price in rubles to the value of the weapons currently equipped. 
   - Looted weapons with higer value will replace an equipped weapon with the lowest value
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
@@ -30,8 +30,8 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
 
 **Weapon Loot Settings**
-- `Use flea market prices` - Change bots to query items against the ragfair prices instead of using the handbook prices. Will make a query to get ragfair prices when the client is first started
-- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Keep disabled if experiencing performance issues!
+- `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
+- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues!
 
 
 ## Conflicts

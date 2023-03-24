@@ -12,15 +12,14 @@ namespace LootingBots.Patch.Util
     public class ItemAppraiser
     {
         public Log log;
-        public GClass2529 handbookData;
+        public Dictionary<string, EFT.HandBook.HandbookData> handbookData;
         public Dictionary<string, float> marketData;
+
+        public bool marketInitialized = false;
 
         public void init()
         {
             this.log = LootingBots.log;
-
-            // This is the handbook instance which is initialized when the client first starts.
-            handbookData = Singleton<GClass2529>.Instance;
 
             if (LootingBots.useMarketPrices.Value)
             {
@@ -34,6 +33,12 @@ namespace LootingBots.Patch.Util
                             }
                         )
                     );
+                marketInitialized = true;
+            }
+            else
+            {
+                // This is the handbook instance which is initialized when the client first starts.
+                handbookData = Singleton<GClass2529>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 
@@ -77,18 +82,10 @@ namespace LootingBots.Patch.Util
         /** Gets the price of the item as stated from the beSession handbook values */
         public float getItemHandbookPrice(Item lootItem)
         {
-            EFT.HandBook.HandbookData itemData = Array.Find(
-                handbookData.Items,
-                item => item?.Id == lootItem.TemplateId
-            );
+            float price = handbookData[lootItem.TemplateId]?.Price ?? 0;
 
-            if (itemData == null)
-            {
-                log.logWarning("Could not find price in handbook");
-            }
-
-            log.logDebug($"Price of {lootItem.Name.Localized()} is {itemData?.Price ?? 0}");
-            return itemData?.Price ?? 0;
+            log.logDebug($"Price of {lootItem.Name.Localized()} is {price}");
+            return price;
         }
 
         public float getWeaponMarketPrice(Weapon lootWeapon)
@@ -99,7 +96,7 @@ namespace LootingBots.Patch.Util
                 (price, mod) => price += getItemMarketPrice(mod)
             );
             log.logDebug(
-                $"Final price of attachments: {finalPrice} compared to full item {getItemMarketPrice(lootWeapon)}"
+                $"Final price of attachments: {finalPrice} compared to item template {getItemMarketPrice(lootWeapon)}"
             );
 
             return finalPrice;
