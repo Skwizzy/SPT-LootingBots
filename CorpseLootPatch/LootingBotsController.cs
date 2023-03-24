@@ -23,9 +23,9 @@ namespace LootingBots
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
         public static ConfigEntry<bool> useMarketPrices;
+        public static ConfigEntry<bool> valueFromMods;
         public static Log log;
         public static ItemAppraiser itemAppraiser = new ItemAppraiser();
-
 
         public void Update()
         {
@@ -44,40 +44,47 @@ namespace LootingBots
         public void Awake()
         {
             pmcLootingEnabled = Config.Bind(
-                "Corpse Loot Settings",
+                "Corpse Looting",
                 "PMCs can loot",
                 true,
                 "Allows PMC bots to loot corpses"
             );
             bodySeeDist = Config.Bind(
-                "Corpse Loot Settings",
+                "Corpse Looting",
                 "Distance to see body",
                 25f,
                 "If the bot is with X meters, it can see the body"
             );
             bodyLeaveDist = Config.Bind(
-                "Corpse Loot Settings",
+                "Corpse Looting",
                 "Distance to forget body",
                 50f,
                 "If the bot is further than X meters, it will forget about the body"
             );
             bodyLookPeriod = Config.Bind(
-                "Corpse Loot Settings",
+                "Corpse Looting",
                 "Looting time (*)",
                 8.0f,
                 "Time bot stands at corpse looting. *WARNING: Shorter times may display strange behavior"
             );
-            useMarketPrices = Config.Bind(
-                "Corpse Loot Settings",
-                "Use flea market prices (*)",
-                false,
-                "Bots will query the ragfair service to do item value checks. *WARNING: reported to cause some performance issues on lower end PCs"
-            );
             enableLogging = Config.Bind(
-                "Corpse Loot Settings",
+                "Corpse Looting",
                 "Enable Debug",
                 false,
                 "Enables log messages to be printed"
+            );
+
+            useMarketPrices = Config.Bind(
+                "Weapon Looting",
+                "Use flea market prices",
+                false,
+                "Bots will query the ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started"
+            );
+            valueFromMods = Config.Bind(
+                "Weapon Looting",
+                "Calculate value from attachments",
+                false,
+                "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Keep disabled if experiencing performance issues"
             );
 
             log = new Log(Logger);

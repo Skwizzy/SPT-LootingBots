@@ -40,14 +40,17 @@ namespace LootingBots.Patch.Util
         /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/
         public float getItemPrice(Item lootItem)
         {
+            bool valueFromMods = LootingBots.valueFromMods.Value;
             if (LootingBots.useMarketPrices.Value && marketData != null)
             {
-                return getItemMarketPrice(lootItem);
+                return lootItem is Weapon && valueFromMods
+                    ? getWeaponMarketPrice(lootItem as Weapon)
+                    : getItemMarketPrice(lootItem);
             }
 
             if (handbookData != null)
             {
-                return lootItem is Weapon
+                return lootItem is Weapon && valueFromMods
                     ? getWeaponHandbookPrice(lootItem as Weapon)
                     : getItemHandbookPrice(lootItem);
             }
@@ -88,10 +91,26 @@ namespace LootingBots.Patch.Util
             return itemData?.Price ?? 0;
         }
 
+        public float getWeaponMarketPrice(Weapon lootWeapon)
+        {
+            log.logDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            float finalPrice = lootWeapon.Mods.Aggregate(
+                0f,
+                (price, mod) => price += getItemMarketPrice(mod)
+            );
+            log.logDebug(
+                $"Final price of attachments: {finalPrice} compared to full item {getItemMarketPrice(lootWeapon)}"
+            );
+
+            return finalPrice;
+        }
+
         public float getItemMarketPrice(Item lootItem)
         {
-            log.logDebug($"Attempting to get price of: {lootItem.Name.Localized()}");
-            return marketData[lootItem.TemplateId];
+            float price = marketData[lootItem.TemplateId];
+            log.logDebug($"Price of {lootItem.Name.Localized()} is {price}");
+
+            return price;
         }
     }
 }

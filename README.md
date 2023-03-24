@@ -22,14 +22,18 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - Looted weapons with higer value will replace an equipped weapon with the lowest value
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
-### Mod Settings (F12)
+## Mod Settings (F12)
 - `Enable Debug` - Enables logging in the plugin, does not require restart
 - `PMCs can loot` - Enables config changes to allow looting behavior
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
 - `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
-- `Use flea market prices (*)` - Change bots to query items against the ragfair service instead of using the handbook prices. *Warning - Users have reported some performance issues on mid/lower end PCs, defaults to false
-    
+
+**Weapon Loot Settings**
+- `Use flea market prices` - Change bots to query items against the ragfair prices instead of using the handbook prices. Will make a query to get ragfair prices when the client is first started
+- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Keep disabled if experiencing performance issues!
+
+
 ## Conflicts
 This mod may conflict with any client mod that attempts to alter the following bot settings: (bots may not exhibit base EFT looting behavior)
 ```
@@ -58,7 +62,7 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 
 ## Package Contents
 - `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-NoDiscardLimits-1.0.0` - Small server plugin that sets DiscardLimitsEnabled to false in the server/globals/config. Fixes issues with PMC bots throwing exceptions when discarding items with DiscardLimits (this is the EFT live RMT protection logic)
+- `user/mods/Skwizzy-NoDiscardLimits-1.0.1` - Small server plugin that sets DiscardLimitsEnabled to false in the server/globals/config. Fixes issues with PMC bots throwing exceptions when discarding items with DiscardLimits (this is the EFT live RMT protection logic)
 
 ## Install instructions
 Simply extract the contents of the .rar file into your SPT directory.
