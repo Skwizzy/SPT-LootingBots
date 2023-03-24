@@ -10,30 +10,16 @@ namespace LootingBots.Patch.Util
     public class ItemAppraiser
     {
         public Log log;
-        public GClass2530<EFT.HandBook.HandbookData> handbookData;
+        public GClass2529 handbookData;
         public ISession beSession;
 
         public ItemAppraiser(Log log, GClass2530<EFT.HandBook.HandbookData> handbookData = null)
         {
             this.log = log;
-            this.handbookData = handbookData;
-        }
+            // This is the handbook instance which is initialized when the client first starts.
+            this.handbookData = Singleton<GClass2529>.Instance;
+            this.beSession = Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession();
 
-        /** Initializes the handbook data only if the useMarketPrices option is disabled in the mod menu*/
-        public async Task init()
-        {
-            beSession = Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession();
-
-            if (handbookData == null && !LootingBots.useMarketPrices.Value)
-            {
-                handbookData = await getHandbookData();
-            }
-        }
-
-        public Task<GClass2530<EFT.HandBook.HandbookData>> getHandbookData()
-        {
-            log.logWarning($"Getting handbook data. Should only happen once per application session");
-            return beSession.RequestHandbookInfo();
         }
 
         /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/

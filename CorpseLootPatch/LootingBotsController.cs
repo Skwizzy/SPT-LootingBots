@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using System;
 using LootingBots.Patch;
+using LootingBots.Patch.Util;
 
 namespace LootingBots
 {
@@ -11,7 +12,7 @@ namespace LootingBots
     {
         private const String MOD_GUID = "me.skwizzy.lootingbots";
         private const String MOD_NAME = "LootingBots";
-        private const String MOD_VERSION = "1.0.0";
+        private const String MOD_VERSION = "1.0.1";
 
         public static ConfigEntry<bool> enableLogging;
 
@@ -59,9 +60,11 @@ namespace LootingBots
                 false,
                 "Enables log messages to be printed"
             );
+            
+            Log log = new Log(Logger);
 
             new CorpseLootSettingsPatch().Enable();
-            new LootCorpsePatch().Enable();
+            new LootCorpsePatch(log).Enable();
         }
     }
 }

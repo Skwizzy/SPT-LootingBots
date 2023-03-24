@@ -42,6 +42,11 @@ namespace LootingBots.Patch
         private static ItemAppraiser itemAppraiser;
         private static Log log;
 
+        public LootCorpsePatch(Log logger)
+        {
+            log = logger;
+        }
+
         protected override MethodBase GetTargetMethod()
         {
             _method_7 = typeof(GClass325).GetMethod(
@@ -62,12 +67,7 @@ namespace LootingBots.Patch
             ref GClass263 ___gclass263_0
         )
         {
-            if (log == null)
-            {
-                log = new Log(Logger);
-            }
-
-            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, Logger);
+            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, log);
 
             try
             {
@@ -89,8 +89,6 @@ namespace LootingBots.Patch
             {
                 itemAppraiser = new ItemAppraiser(log);
             }
-
-            await itemAppraiser.init();
 
             Item primary = itemAdder.botInventoryController.Inventory.Equipment
                 .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
@@ -186,15 +184,11 @@ namespace LootingBots.Patch
             // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
             public int currentBodyArmorClass = 0;
 
-            public ItemAdder(
-                BotOwner botOwner_0,
-                GClass263 ___gclass263_0,
-                BepInEx.Logging.ManualLogSource Logger
-            )
+            public ItemAdder(BotOwner botOwner_0, GClass263 ___gclass263_0, Log log)
             {
                 try
                 {
-                    this.log = new Log(Logger);
+                    this.log = log;
 
                     // Initialize bot inventory controller
                     Type botOwnerType = botOwner_0.GetPlayer.GetType();
@@ -212,7 +206,7 @@ namespace LootingBots.Patch
                     this.transactionController = new TransactionController(
                         this.botOwner_0,
                         this.botInventoryController,
-                        Logger
+                        this.log
                     );
 
                     // Initialize corpse inventory controller
