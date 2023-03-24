@@ -119,6 +119,8 @@ namespace LootingBots.Patch
 
         public static async void lootCorpse()
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             log.logWarning(
                 $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
             );
@@ -151,6 +153,9 @@ namespace LootingBots.Patch
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
             log.logDebug("Changing to main wep");
             itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
+
+            watch.Stop();
+            log.logDebug($"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}");
         }
 
         public class GearValue

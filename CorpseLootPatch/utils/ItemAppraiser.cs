@@ -4,6 +4,7 @@ using Comfort.Common;
 using System;
 using EFT.UI.Ragfair;
 using EFT;
+using System.Linq;
 
 namespace LootingBots.Patch.Util
 {
@@ -18,8 +19,9 @@ namespace LootingBots.Patch.Util
             this.log = log;
             // This is the handbook instance which is initialized when the client first starts.
             this.handbookData = Singleton<GClass2529>.Instance;
-            this.beSession = Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession();
-
+            this.beSession = Singleton<
+                ClientApplication<ISession>
+            >.Instance.GetClientBackEndSession();
         }
 
         /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/
@@ -32,10 +34,24 @@ namespace LootingBots.Patch.Util
             }
             else if (handbookData != null)
             {
-                return getItemHandbookPrice(lootItem);
+                return lootItem is Weapon
+                    ? getWeaponHandbookPrice(lootItem as Weapon)
+                    : getItemHandbookPrice(lootItem);
             }
 
             return 0;
+        }
+
+        public float getWeaponHandbookPrice(Weapon lootWeapon)
+        {
+            log.logDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            float finalPrice = lootWeapon.Mods.Aggregate(
+                0f,
+                (price, mod) => price += getItemHandbookPrice(mod)
+            );
+            log.logDebug($"Final price of attachments: {finalPrice} compared to full item {getItemHandbookPrice(lootWeapon)}");
+
+            return finalPrice;
         }
 
         /** Gets the price of the item as stated from the beSession handbook values */
