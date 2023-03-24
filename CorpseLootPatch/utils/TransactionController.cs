@@ -102,7 +102,7 @@ namespace LootingBots.Patch.Util
                 inventoryController
             );
 
-            if (ableToPickUp != null)
+            if (ableToPickUp != null && !ableToPickUp.GetRootItem().Parent.Container.ID.ToLower().Equals("securedcontainer"))
             {
                 log.logWarning($"{botName} is picking up: {item.Name.Localized()} (place: {ableToPickUp.GetRootItem().Name.Localized()})");
                 await moveItem(new MoveAction(item, ableToPickUp));
@@ -120,7 +120,7 @@ namespace LootingBots.Patch.Util
             try
             {
                 log.logDebug(
-                    $"Moving item to: {moveAction.place?.Container?.ID?.Localized()}"
+                    $"Moving item to: {moveAction.place.GetRootItem().Name.Localized()}"
                 );
                 GStruct321 value = GClass2426.Move(
                     moveAction.toMove,
