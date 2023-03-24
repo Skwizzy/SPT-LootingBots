@@ -5,6 +5,7 @@ using System;
 using EFT.UI.Ragfair;
 using EFT;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace LootingBots.Patch.Util
 {
@@ -12,32 +13,46 @@ namespace LootingBots.Patch.Util
     {
         public Log log;
         public GClass2529 handbookData;
-        public ISession beSession;
+        public Dictionary<string, float> marketData;
 
-        public ItemAppraiser(Log log, GClass2530<EFT.HandBook.HandbookData> handbookData = null)
+        public void init()
         {
-            this.log = log;
+            this.log = LootingBots.log;
+
             // This is the handbook instance which is initialized when the client first starts.
-            this.handbookData = Singleton<GClass2529>.Instance;
-            this.beSession = Singleton<
-                ClientApplication<ISession>
-            >.Instance.GetClientBackEndSession();
+            handbookData = Singleton<GClass2529>.Instance;
+
+            if (LootingBots.useMarketPrices.Value)
+            {
+                Singleton<ClientApplication<ISession>>.Instance
+                    .GetClientBackEndSession()
+                    .RagfairGetPrices(
+                        new Callback<Dictionary<string, float>>(
+                            (Result<Dictionary<string, float>> result) =>
+                            {
+                                marketData = result.Value;
+                            }
+                        )
+                    );
+            }
         }
 
         /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/
-        public async Task<float> getItemPrice(Item lootItem)
+        public float getItemPrice(Item lootItem)
         {
-            if (LootingBots.useMarketPrices.Value)
+            if (LootingBots.useMarketPrices.Value && marketData != null)
             {
-                ItemMarketPrices prices = await getItemMarketPrice(lootItem);
-                return prices.avg;
+                return getItemMarketPrice(lootItem);
             }
-            else if (handbookData != null)
+
+            if (handbookData != null)
             {
                 return lootItem is Weapon
                     ? getWeaponHandbookPrice(lootItem as Weapon)
                     : getItemHandbookPrice(lootItem);
             }
+
+            log.logDebug($"ItemAppraiser data is null");
 
             return 0;
         }
@@ -49,7 +64,9 @@ namespace LootingBots.Patch.Util
                 0f,
                 (price, mod) => price += getItemHandbookPrice(mod)
             );
-            log.logDebug($"Final price of attachments: {finalPrice} compared to full item {getItemHandbookPrice(lootWeapon)}");
+            log.logDebug(
+                $"Final price of attachments: {finalPrice} compared to full item {getItemHandbookPrice(lootWeapon)}"
+            );
 
             return finalPrice;
         }
@@ -71,30 +88,10 @@ namespace LootingBots.Patch.Util
             return itemData?.Price ?? 0;
         }
 
-        /** Use the beSession to query the RagFair serivce for the price of the current lootItem**/
-        public Task<ItemMarketPrices> getItemMarketPrice(Item lootItem)
+        public float getItemMarketPrice(Item lootItem)
         {
             log.logDebug($"Attempting to get price of: {lootItem.Name.Localized()}");
-            TaskCompletionSource<ItemMarketPrices> promise =
-                new TaskCompletionSource<ItemMarketPrices>();
-
-            Task.Factory.StartNew(
-                () =>
-                    beSession.GetMarketPrices(
-                        lootItem.TemplateId,
-                        new Callback<ItemMarketPrices>(
-                            (Result<ItemMarketPrices> result) =>
-                            {
-                                log.logDebug(
-                                    $"Price of {lootItem.Name.Localized()}: {result.Value?.avg}"
-                                );
-                                promise.TrySetResult(result.Value);
-                            }
-                        )
-                    )
-            );
-
-            return promise.Task;
+            return marketData[lootItem.TemplateId];
         }
     }
 }

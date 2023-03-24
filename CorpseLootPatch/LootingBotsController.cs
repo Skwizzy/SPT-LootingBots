@@ -3,6 +3,8 @@ using BepInEx.Configuration;
 using System;
 using LootingBots.Patch;
 using LootingBots.Patch.Util;
+using Comfort.Common;
+using EFT;
 
 namespace LootingBots
 {
@@ -21,6 +23,23 @@ namespace LootingBots
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
         public static ConfigEntry<bool> useMarketPrices;
+        public static Log log;
+        public static ItemAppraiser itemAppraiser = new ItemAppraiser();
+
+
+        public void Update()
+        {
+            // Initialize the itemAppraiser when the BE instance comes online
+            if (
+                Singleton<ClientApplication<ISession>>.Instance != null
+                && Singleton<GClass2529>.Instance != null
+                && itemAppraiser.handbookData == null
+            )
+            {
+                log.logWarning($"Initializing item appraiser");
+                itemAppraiser.init();
+            }
+        }
 
         public void Awake()
         {
@@ -60,11 +79,10 @@ namespace LootingBots
                 false,
                 "Enables log messages to be printed"
             );
-            
-            Log log = new Log(Logger);
 
+            log = new Log(Logger);
             new CorpseLootSettingsPatch().Enable();
-            new LootCorpsePatch(log).Enable();
+            new LootCorpsePatch().Enable();
         }
     }
 }

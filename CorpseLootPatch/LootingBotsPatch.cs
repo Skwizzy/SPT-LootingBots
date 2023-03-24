@@ -42,9 +42,10 @@ namespace LootingBots.Patch
         private static ItemAppraiser itemAppraiser;
         private static Log log;
 
-        public LootCorpsePatch(Log logger)
+        public LootCorpsePatch()
         {
-            log = logger;
+            log = LootingBots.log;
+            itemAppraiser = LootingBots.itemAppraiser;
         }
 
         protected override MethodBase GetTargetMethod()
@@ -81,15 +82,9 @@ namespace LootingBots.Patch
             return true;
         }
 
-        public static async Task calculateGearValue()
+        public static void calculateGearValue()
         {
             log.logDebug("Calculating gear value...");
-
-            if (itemAppraiser == null)
-            {
-                itemAppraiser = new ItemAppraiser(log);
-            }
-
             Item primary = itemAdder.botInventoryController.Inventory.Equipment
                 .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
                 .ContainedItem;
@@ -102,17 +97,17 @@ namespace LootingBots.Patch
 
             if (primary != null && gearValue.primary.Id != primary.Id)
             {
-                float value = await itemAppraiser.getItemPrice(primary);
+                float value =  itemAppraiser.getItemPrice(primary);
                 gearValue.primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && gearValue.secondary.Id != secondary.Id)
             {
-                float value = await itemAppraiser.getItemPrice(secondary);
+                float value =  itemAppraiser.getItemPrice(secondary);
                 gearValue.secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && gearValue.holster.Id != holster.Id)
             {
-                float value = await itemAppraiser.getItemPrice(holster);
+                float value =  itemAppraiser.getItemPrice(holster);
                 gearValue.holster = new ValuePair(holster.Id, value);
             }
         }
@@ -125,7 +120,7 @@ namespace LootingBots.Patch
                 $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
             );
 
-            await calculateGearValue();
+            calculateGearValue();
 
             Item[] priorityItems = itemAdder.corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(
@@ -259,7 +254,7 @@ namespace LootingBots.Patch
                     {
                         log.logDebug($"Loot found: {item.Name.Localized()}");
                         // Check to see if we need to swap gear
-                        TransactionController.EquipAction action = await getEquipAction(item);
+                        TransactionController.EquipAction action = getEquipAction(item);
                         if (action.swap != null)
                         {
                             await transactionController.throwAndEquip(action.swap);
@@ -302,7 +297,7 @@ namespace LootingBots.Patch
             * Gear is checked in a specific order so that bots will try to swap gear that is a "container" first like backpacks and tacVests to make sure
             * they arent putting loot in an item they will ultimately decide to drop
             */
-            public async Task<TransactionController.EquipAction> getEquipAction(Item lootItem)
+            public TransactionController.EquipAction getEquipAction(Item lootItem)
             {
                 // TODO: Try to combine this into one call to get all 4 slots
                 Item helmet = botInventoryController.Inventory.Equipment
@@ -324,7 +319,7 @@ namespace LootingBots.Patch
 
                 if (lootItem is Weapon)
                 {
-                    return await getWeaponEquipAction(lootItem as Weapon);
+                    return getWeaponEquipAction(lootItem as Weapon);
                 }
 
                 if (backpack?.Parent?.Container.ID == lootID && shouldSwapGear(backpack, lootItem))
@@ -368,7 +363,7 @@ namespace LootingBots.Patch
                 return action;
             }
 
-            public async Task<TransactionController.EquipAction> getWeaponEquipAction(
+            public TransactionController.EquipAction getWeaponEquipAction(
                 Weapon lootWeapon
             )
             {
@@ -385,7 +380,7 @@ namespace LootingBots.Patch
                 TransactionController.EquipAction action = new TransactionController.EquipAction();
                 bool isPistol = lootWeapon.WeapClass.Equals("pistol");
 
-                float lootValue = await itemAppraiser.getItemPrice(lootWeapon);
+                float lootValue = itemAppraiser.getItemPrice(lootWeapon);
 
                 if (isPistol && holster != null && gearValue.holster.value < lootValue)
                 {
