@@ -16,7 +16,7 @@ namespace LootingBots
         private const String MOD_NAME = "LootingBots";
         private const String MOD_VERSION = "1.0.1";
 
-        public static ConfigEntry<bool> enableLogging;
+        public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
 
         public static ConfigEntry<bool> pmcLootingEnabled;
         public static ConfigEntry<float> bodySeeDist;
@@ -24,6 +24,7 @@ namespace LootingBots
         public static ConfigEntry<float> bodyLookPeriod;
         public static ConfigEntry<bool> useMarketPrices;
         public static ConfigEntry<bool> valueFromMods;
+        public static ConfigEntry<BotType> lootingEnabledBots;
         public static Log log;
         public static ItemAppraiser itemAppraiser = new ItemAppraiser();
 
@@ -47,48 +48,76 @@ namespace LootingBots
 
         public void Awake()
         {
-            pmcLootingEnabled = Config.Bind(
+            lootingEnabledBots = Config.Bind(
                 "Corpse Looting",
-                "PMCs can loot",
-                true,
-                "Allows PMC bots to loot corpses"
+                "Enable looting",
+                BotType.All,
+                new ConfigDescription(
+                    "Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 10 }
+                )
             );
             bodySeeDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to see body",
                 25f,
-                "If the bot is with X meters, it can see the body"
+                new ConfigDescription(
+                    "If the bot is with X meters, it can see the body",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }
+                )
             );
             bodyLeaveDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to forget body",
                 50f,
-                "If the bot is further than X meters, it will forget about the body"
+                new ConfigDescription(
+                    "If the bot is further than X meters, it will forget about the body",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
             );
             bodyLookPeriod = Config.Bind(
                 "Corpse Looting",
                 "Looting time (*)",
                 8.0f,
-                "Time bot stands at corpse looting. *WARNING: Shorter times may display strange behavior"
+                new ConfigDescription(
+                    "Time bot stands at corpse looting. *WARNING: Shorter times may display strange behavior",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
             );
-            enableLogging = Config.Bind(
+            enabledLogLevels = Config.Bind<LogUtils.LogLevel>(
                 "Corpse Looting",
-                "Enable Debug",
-                false,
-                "Enables log messages to be printed"
+                "Log Levels",
+                LogUtils.LogLevel.Error,
+                new ConfigDescription(
+                    "Enable different levels of log messages to show in the logs",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
             );
 
             useMarketPrices = Config.Bind(
                 "Weapon Looting",
                 "Use flea market prices",
                 false,
-                "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times."
+                new ConfigDescription(
+                    "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
             );
             valueFromMods = Config.Bind(
                 "Weapon Looting",
                 "Calculate value from attachments",
                 true,
-                "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues"
+                new ConfigDescription(
+                    "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 0 }
+                )
             );
 
             log = new Log(Logger);

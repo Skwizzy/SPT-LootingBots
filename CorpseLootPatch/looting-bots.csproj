@@ -78,6 +78,7 @@
     <Compile Include="LootingBotsController.cs" />
     <Compile Include="LootingBotsPatch.cs" />
     <Compile Include="CorpseLootSettingsPatch.cs" />
+    <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
   </ItemGroup>
 
