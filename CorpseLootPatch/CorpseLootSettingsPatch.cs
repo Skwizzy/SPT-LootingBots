@@ -30,7 +30,7 @@ namespace LootingBots.Patch
                 WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
                 WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
 
-                bool isPMC = ___wildSpawnType_0 == bear || ___wildSpawnType_0 == usec || ___wildSpawnType_0 == WildSpawnType.pmcBot;
+                bool isPMC = ___wildSpawnType_0 == bear || ___wildSpawnType_0 == usec;
                 if ((isPMC) && enabledTypes.hasPmc())
                 {
                     enableLooting();
@@ -40,13 +40,11 @@ namespace LootingBots.Patch
                 switch (___wildSpawnType_0)
                 {
                     case WildSpawnType.assault:
-                    case WildSpawnType.cursedAssault:
                     case WildSpawnType.assaultGroup:
                     {
                         if (enabledTypes.hasScav())
                         {
                             enableLooting();
-                            Logger.LogInfo("Corpse looting enabled for scav");
                         }
                         break;
                     }
@@ -86,16 +84,20 @@ namespace LootingBots.Patch
                         break;
                     }
                     case WildSpawnType.exUsec:
+                    case WildSpawnType.pmcBot:
                     {
-                        if (enabledTypes.hasRaider()) {
+                        if (enabledTypes.hasRaider())
+                        {
                             enableLooting();
                         }
                         break;
                     }
                     case WildSpawnType.sectantPriest:
                     case WildSpawnType.sectantWarrior:
+                    case WildSpawnType.cursedAssault:
                     {
-                        if (enabledTypes.hasCultist()) {
+                        if (enabledTypes.hasCultist())
+                        {
                             enableLooting();
                         }
                         break;
