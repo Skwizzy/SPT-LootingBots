@@ -21,17 +21,22 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - Backpack will be swapped if backpack being looted has more slots
 - When looting larger rigs, bots will swap if currently equipped rig is of equal or lower armor class
 - When throwing old backpacks/tactical rigs, bots try to take all the loot from the container thrown
-- When looting weapons, bots will compare the item's value in roubles to the value of the weapons currently equipped. 
+- When looting weapons, bots will compare the item's Handbook(default) or Flea market price in rubles to the value of the weapons currently equipped. 
   - Looted weapons with higer value will replace an equipped weapon with the lowest value
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
-### Mod Settings (F12)
-- `Enable Debug` - Enables logging in the plugin, does not require restart
-- `PMCs can loot` - Enables config changes to allow looting behavior
+## Mod Settings (F12)
+- `Enable looting` - Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid. Defaults to `all`
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
-- `Looting time (warning)` - Time in seconds the bot will stand over a corpse. Changing lower than 8 seconds may result in issues
-    
+- `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
+- `Log Levels` - Enable different levels of log messages to show in the logs
+
+**Weapon Loot Settings**
+- `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
+- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues!
+
+
 ## Conflicts
 This mod may conflict with any client mod that attempts to alter the following bot settings: (bots may not exhibit base EFT looting behavior)
 ```

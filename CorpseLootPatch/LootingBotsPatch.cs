@@ -6,11 +6,6 @@ using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT;
-using EFT.UI.Ragfair;
-using EFT.SynchronizableObjects;
-using UnityEngine;
-using System.Collections;
-using Comfort.Common;
 
 namespace LootingBots.Patch
 {
@@ -44,7 +39,14 @@ namespace LootingBots.Patch
         private static ItemAdder itemAdder;
 
         private static GearValue gearValue = new GearValue();
+        private static ItemAppraiser itemAppraiser;
         private static Log log;
+
+        public LootCorpsePatch()
+        {
+            log = LootingBots.log;
+            itemAppraiser = LootingBots.itemAppraiser;
+        }
 
         protected override MethodBase GetTargetMethod()
         {
@@ -66,8 +68,7 @@ namespace LootingBots.Patch
             ref GClass263 ___gclass263_0
         )
         {
-            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, Logger);
-            log = new Log(Logger);
+            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, log);
 
             try
             {
@@ -81,7 +82,7 @@ namespace LootingBots.Patch
             return true;
         }
 
-        public static async Task calculateGearValue()
+        public static void calculateGearValue()
         {
             log.logDebug("Calculating gear value...");
             Item primary = itemAdder.botInventoryController.Inventory.Equipment
@@ -96,28 +97,30 @@ namespace LootingBots.Patch
 
             if (primary != null && gearValue.primary.Id != primary.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(primary);
-                gearValue.primary = new ValuePair(primary.Id, value.avg);
+                float value =  itemAppraiser.getItemPrice(primary);
+                gearValue.primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && gearValue.secondary.Id != secondary.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(secondary);
-                gearValue.secondary = new ValuePair(secondary.Id, value.avg);
+                float value =  itemAppraiser.getItemPrice(secondary);
+                gearValue.secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && gearValue.holster.Id != holster.Id)
             {
-                ItemMarketPrices value = await itemAdder.getItemMarketPrice(holster);
-                gearValue.holster = new ValuePair(holster.Id, value.avg);
+                float value =  itemAppraiser.getItemPrice(holster);
+                gearValue.holster = new ValuePair(holster.Id, value);
             }
         }
 
         public static async void lootCorpse()
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             log.logWarning(
-                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
+                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({itemAdder.corpse.Profile?.Info?.Settings?.Role}) {itemAdder.corpse.Profile?.Info.Nickname}"
             );
 
-            await calculateGearValue();
+            calculateGearValue();
 
             Item[] priorityItems = itemAdder.corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(
@@ -145,6 +148,9 @@ namespace LootingBots.Patch
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
             log.logDebug("Changing to main wep");
             itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
+
+            watch.Stop();
+            log.logDebug($"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}");
         }
 
         public class GearValue
@@ -178,15 +184,11 @@ namespace LootingBots.Patch
             // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
             public int currentBodyArmorClass = 0;
 
-            public ItemAdder(
-                BotOwner botOwner_0,
-                GClass263 ___gclass263_0,
-                BepInEx.Logging.ManualLogSource Logger
-            )
+            public ItemAdder(BotOwner botOwner_0, GClass263 ___gclass263_0, Log log)
             {
                 try
                 {
-                    this.log = new Log(Logger);
+                    this.log = log;
 
                     // Initialize bot inventory controller
                     Type botOwnerType = botOwner_0.GetPlayer.GetType();
@@ -202,8 +204,9 @@ namespace LootingBots.Patch
                     this.botInventoryController = (InventoryControllerClass)
                         botInventory.GetValue(botOwner_0.GetPlayer);
                     this.transactionController = new TransactionController(
+                        this.botOwner_0,
                         this.botInventoryController,
-                        Logger
+                        this.log
                     );
 
                     // Initialize corpse inventory controller
@@ -249,9 +252,9 @@ namespace LootingBots.Patch
                 {
                     if (item != null && item.Name != null)
                     {
-                        log.logDebug($"Loot found on corpse: {item.Name.Localized()}");
+                        log.logDebug($"Loot found: {item.Name.Localized()}");
                         // Check to see if we need to swap gear
-                        TransactionController.EquipAction action = await getEquipAction(item);
+                        TransactionController.EquipAction action = getEquipAction(item);
                         if (action.swap != null)
                         {
                             await transactionController.throwAndEquip(action.swap);
@@ -264,41 +267,19 @@ namespace LootingBots.Patch
                         }
 
                         // Check to see if we can equip the item
-                        GClass2419 ableToEquip = botInventoryController.FindSlotToPickUp(item);
-                        if (ableToEquip != null)
+                        bool ableToEquip = await transactionController.tryEquipItem(item);
+
+                        if (ableToEquip)
                         {
-                            log.logWarning(
-                                $"{botOwner_0.Profile.Info.Settings.Role} is equipping: {item.Name.Localized()}"
-                            );
-                            await transactionController.moveItem(
-                                new TransactionController.MoveAction(item, ableToEquip)
-                            );
                             continue;
-                        }
-                        else
-                        {
-                            log.logDebug($"Cannot equip: {item.Name.Localized()}");
                         }
 
                         // Check to see if we can pick up the item
-                        GClass2421 ableToPickUp = botInventoryController.FindGridToPickUp(
-                            item,
-                            botInventoryController
-                        );
+                        bool ableToPickUp = await transactionController.tryPickupItem(item);
 
-                        if (ableToPickUp != null)
+                        if (ableToPickUp)
                         {
-                            log.logWarning(
-                                $"{botOwner_0.Profile.Info.Settings.Role} is picking up: {item.Name.Localized()}"
-                            );
-                            await transactionController.moveItem(
-                                new TransactionController.MoveAction(item, ableToPickUp)
-                            );
                             continue;
-                        }
-                        else
-                        {
-                            log.logDebug($"No valid slot found for: {item.Name.Localized()}");
                         }
 
                         // If we cant pick up the item and it has nested slots, loot the items from the container
@@ -316,7 +297,7 @@ namespace LootingBots.Patch
             * Gear is checked in a specific order so that bots will try to swap gear that is a "container" first like backpacks and tacVests to make sure
             * they arent putting loot in an item they will ultimately decide to drop
             */
-            public async Task<TransactionController.EquipAction> getEquipAction(Item lootItem)
+            public TransactionController.EquipAction getEquipAction(Item lootItem)
             {
                 // TODO: Try to combine this into one call to get all 4 slots
                 Item helmet = botInventoryController.Inventory.Equipment
@@ -338,7 +319,7 @@ namespace LootingBots.Patch
 
                 if (lootItem is Weapon)
                 {
-                    return await getWeaponEquipAction(lootItem as Weapon);
+                    return getWeaponEquipAction(lootItem as Weapon);
                 }
 
                 if (backpack?.Parent?.Container.ID == lootID && shouldSwapGear(backpack, lootItem))
@@ -382,7 +363,7 @@ namespace LootingBots.Patch
                 return action;
             }
 
-            public async Task<TransactionController.EquipAction> getWeaponEquipAction(
+            public TransactionController.EquipAction getWeaponEquipAction(
                 Weapon lootWeapon
             )
             {
@@ -399,9 +380,9 @@ namespace LootingBots.Patch
                 TransactionController.EquipAction action = new TransactionController.EquipAction();
                 bool isPistol = lootWeapon.WeapClass.Equals("pistol");
 
-                ItemMarketPrices lootValue = await getItemMarketPrice(lootWeapon);
+                float lootValue = itemAppraiser.getItemPrice(lootWeapon);
 
-                if (isPistol && holster != null && gearValue.holster.value < lootValue.avg)
+                if (isPistol && holster != null && gearValue.holster.value < lootValue)
                 {
                     log.logDebug(
                         $"Trying to swap {holster.Name.Localized()} with {lootWeapon.Name.Localized()}"
@@ -412,7 +393,7 @@ namespace LootingBots.Patch
                 {
                     // If we have a primary that is worth less than the looted weapon, move the primary to the secondary slot and equp the looted weapon.
                     // Otherwise just swap the primary wepon with the looted weapon
-                    if (gearValue.primary.value < lootValue.avg)
+                    if (gearValue.primary.value < lootValue)
                     {
                         if (secondary == null)
                         {
@@ -425,7 +406,7 @@ namespace LootingBots.Patch
                                 {
                                     // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
                                     await Task.Delay(1000);
-                                    await tryAddItemsToBot(new Item[] { lootWeapon });
+                                    await transactionController.tryEquipItem(lootWeapon);
                                 }
                             );
                             log.logDebug(
@@ -441,7 +422,7 @@ namespace LootingBots.Patch
                         }
                     }
                     // If the secondary is worth less than the looted weapon, swap the secondary
-                    else if (secondary != null && gearValue.secondary.value < lootValue.avg)
+                    else if (secondary != null && gearValue.secondary.value < lootValue)
                     {
                         log.logDebug(
                             $"Trying to swap {secondary.Name.Localized()} with {lootWeapon.Name.Localized()}"
@@ -544,15 +525,20 @@ namespace LootingBots.Patch
                 Item[] nestedItems = parentItem.GetAllItems().ToArray();
                 if (nestedItems.Length > 1)
                 {
-                    log.logDebug(
-                        $"looting nested {nestedItems.Length} items from {parentItem.Name.Localized()}"
-                    );
+                    // Filter out the parent item from the list, filter out any items that are children of another container like a magazine, backpack, rig
                     Item[] containerItems = nestedItems
-                        .Where(nestedItem => nestedItem.Id != parentItem.Id)
+                        .Where(
+                            nestedItem =>
+                                nestedItem.Id != parentItem.Id
+                                && nestedItem.Id == nestedItem.GetRootItem().Id
+                        )
                         .ToArray();
 
                     if (containerItems.Length > 0)
                     {
+                        log.logDebug(
+                            $"Looting {containerItems.Length} items from {parentItem.Name.Localized()}"
+                        );
                         await tryAddItemsToBot(containerItems);
                     }
                 }
@@ -585,37 +571,10 @@ namespace LootingBots.Patch
                         : async () =>
                         {
                             // Try to equip the item after throwing
-                            await tryAddItemsToBot(new Item[1] { toEquip });
+                            await transactionController.tryEquipItem(toEquip);
                         },
                     onSwapComplete
                 );
-            }
-
-            public Task<ItemMarketPrices> getItemMarketPrice(Item lootItem)
-            {
-                log.logDebug($"Attempting to get price of: {lootItem.Name.Localized()}");
-                TaskCompletionSource<ItemMarketPrices> promise =
-                    new TaskCompletionSource<ItemMarketPrices>();
-
-                Task.Factory.StartNew(
-                    () =>
-                        Singleton<ClientApplication<ISession>>.Instance
-                            .GetClientBackEndSession()
-                            .GetMarketPrices(
-                                lootItem.TemplateId,
-                                new Callback<ItemMarketPrices>(
-                                    (Result<ItemMarketPrices> result) =>
-                                    {
-                                        log.logDebug(
-                                            $"Price of {lootItem.Name.Localized()}: {result.Value?.avg}"
-                                        );
-                                        promise.TrySetResult(result.Value);
-                                    }
-                                )
-                            )
-                );
-
-                return promise.Task;
             }
         }
     }
