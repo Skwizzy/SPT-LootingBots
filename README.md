@@ -23,11 +23,11 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
 ## Mod Settings (F12)
-- `Enable Debug` - Enables logging in the plugin, does not require restart
-- `PMCs can loot` - Enables config changes to allow looting behavior
+- `Enable looting` - Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid. Defaults to `all`
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
 - `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
+- `Log Levels` - Enable different levels of log messages to show in the logs
 
 **Weapon Loot Settings**
 - `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
