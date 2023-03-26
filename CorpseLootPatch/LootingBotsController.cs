@@ -121,6 +121,7 @@ namespace LootingBots
             );
 
             log = new Log(Logger);
+            new LootContainerPatch().Enable();
             new CorpseLootSettingsPatch().Enable();
             new LootCorpsePatch().Enable();
         }
