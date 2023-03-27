@@ -18,7 +18,7 @@ namespace LootingBots
 
         public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
 
-        public static ConfigEntry<bool> pmcLootingEnabled;
+        public static ConfigEntry<bool> containerLootingEnabled;
         public static ConfigEntry<float> bodySeeDist;
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
@@ -48,6 +48,16 @@ namespace LootingBots
 
         public void Awake()
         {
+            containerLootingEnabled = Config.Bind(
+                "Container Looting",
+                "Enable",
+                true,
+                new ConfigDescription(
+                    "Enabled looting of containers for bots on patrols that stop in front of lootable containers",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 0 }
+                )
+            );
             lootingEnabledBots = Config.Bind(
                 "Corpse Looting",
                 "Enable looting",
