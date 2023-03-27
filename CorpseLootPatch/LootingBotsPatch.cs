@@ -36,71 +36,116 @@ namespace LootingBots.Patch
         }
     }
 
+    // public class LootContainerPatch1 : ModulePatch
+    // {
+    //     private static ItemAdder itemAdder;
+
+    //     protected override MethodBase GetTargetMethod()
+    //     {
+    //         return typeof(BotOwner).GetMethod(
+    //             "PreActivate",
+    //             BindingFlags.Public | BindingFlags.Instance
+    //         );
+    //     }
+
+    //     [PatchPostfix]
+    //     private static void PatchPostfix(
+    //         ref BotOwner __instance,
+    //         BotZone zone,
+    //         GameTimeClass time,
+    //         BotGroupClass group,
+    //         bool autoActivate = true
+    //     )
+    //     {
+    //         itemAdder = new ItemAdder(__instance);
+    //         __instance.PatrollingData.OnPatrolPointCome += onPatrolPointCome;
+    //     }
+
+    //     public static async void onPatrolPointCome(GClass495 obj)
+    //     {
+    //         if (obj.TargetPoint.name.Contains("loot"))
+    //         {
+    //             Logger.LogDebug("Method 1");
+    //             Logger.LogDebug($"{obj.TargetPoint}");
+    //             Logger.LogDebug($"{obj.TargetPoint.position}");
+    //             Collider[] array = Physics.OverlapSphere(
+    //                 obj.TargetPoint.position,
+    //                 1f,
+    //                 LayerMask.GetMask(
+    //                     new string[]
+    //                     {
+    //                         "Interactive",
+    //                         // "Deadbody",
+    //                         "Loot"
+    //                     }
+    //                 ),
+    //                 QueryTriggerInteraction.Collide
+    //             );
+
+    //             foreach (Collider collider in array)
+    //             {
+    //                 LootableContainer containerObj =
+    //                     collider.gameObject.GetComponentInParent<LootableContainer>();
+    //                 if (containerObj)
+    //                 {
+    //                     Item container = containerObj.ItemOwner.Items.ToArray()[0];
+
+    //                     if (container != null)
+    //                     {
+    //                         Logger.LogWarning($"Found container: {container.Name.Localized()}");
+    //                         Logger.LogDebug(containerObj.ItemOwner.Items.ToArray().Length);
+
+    //                         await itemAdder.tryAddItemsToBot(
+    //                             container
+    //                                 .GetAllItems()
+    //                                 .Where(item => !item.IsUnremovable && item.Id != container.Id)
+    //                                 .ToArray()
+    //                         );
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
     public class LootContainerPatch : ModulePatch
     {
         private static ItemAdder itemAdder;
+        private static BotOwner botOwner;
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(BotOwner).GetMethod(
-                "PreActivate",
+            return typeof(SitReservWay).GetMethod(
+                "ComeTo",
                 BindingFlags.Public | BindingFlags.Instance
             );
         }
 
         [PatchPostfix]
         private static void PatchPostfix(
-            ref BotOwner __instance,
-            BotZone zone,
-            GameTimeClass time,
-            BotGroupClass group,
-            bool autoActivate = true
+            BotOwner bot,
+            ref bool ___ShallLoot,
+            ref LootableContainer ___lootableContainer_0,
+            ref bool ___bool_2
         )
         {
-            itemAdder = new ItemAdder(__instance);
-            __instance.PatrollingData.OnPatrolPointCome += onPatrolPointCome;
+            if (___ShallLoot && ___bool_2)
+            {
+                botOwner = bot;
+                itemAdder = new ItemAdder(bot);
+                getContainerAtPoint(___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
+            }
         }
 
-        public static async void onPatrolPointCome(GClass495 obj)
+        public static async void getContainerAtPoint(Item container)
         {
-            if (obj.TargetPoint.name.Contains("loot"))
+            if (container != null)
             {
-                Collider[] array = Physics.OverlapSphere(
-                    obj.TargetPoint.position,
-                    1f,
-                    LayerMask.GetMask(
-                        new string[]
-                        {
-                            "Interactive",
-                            // "Deadbody",
-                            "Loot"
-                        }
-                    ),
-                    QueryTriggerInteraction.Collide
+                Logger.LogWarning(
+                    $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
                 );
 
-                foreach (Collider collider in array)
-                {
-                    LootableContainer containerObj =
-                        collider.gameObject.GetComponentInParent<LootableContainer>();
-                    if (containerObj)
-                    {
-                        Item container = containerObj.ItemOwner.Items.ToArray()[0];
-
-                        if (container != null)
-                        {
-                            Logger.LogWarning($"Found container: {container.Name.Localized()}");
-                            Logger.LogDebug(containerObj.ItemOwner.Items.ToArray().Length);
-
-                            await itemAdder.tryAddItemsToBot(
-                                container
-                                    .GetAllItems()
-                                    .Where(item => !item.IsUnremovable && item.Id != container.Id)
-                                    .ToArray()
-                            );
-                        }
-                    }
-                }
+                await itemAdder.lootNestedItems(container);
             }
         }
     }

@@ -283,9 +283,6 @@ namespace LootingBots.Patch.Util
                                 await transactionController.tryEquipItem(lootWeapon);
                             }
                         );
-                        log.logDebug(
-                            $"Trying to move {primary.Name.Localized()} to secondary slot and equip {lootWeapon.Name.Localized()}"
-                        );
                     }
                     else
                     {
