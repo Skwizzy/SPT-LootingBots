@@ -358,10 +358,6 @@ namespace LootingBots.Patch
 
     public class LootContainerPatch1 : ModulePatch
     {
-        private static ItemAdder itemAdder;
-
-        private static bool checkPoint;
-
         protected override MethodBase GetTargetMethod()
         {
             return typeof(GClass325).GetMethod(
