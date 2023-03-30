@@ -409,6 +409,8 @@ namespace LootingBots.Patch.Util
                     );
                     await tryAddItemsToBot(containerItems);
                 }
+            } else {
+                log.logDebug($"No nested items found in {parentItem.Name}");
             }
         }
 

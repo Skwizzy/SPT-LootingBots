@@ -73,6 +73,8 @@
       <HintPath>..\..\..\3.5.3\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.5.3\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
+    <Reference Include="UnityEngine.AIModule" HintPath="..\Shared\Managed\UnityEngine.AIModule.dll" Private="False" />
+
 
   </ItemGroup>
   
@@ -83,6 +85,7 @@
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
     <Compile Include="components\*.cs" />
+    <Compile Include="patch\*.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

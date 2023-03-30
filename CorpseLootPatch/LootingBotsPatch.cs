@@ -2,13 +2,10 @@ using Aki.Reflection.Patching;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT.Interactive;
 using EFT;
-using Comfort.Common;
-using UnityEngine;
 
 namespace LootingBots.Patch
 {
@@ -36,78 +33,6 @@ namespace LootingBots.Patch
         }
     }
 
-    // public class LootContainerPatch1 : ModulePatch
-    // {
-    //     private static ItemAdder itemAdder;
-
-    //     protected override MethodBase GetTargetMethod()
-    //     {
-    //         return typeof(BotOwner).GetMethod(
-    //             "PreActivate",
-    //             BindingFlags.Public | BindingFlags.Instance
-    //         );
-    //     }
-
-    //     [PatchPostfix]
-    //     private static void PatchPostfix(
-    //         ref BotOwner __instance,
-    //         BotZone zone,
-    //         GameTimeClass time,
-    //         BotGroupClass group,
-    //         bool autoActivate = true
-    //     )
-    //     {
-    //         itemAdder = new ItemAdder(__instance);
-    //         __instance.PatrollingData.OnPatrolPointCome += onPatrolPointCome;
-    //     }
-
-    //     public static async void onPatrolPointCome(GClass495 obj)
-    //     {
-    //         if (obj.TargetPoint.name.Contains("loot"))
-    //         {
-    //             Logger.LogDebug("Method 1");
-    //             Logger.LogDebug($"{obj.TargetPoint}");
-    //             Logger.LogDebug($"{obj.TargetPoint.position}");
-    //             Collider[] array = Physics.OverlapSphere(
-    //                 obj.TargetPoint.position,
-    //                 1f,
-    //                 LayerMask.GetMask(
-    //                     new string[]
-    //                     {
-    //                         "Interactive",
-    //                         // "Deadbody",
-    //                         "Loot"
-    //                     }
-    //                 ),
-    //                 QueryTriggerInteraction.Collide
-    //             );
-
-    //             foreach (Collider collider in array)
-    //             {
-    //                 LootableContainer containerObj =
-    //                     collider.gameObject.GetComponentInParent<LootableContainer>();
-    //                 if (containerObj)
-    //                 {
-    //                     Item container = containerObj.ItemOwner.Items.ToArray()[0];
-
-    //                     if (container != null)
-    //                     {
-    //                         Logger.LogWarning($"Found container: {container.Name.Localized()}");
-    //                         Logger.LogDebug(containerObj.ItemOwner.Items.ToArray().Length);
-
-    //                         await itemAdder.tryAddItemsToBot(
-    //                             container
-    //                                 .GetAllItems()
-    //                                 .Where(item => !item.IsUnremovable && item.Id != container.Id)
-    //                                 .ToArray()
-    //                         );
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     public class LootContainerPatch : ModulePatch
     {
         private static ItemAdder itemAdder;
@@ -133,6 +58,7 @@ namespace LootingBots.Patch
             {
                 botOwner = bot;
                 itemAdder = new ItemAdder(bot);
+                LootingBots.log.logWarning($"{___lootableContainer_0.name}");
                 lootContainer(___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
             }
         }
@@ -141,7 +67,7 @@ namespace LootingBots.Patch
         {
             if (container != null)
             {
-                Logger.LogWarning(
+                LootingBots.log.logWarning(
                     $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
                 );
 
@@ -150,137 +76,8 @@ namespace LootingBots.Patch
         }
     }
 
-    // public class LootContainerPatch1 : ModulePatch
-    // {
-    //     private static ItemAdder itemAdder;
-    //     private static BotOwner botOwner;
-
-    //     private static bool checkPoint;
-
-    //     protected override MethodBase GetTargetMethod()
-    //     {
-    //         return typeof(GClass452).GetMethod(
-    //             "RefreshClosestItems",
-    //             BindingFlags.Public | BindingFlags.Instance
-    //         );
-    //     }
-
-    //     [PatchPrefix]
-    //     private static void PatchPrefix(ref BotOwner ___botOwner_0, ref float ___float_6)
-    //     {
-    //         if (___float_6 < Time.time)
-    //         {
-    //             Collider[] array = Physics.OverlapSphere(
-    //                 ___botOwner_0.Position,
-    //                 25f,
-    //                 LayerMask.GetMask(
-    //                     new string[]
-    //                     {
-    //                         "Interactive",
-    //                         // "Deadbody",
-    //                         // "Loot"
-    //                     }
-    //                 ),
-    //                 QueryTriggerInteraction.Collide
-    //             );
-
-    //             foreach (Collider collider in array)
-    //         {
-    //             LootableContainer containerObj =
-    //                 collider.gameObject.GetComponentInParent<LootableContainer>();
-    //             if (containerObj)
-    //             {
-    //                 Item container = containerObj.ItemOwner.Items.ToArray()[0];
-
-    //                 if (container != null)
-    //                 {
-    //                     Logger.LogWarning(
-    //                         $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
-    //                     );
-    //                     Logger.LogDebug(containerObj.ItemOwner.Items.ToArray().Length);
-    //                 }
-    //             }
-    //         }
-    //         }
-    //     }
-
-    //     [PatchPostfix]
-    //     private static void PatchPostfix(
-    //         ref GClass428 ___gclass428_0,
-    //         ref BotOwner ___botOwner_0,
-    //         ref float ___float_0
-    //     )
-    //     {
-    //         // if (___gclass428_0.Status != PatrolStatus.stay)
-    //         // {
-    //         //     return;
-    //         // }
-
-    //         if (checkPoint)
-    //         {
-    //             botOwner = ___botOwner_0;
-    //             checkPoint = false;
-    //             itemAdder = new ItemAdder(___botOwner_0);
-    //             Logger.LogDebug($"{___gclass428_0.CurPatrolPoint.TargetPoint.gameObject.name}");
-    //             Logger.LogDebug($"{___gclass428_0.CurPatrolPoint.TargetPoint.position}");
-    //             Logger.LogDebug($"{___gclass428_0.CurTargetPoint}");
-    //             Logger.LogDebug(
-    //                 $"{___gclass428_0.CurPatrolPoint.TargetPoint.GetComponentInParent<LootPoint>()}"
-    //             );
-    //             Logger.LogDebug(
-    //                 $"{___gclass428_0.CurPatrolPoint.TargetPoint.gameObject.GetComponentInParent<LootableContainer>()}"
-    //             );
-
-    //             // if (!___gclass428_0.CurPatrolPoint.TargetPoint.name.Contains("GameObject"))
-    //             // {
-    //             getContainerAtPoint(___gclass428_0.CurPatrolPoint.TargetPoint.position);
-    //             // }
-    //         }
-    //     }
-
-    //     public static async void getContainerAtPoint(Vector3 obj)
-    //     {
-    //         Collider[] array = Physics.OverlapSphere(
-    //             obj,
-    //             1f,
-    //             LayerMask.GetMask(
-    //                 new string[]
-    //                 {
-    //                     "Interactive",
-    //                     // "Deadbody",
-    //                     "Loot"
-    //                 }
-    //             ),
-    //             QueryTriggerInteraction.Collide
-    //         );
-
-    //         Logger.LogDebug("Collider generated");
-
-    //         foreach (Collider collider in array)
-    //         {
-    //             LootableContainer containerObj =
-    //                 collider.gameObject.GetComponentInParent<LootableContainer>();
-    //             if (containerObj)
-    //             {
-    //                 Item container = containerObj.ItemOwner.Items.ToArray()[0];
-
-    //                 if (container != null)
-    //                 {
-    //                     Logger.LogWarning(
-    //                         $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
-    //                     );
-    //                     Logger.LogDebug(containerObj.ItemOwner.Items.ToArray().Length);
-
-    //                     await itemAdder.lootNestedItems(container);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
     public class LootCorpsePatch : ModulePatch
     {
-        private static MethodInfo _method_7;
         private static ItemAdder itemAdder;
 
         private static ItemAppraiser itemAppraiser;
@@ -294,11 +91,6 @@ namespace LootingBots.Patch
 
         protected override MethodBase GetTargetMethod()
         {
-            _method_7 = typeof(GClass325).GetMethod(
-                "method_7",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            );
-
             return typeof(GClass325).GetMethod(
                 "method_6",
                 BindingFlags.NonPublic | BindingFlags.Instance
