@@ -67,7 +67,7 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 - [ ] Stronger checks for when to equip a new primary weapon
 - [ ] Weapon attachement stripping
 - [ ] Enhance base logic for adding corpses to loot pool
-- [ ] Apply same looting logic to patrol patterns where scavs stop in front of lootable containers
+- [x] Apply same looting logic to patrol patterns where scavs stop in front of lootable containers
 - [ ] Loose loot detection
 - [ ] Container nesting
 - [ ] Customizable params in mod settings
