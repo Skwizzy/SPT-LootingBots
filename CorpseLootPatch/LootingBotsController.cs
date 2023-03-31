@@ -37,7 +37,7 @@ namespace LootingBots
             // Initialize the itemAppraiser when the BE instance comes online
             if (
                 Singleton<ClientApplication<ISession>>.Instance != null
-                && Singleton<GClass2529>.Instance != null
+                && Singleton<GClass2520>.Instance != null
                 && shoultInitAppraiser
             )
             {

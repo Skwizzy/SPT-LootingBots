@@ -35,7 +35,6 @@ namespace LootingBots.Patch
 
     public class LootCorpsePatch : ModulePatch
     {
-        private static MethodInfo _method_7;
         private static ItemAdder itemAdder;
 
         private static GearValue gearValue = new GearValue();
@@ -48,27 +47,19 @@ namespace LootingBots.Patch
             itemAppraiser = LootingBots.itemAppraiser;
         }
 
+        // BotOwner.DeadBodyWork
         protected override MethodBase GetTargetMethod()
         {
-            _method_7 = typeof(GClass325).GetMethod(
-                "method_7",
-                BindingFlags.NonPublic | BindingFlags.Instance
-            );
-
-            return typeof(GClass325).GetMethod(
+            return typeof(GClass322).GetMethod(
                 "method_6",
                 BindingFlags.NonPublic | BindingFlags.Instance
             );
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(
-            ref GClass325 __instance,
-            ref BotOwner ___botOwner_0,
-            ref GClass263 ___gclass263_0
-        )
+        private static bool PatchPrefix(ref BotOwner ___botOwner_0, ref GClass260 ___gclass260_0)
         {
-            itemAdder = new ItemAdder(___botOwner_0, ___gclass263_0, log);
+            itemAdder = new ItemAdder(___botOwner_0, ___gclass260_0, log);
 
             try
             {
@@ -97,17 +88,17 @@ namespace LootingBots.Patch
 
             if (primary != null && gearValue.primary.Id != primary.Id)
             {
-                float value =  itemAppraiser.getItemPrice(primary);
+                float value = itemAppraiser.getItemPrice(primary);
                 gearValue.primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && gearValue.secondary.Id != secondary.Id)
             {
-                float value =  itemAppraiser.getItemPrice(secondary);
+                float value = itemAppraiser.getItemPrice(secondary);
                 gearValue.secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && gearValue.holster.Id != holster.Id)
             {
-                float value =  itemAppraiser.getItemPrice(holster);
+                float value = itemAppraiser.getItemPrice(holster);
                 gearValue.holster = new ValuePair(holster.Id, value);
             }
         }
@@ -150,7 +141,9 @@ namespace LootingBots.Patch
             itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
 
             watch.Stop();
-            log.logDebug($"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}");
+            log.logDebug(
+                $"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}"
+            );
         }
 
         public class GearValue
@@ -184,7 +177,7 @@ namespace LootingBots.Patch
             // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
             public int currentBodyArmorClass = 0;
 
-            public ItemAdder(BotOwner botOwner_0, GClass263 ___gclass263_0, Log log)
+            public ItemAdder(BotOwner botOwner_0, GClass260 ___gclass260_0, Log log)
             {
                 try
                 {
@@ -210,7 +203,7 @@ namespace LootingBots.Patch
                     );
 
                     // Initialize corpse inventory controller
-                    Player corpse = ___gclass263_0.Player;
+                    Player corpse = ___gclass260_0.Player;
                     Type corpseType = corpse.GetType();
                     FieldInfo corpseInventory = corpseType.BaseType.GetField(
                         "_inventoryController",
@@ -363,9 +356,7 @@ namespace LootingBots.Patch
                 return action;
             }
 
-            public TransactionController.EquipAction getWeaponEquipAction(
-                Weapon lootWeapon
-            )
+            public TransactionController.EquipAction getWeaponEquipAction(Weapon lootWeapon)
             {
                 Item primary = botInventoryController.Inventory.Equipment
                     .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
@@ -471,10 +462,10 @@ namespace LootingBots.Patch
             /** Calculate the size of a container */
             public int getContainerSize(SearchableItemClass container)
             {
-                GClass2163[] grids = container.Grids;
+                var grids = container.Grids;
                 int gridSize = 0;
 
-                foreach (GClass2163 grid in grids)
+                foreach (var grid in grids)
                 {
                     gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
                 }
