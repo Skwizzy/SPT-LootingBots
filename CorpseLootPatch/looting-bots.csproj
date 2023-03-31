@@ -80,12 +80,10 @@
   
   <ItemGroup>
     <Compile Include="LootingBotsController.cs" />
-    <Compile Include="LootingBotsPatch.cs" />
-    <Compile Include="CorpseLootSettingsPatch.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
     <Compile Include="components\*.cs" />
-    <Compile Include="patch\*.cs" />
+    <Compile Include="patches\*.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -97,8 +95,8 @@ ping -n  2 127.0.0.1 &gt;NUL
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>
-      copy "$(TargetPath)" "C:\Users\Defective Robot\Desktop\SPT\3.5.3\BepInEx\plugins\skwizzy.LootingBots.dll"
-      copy "$(TargetPath)" "C:\Users\Defective Robot\Desktop\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "M:\SPT\3.5.3\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "M:\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
     </PostBuildEvent>
   </PropertyGroup>
 </Project>

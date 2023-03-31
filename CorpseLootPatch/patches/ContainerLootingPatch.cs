@@ -12,14 +12,19 @@ using System.Collections.Generic;
 
 namespace LootingBots.Patch
 {
+    public class BotContainerData
+    {
+        public LootableContainer activeContainer;
+        public string[] visitedContainerIds = new string[] { };
+        public float waitAfterLooting = 0f;
+    }
+
     public static class LootMap
     {
-        public static Dictionary<int, LootableContainer> containerMap =
-            new Dictionary<int, LootableContainer>();
+        public static Dictionary<int, BotContainerData> containerDataMap =
+            new Dictionary<int, BotContainerData>();
 
-        public static Dictionary<int, string[]> visitedContainerMap =
-            new Dictionary<int, string[]>();
-
+        // Original function is method_4
         public static void cleanup(
             ref BotOwner ___botOwner_0,
             LootableContainer container,
@@ -33,22 +38,17 @@ namespace LootingBots.Patch
                     $"Removing container for bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()}"
                 );
 
-                string[] visited;
-                LootMap.visitedContainerMap.TryGetValue(___botOwner_0.Id, out visited);
+                BotContainerData botContainerData;
+                LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
 
-                if (visited != null)
-                {
-                    LootMap.visitedContainerMap[___botOwner_0.Id] = visited
-                        .Append(container.Id)
-                        .ToArray();
-                }
-                else
-                {
-                    visited = new string[] { container.Id };
-                    LootMap.visitedContainerMap.Add(___botOwner_0.Id, visited);
-                }
+                botContainerData.visitedContainerIds = botContainerData.visitedContainerIds
+                    .Append(container.Id)
+                    .ToArray();
 
-                LootMap.containerMap.Remove(___botOwner_0.Id);
+                botContainerData.activeContainer = null;
+
+                LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
+
                 ___bool_2 = false;
                 ___bool1 = false;
             }
@@ -65,9 +65,10 @@ namespace LootingBots.Patch
         {
             try
             {
-                new LootContainerPatch1().Enable();
-                new LootContainerPatch2().Enable();
-                new LootContainerPatch3().Enable();
+                new ReservePatrolContainerPatch().Enable();
+                new FindNearestContainerPatch().Enable();
+                new ContainerManualUpdatePatch().Enable();
+                new ContainerUpdateCheckPatch().Enable();
             }
             catch (Exception e)
             {
@@ -76,7 +77,7 @@ namespace LootingBots.Patch
         }
     }
 
-    public class LootContainerPatch3 : ModulePatch
+    public class ContainerUpdateCheckPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -96,14 +97,18 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            LootableContainer container;
-            LootMap.containerMap.TryGetValue(___botOwner_0.Id, out container);
+            BotContainerData botContainerData;
+            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
 
             // Check if we have looted an item and the wait timer has completed
             bool Boolean_0 = ___bool_1 && ___float_5 < Time.time;
 
             // If there is not an active container or there is a body saved, execute the original method
-            if (!container || ___gclass263_0 != null)
+            if (
+                !LootingBots.dynamicContainerLootingEnabled.Value
+                || !botContainerData?.activeContainer
+                || ___gclass263_0 != null
+            )
             {
                 return true;
             }
@@ -116,7 +121,7 @@ namespace LootingBots.Patch
                     ref ___botOwner_0,
                     ref ___bool_2,
                     ref ___bool_1,
-                    container
+                    botContainerData.activeContainer
                 );
                 return false;
             }
@@ -154,7 +159,7 @@ namespace LootingBots.Patch
         }
     }
 
-    public class LootContainerPatch2 : ModulePatch
+    public class ContainerManualUpdatePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -177,14 +182,20 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            LootableContainer container;
-            LootMap.containerMap.TryGetValue(___botOwner_0.Id, out container);
+            BotContainerData botContainerData;
+            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
 
             // If there is no active container or if there is a corpse, execute the original method
-            if (!container || ___gclass263_0 != null)
+            if (
+                !LootingBots.dynamicContainerLootingEnabled.Value
+                || !botContainerData?.activeContainer
+                || ___gclass263_0 != null
+            )
             {
                 return true;
             }
+
+            LootableContainer container = botContainerData.activeContainer;
 
             if (
                 isCloseEnough(
@@ -266,38 +277,22 @@ namespace LootingBots.Patch
                 Vector3 vector = GClass780.NormalizeFastSelf(position - botOwner_0.Position);
                 Vector3 position2 = position - vector;
 
-                NavMeshPath navMeshPath = new NavMeshPath();
-                bool hasPath = NavMesh.CalculatePath(
-                    botOwner_0.Position,
-                    position,
-                    -1,
-                    navMeshPath
+                NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
+                    position2,
+                    true,
+                    -1f,
+                    false,
+                    true,
+                    true
                 );
 
-                // Additional check on NavMeshPath before issuing GoToPoint
-                if (hasPath)
-                {
-                    NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
-                        position2,
-                        true,
-                        -1f,
-                        false,
-                        true,
-                        true
-                    );
+                Logger.LogInfo(
+                    $"Bot {botOwner_0.Profile?.Info.Nickname.TrimEnd()} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
+                );
 
-                    Logger.LogInfo(
-                        $"Bot {botOwner_0.Profile?.Info.Nickname.TrimEnd()} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
-                    );
-
-                    if (pathStatus == NavMeshPathStatus.PathInvalid || pathStatus == null)
-                    {
-                        cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
-                    }
-                }
-                else
+                if (pathStatus == NavMeshPathStatus.PathInvalid || pathStatus == null)
                 {
-                    cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
+                    LootMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
                 }
             }
         }
@@ -310,53 +305,17 @@ namespace LootingBots.Patch
 
             await itemAdder.lootNestedItems(item);
             ___botOwner_0.WeaponManager.Selector.TakeMainWeapon();
-        }
 
-        // Original function is method_4
-        public static void cleanup(
-            ref BotOwner ___botOwner_0,
-            LootableContainer container,
-            ref bool ___bool_2,
-            ref bool ___bool1
-        )
-        {
-            try
-            {
-                Logger.LogWarning(
-                    $"Removing container for bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()}"
-                );
-
-                string[] visited;
-                LootMap.visitedContainerMap.TryGetValue(___botOwner_0.Id, out visited);
-
-                // Add the removed container to the visited container map
-                if (visited != null)
-                {
-                    LootMap.visitedContainerMap[___botOwner_0.Id] = visited
-                        .Append(container.Id)
-                        .ToArray();
-                }
-                else
-                {
-                    visited = new string[] { container.Id };
-                    LootMap.visitedContainerMap.Add(___botOwner_0.Id, visited);
-                }
-
-                // Remove container from active container map
-                LootMap.containerMap.Remove(___botOwner_0.Id);
-
-                // Set ShallLoot and has looted item to false
-                ___bool_2 = false;
-                ___bool1 = false;
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e.StackTrace);
-            }
+            // Increment loot wait timer in BotContainerData
+            BotContainerData botContainerData;
+            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
+            botContainerData.waitAfterLooting =
+                Time.time + LootingBots.timeToWaitBetweenContainers.Value;
+            LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
         }
     }
 
-    public class LootContainerPatch1 : ModulePatch
+    public class FindNearestContainerPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -375,90 +334,104 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
+            if (!LootingBots.dynamicContainerLootingEnabled.Value)
+            {
+                return;
+            }
+
+            BotContainerData botContainerData;
+
+            if (!LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData))
+            {
+                botContainerData = new BotContainerData();
+                LootMap.containerDataMap.Add(___botOwner_0.Id, botContainerData);
+            }
+
             // Only apply container detection if there is no active corpse and if the bot is not a sniper bot
             if (
-                ___float_2 < Time.time
+                botContainerData.waitAfterLooting < Time.time
                 && ___gclass263_0 == null
                 && ___botOwner_0.Profile.Info.Settings.Role != WildSpawnType.marksman
             )
             {
-                LootableContainer existingContainer;
-                if (LootMap.containerMap.TryGetValue(___botOwner_0.Id, out existingContainer))
+                // If we have an active container already do not scan
+                if (botContainerData?.activeContainer)
                 {
                     Logger.LogWarning(
-                        $"Bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} existing container: {existingContainer?.name}"
+                        $"Bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} existing container: {botContainerData.activeContainer.name}"
                     );
                     return;
                 }
 
-                string[] visitedContainers;
-                LootMap.visitedContainerMap.TryGetValue(___botOwner_0.Id, out visitedContainers);
-
+                string[] visitedContainers = botContainerData.visitedContainerIds;
                 LootableContainer closestContainer = null;
                 float shortestDist = -1f;
 
-                if (!existingContainer)
+                // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
+                Collider[] array = Physics.OverlapSphere(
+                    ___botOwner_0.Position,
+                    LootingBots.detectContainerDistance.Value,
+                    LayerMask.GetMask(
+                        new string[]
+                        {
+                            "Interactive",
+                            // "Deadbody",
+                            // "Loot"
+                        }
+                    ),
+                    QueryTriggerInteraction.Collide
+                );
+
+                // For each object detected, check to see if it is a lootable container and then calculate its distance from the player
+                foreach (Collider collider in array)
                 {
-                    // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
-                    Collider[] array = Physics.OverlapSphere(
-                        ___botOwner_0.Position,
-                        25f,
-                        LayerMask.GetMask(
-                            new string[]
-                            {
-                                "Interactive",
-                                // "Deadbody",
-                                // "Loot"
-                            }
-                        ),
-                        QueryTriggerInteraction.Collide
-                    );
+                    LootableContainer containerObj =
+                        collider.gameObject.GetComponentInParent<LootableContainer>();
 
-                    // For each object detected, check to see if it is a lootable container and then calculate its distance from the player
-                    foreach (Collider collider in array)
+                    if (
+                        containerObj != null
+                        && (
+                            visitedContainers == null
+                            || !visitedContainers.Contains(containerObj.Id)
+                        )
+                    )
                     {
-                        LootableContainer containerObj =
-                            collider.gameObject.GetComponentInParent<LootableContainer>();
+                        // If we havent already visted the container, calculate its distance and save the container with the smallest distance
+                        Vector3 vector = ___botOwner_0.Position - containerObj.transform.position;
+                        float y = vector.y;
+                        vector.y = 0f;
+                        float dist = vector.magnitude;
 
+                        Item container = containerObj.ItemOwner.Items.ToArray()[0];
+
+                        // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
+                        NavMeshPath navMeshPath = new NavMeshPath();
                         if (
-                            containerObj != null
-                            && (
-                                visitedContainers == null
-                                || !visitedContainers.Contains(containerObj.Id)
+                            (shortestDist == -1f || dist < shortestDist)
+                            && NavMesh.CalculatePath(
+                                ___botOwner_0.Position,
+                                containerObj.transform.position,
+                                -1,
+                                navMeshPath
                             )
                         )
                         {
-                            // If we havent already visted the container, calculate its distance and save the container with the smallest distance
-                            Vector3 vector =
-                                ___botOwner_0.Position - containerObj.transform.position;
-                            float y = vector.y;
-                            vector.y = 0f;
-                            float dist = vector.magnitude;
-
-                            Item container = containerObj.ItemOwner.Items.ToArray()[0];
-
-                            if (shortestDist == -1f || dist < shortestDist)
-                            {
-                                shortestDist = dist;
-                                closestContainer = containerObj;
-                            }
+                            shortestDist = dist;
+                            closestContainer = containerObj;
                         }
                     }
+                }
 
-                    if (closestContainer != null)
-                    {
-                        Logger.LogWarning(
-                            $"Clostest container: {closestContainer.name.Localized()}"
-                        );
-                        Logger.LogWarning(
-                            $"Last visited container count: {visitedContainers?.Length}"
-                        );
-                        // Add closest container found to container map
-                        LootMap.containerMap.Add(___botOwner_0.Id, closestContainer);
+                if (closestContainer != null)
+                {
+                    Logger.LogWarning($"Clostest container: {closestContainer.name.Localized()}");
+                    Logger.LogWarning($"Last visited container count: {visitedContainers?.Length}");
+                    // Add closest container found to container map
+                    botContainerData.activeContainer = closestContainer;
+                    LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
 
-                        // Set ShallLoot to true
-                        ___bool_2 = true;
-                    }
+                    // Set ShallLoot to true
+                    ___bool_2 = true;
                 }
             }
         }

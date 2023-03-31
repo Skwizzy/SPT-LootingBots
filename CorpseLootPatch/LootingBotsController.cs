@@ -19,6 +19,11 @@ namespace LootingBots
         public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
 
         public static ConfigEntry<bool> containerLootingEnabled;
+        public static ConfigEntry<bool> dynamicContainerLootingEnabled;
+        public static ConfigEntry<float> timeToWaitBetweenContainers;
+        public static ConfigEntry<float> detectContainerDistance;
+
+
         public static ConfigEntry<float> bodySeeDist;
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
@@ -50,14 +55,45 @@ namespace LootingBots
         {
             containerLootingEnabled = Config.Bind(
                 "Container Looting",
-                "Enable",
+                "Enable reserve patrols",
                 true,
                 new ConfigDescription(
                     "Enabled looting of containers for bots on patrols that stop in front of lootable containers",
                     null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
+            );
+            dynamicContainerLootingEnabled = Config.Bind(
+                "Container Looting",
+                "Enable dynamic looting",
+                false,
+                new ConfigDescription(
+                    "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
+            timeToWaitBetweenContainers = Config.Bind(
+                "Container Looting",
+                "Dynamic looting: Delay between containers",
+                45f,
+                new ConfigDescription(
+                    "The amount of time the bot will wait after looting a container before trying to find the next nearest contianer",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            detectContainerDistance = Config.Bind(
+                "Container Looting",
+                "Dynamic looting: Detect container distance",
+                25f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a container",
+                    null,
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
             );
+
             lootingEnabledBots = Config.Bind(
                 "Corpse Looting",
                 "Enable looting",
