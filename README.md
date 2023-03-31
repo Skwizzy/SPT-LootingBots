@@ -13,8 +13,10 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   
 ### Modded behavior:
   - Base game corpse looting behavior added to all bot types (option for pmc)
+  - Bots on patrol that stop in front of containers will attempt to place items in their inventory
   - When a bot goes to loot the primary weapon of a corpse they now attempt to loot everything from the corpse, equipping things in empty slots and swapping out gear for better gear.
-  - If a bot cannot equip a piece of gear, they will attempt to place it in their bag/rig
+  - If a bot cannot equip a piece of gear, they will attempt to place it in their inventory
+  - Bots are now able to treat nearby containers similar to how they treat corpses and attempt to loot the items from the container
 
 **Gear Swap Critria** 
 - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
@@ -26,6 +28,13 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - Bots prefer to use the higest value weapon as their primary (if they have ammo)
 
 ## Mod Settings (F12)
+**Container Looting**
+- `Enable reserve patrols` - Enables looting of containers for bots on patrols that stop in front of lootable containers (reserve patrols)
+- `Enable dynamic looting` - Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting. 
+- `Dynamic Looting: Dynamic looting: Delay between containers` - The amount of time the bot will wait after looting a container before trying to find the next nearest contianer
+- `Dynamic looting: Detect container distance` - Distance (in meters) a bot is able to detect a container
+
+**Corpse Looting**
 - `Enable looting` - Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid. Defaults to `all`
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
