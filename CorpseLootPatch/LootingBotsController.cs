@@ -58,7 +58,7 @@ namespace LootingBots
                 "Enable reserve patrols",
                 true,
                 new ConfigDescription(
-                    "Enabled looting of containers for bots on patrols that stop in front of lootable containers",
+                    "Enable looting of containers for bots on patrols that stop in front of lootable containers",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }
                 )

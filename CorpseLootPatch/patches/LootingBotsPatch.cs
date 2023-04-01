@@ -32,7 +32,6 @@ namespace LootingBots.Patch
         }
     }
 
-
     public class LootCorpsePatch : ModulePatch
     {
         private static ItemAdder itemAdder;
@@ -56,11 +55,18 @@ namespace LootingBots.Patch
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(
-            ref BotOwner ___botOwner_0,
-            ref GClass263 ___gclass263_0
-        )
+        private static bool PatchPrefix(ref BotOwner ___botOwner_0, ref GClass263 ___gclass263_0)
         {
+            // If the bot does not have looting enabled, do not override the method
+            if (
+                !LootingBots.lootingEnabledBots.Value.isLootingEnabled(
+                    ___botOwner_0.Profile.Info.Settings.Role
+                )
+            )
+            {
+                return true;
+            }
+
             itemAdder = new ItemAdder(___botOwner_0);
 
             try

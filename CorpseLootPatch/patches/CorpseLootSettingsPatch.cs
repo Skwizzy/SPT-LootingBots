@@ -24,85 +24,9 @@ namespace LootingBots.Patch
         {
             instance = __instance;
             BotType enabledTypes = LootingBots.lootingEnabledBots.Value;
-            // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
-            unchecked
+            if (enabledTypes.isLootingEnabled(___wildSpawnType_0))
             {
-                WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
-                WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
-
-                bool isPMC = ___wildSpawnType_0 == bear || ___wildSpawnType_0 == usec;
-                if ((isPMC) && enabledTypes.hasPmc())
-                {
-                    enableLooting();
-                    return;
-                }
-
-                switch (___wildSpawnType_0)
-                {
-                    case WildSpawnType.assault:
-                    case WildSpawnType.assaultGroup:
-                    {
-                        if (enabledTypes.hasScav())
-                        {
-                            enableLooting();
-                        }
-                        break;
-                    }
-                    case WildSpawnType.bossBully:
-                    case WildSpawnType.bossGluhar:
-                    case WildSpawnType.bossKilla:
-                    case WildSpawnType.bossKnight:
-                    case WildSpawnType.bossKojaniy:
-                    case WildSpawnType.bossSanitar:
-                    case WildSpawnType.bossTagilla:
-                    case WildSpawnType.bossTest:
-                    case WildSpawnType.bossZryachiy:
-                    {
-                        if (enabledTypes.hasBoss())
-                        {
-                            enableLooting();
-                        }
-                        break;
-                    }
-                    case WildSpawnType.followerBigPipe:
-                    case WildSpawnType.followerBirdEye:
-                    case WildSpawnType.followerBully:
-                    case WildSpawnType.followerGluharAssault:
-                    case WildSpawnType.followerGluharScout:
-                    case WildSpawnType.followerGluharSecurity:
-                    case WildSpawnType.followerGluharSnipe:
-                    case WildSpawnType.followerKojaniy:
-                    case WildSpawnType.followerSanitar:
-                    case WildSpawnType.followerTagilla:
-                    case WildSpawnType.followerTest:
-                    case WildSpawnType.followerZryachiy:
-                    {
-                        if (enabledTypes.hasFollower())
-                        {
-                            enableLooting();
-                        }
-                        break;
-                    }
-                    case WildSpawnType.exUsec:
-                    case WildSpawnType.pmcBot:
-                    {
-                        if (enabledTypes.hasRaider())
-                        {
-                            enableLooting();
-                        }
-                        break;
-                    }
-                    case WildSpawnType.sectantPriest:
-                    case WildSpawnType.sectantWarrior:
-                    case WildSpawnType.cursedAssault:
-                    {
-                        if (enabledTypes.hasCultist())
-                        {
-                            enableLooting();
-                        }
-                        break;
-                    }
-                }
+                enableLooting();
             }
         }
 
