@@ -32,14 +32,14 @@ namespace LootingBots.Patch
         }
     }
 
-    public class LootCorpsePatch : ModulePatch
+    public class CorpseLootingPatch : ModulePatch
     {
         private static ItemAdder itemAdder;
 
         private static ItemAppraiser itemAppraiser;
         private static Log log;
 
-        public LootCorpsePatch()
+        public CorpseLootingPatch()
         {
             log = LootingBots.log;
             itemAppraiser = LootingBots.itemAppraiser;

@@ -14,15 +14,97 @@ namespace LootingBots.Patch
 {
     public class BotContainerData
     {
+        // Current container that the bot will try to loot
         public LootableContainer activeContainer;
+
+        // Container ids that the bot has looted
         public string[] visitedContainerIds = new string[] { };
+
+        // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
+        public string[] nonNavigableContainerIds = new string[] { };
+
+        // Amount of time in seconds to wait after looting a container before finding the next container
         public float waitAfterLooting = 0f;
+
+        // Amount of times a bot has tried to navigate to a single container
+        public int navigationAttempts = 0;
+
+        // Amount of time to wait before clearning the nonNavigableContainerIds array
+        public float clearNonNavigableIdTimer = 0f;
     }
 
-    public static class LootMap
+    public static class ContainerDataMap
     {
         public static Dictionary<int, BotContainerData> containerDataMap =
             new Dictionary<int, BotContainerData>();
+
+        public static void setContainerData(int botId, BotContainerData containerData)
+        {
+            containerDataMap[botId] = containerData;
+        }
+
+        public static BotContainerData getContainerData(int botId)
+        {
+            BotContainerData containerData;
+
+            if (!containerDataMap.TryGetValue(botId, out containerData))
+            {
+                containerData = new BotContainerData();
+                containerDataMap.Add(botId, containerData);
+            }
+
+            return containerData;
+        }
+
+        public static BotContainerData updateNavigationAttempts(int botId)
+        {
+            BotContainerData containerData = getContainerData(botId);
+            containerData.navigationAttempts++;
+            setContainerData(botId, containerData);
+            return containerData;
+        }
+
+        public static void addNonNavigableContainer(int botId, string containerId)
+        {
+            BotContainerData containerData = getContainerData(botId);
+            containerData.nonNavigableContainerIds = containerData.nonNavigableContainerIds
+                .Append(containerId)
+                .ToArray();
+            setContainerData(botId, containerData);
+        }
+
+        public static void addVistedContainer(int botId, string containerId)
+        {
+            BotContainerData containerData = getContainerData(botId);
+            containerData.visitedContainerIds = containerData.visitedContainerIds
+                .Append(containerId)
+                .ToArray();
+            setContainerData(botId, containerData);
+        }
+
+        public static BotContainerData refreshNonNavigableContainers(int botId)
+        {
+            BotContainerData containerData = getContainerData(botId);
+            // Clear non navigable containers every 5 minutes to allow bots to try and see if there is a new valid path
+            if (containerData.clearNonNavigableIdTimer < Time.time)
+            {
+                LootingBots.log.logDebug("Clearing saved non-navigable containers");
+
+                containerData.nonNavigableContainerIds = new string[] { };
+                ContainerDataMap.setContainerData(botId, containerData);
+
+                containerData.clearNonNavigableIdTimer = Time.time + 300f;
+            }
+
+            return containerData;
+        }
+
+        public static bool isContainerIgnored(int botId, string containerId)
+        {
+            BotContainerData botData = getContainerData(botId);
+            return botData.nonNavigableContainerIds.Contains(containerId)
+                || botData.visitedContainerIds.Contains(containerId);
+        }
 
         // Original function is method_4
         public static void cleanup(
@@ -34,20 +116,10 @@ namespace LootingBots.Patch
         {
             try
             {
-                LootingBots.log.logWarning(
-                    $"Removing container for bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()}"
-                );
-
-                BotContainerData botContainerData;
-                LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
-
-                botContainerData.visitedContainerIds = botContainerData.visitedContainerIds
-                    .Append(container.Id)
-                    .ToArray();
-
+                BotContainerData botContainerData = getContainerData(___botOwner_0.Id);
+                botContainerData.navigationAttempts = 0;
                 botContainerData.activeContainer = null;
-
-                LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
+                setContainerData(___botOwner_0.Id, botContainerData);
 
                 ___bool_2 = false;
                 ___bool1 = false;
@@ -97,15 +169,16 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            BotContainerData botContainerData;
-            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
+            BotContainerData botContainerData = ContainerDataMap.getContainerData(___botOwner_0.Id);
 
             // Check if we have looted an item and the wait timer has completed
             bool Boolean_0 = ___bool_1 && ___float_5 < Time.time;
 
             // If there is not an active container or there is a body saved, execute the original method
             if (
-                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role)
+                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(
+                    ___botOwner_0.Profile.Info.Settings.Role
+                )
                 || !botContainerData?.activeContainer
                 || ___gclass263_0 != null
             )
@@ -140,8 +213,11 @@ namespace LootingBots.Patch
             // If we have just looted a container, and the wait timer is finished cleanup the container from the map
             if (Boolean_0)
             {
-                Logger.LogError("Removing a container");
-                LootMap.cleanup(ref ___botOwner_0, container, ref bool_2, ref bool_1);
+                LootingBots.log.logWarning(
+                    $"Removing successfully looted container: {container.name}"
+                );
+                ContainerDataMap.cleanup(ref ___botOwner_0, container, ref bool_2, ref bool_1);
+                ContainerDataMap.addVistedContainer(___botOwner_0.Id, container.Id);
                 return;
             }
 
@@ -182,12 +258,13 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            BotContainerData botContainerData;
-            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
+            BotContainerData botContainerData = ContainerDataMap.getContainerData(___botOwner_0.Id);
 
             // If there is no active container or if there is a corpse, execute the original method
             if (
-                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role)
+                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(
+                    ___botOwner_0.Profile.Info.Settings.Role
+                )
                 || !botContainerData?.activeContainer
                 || ___gclass263_0 != null
             )
@@ -272,27 +349,43 @@ namespace LootingBots.Patch
 
             if (float_1 < Time.time)
             {
-                float_1 = Time.time + 6f;
-                Vector3 position = container.transform.position;
-                Vector3 vector = GClass780.NormalizeFastSelf(position - botOwner_0.Position);
-                Vector3 position2 = position - vector;
-
-                NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
-                    position2,
-                    true,
-                    -1f,
-                    false,
-                    true,
-                    true
+                BotContainerData containerData = ContainerDataMap.updateNavigationAttempts(
+                    botOwner_0.Id
                 );
 
-                Logger.LogInfo(
-                    $"Bot {botOwner_0.Profile?.Info.Nickname.TrimEnd()} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
-                );
-
-                if (pathStatus == NavMeshPathStatus.PathInvalid || pathStatus == null)
+                if (containerData.navigationAttempts < 6)
                 {
-                    LootMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
+                    float_1 = Time.time + 6f;
+                    Vector3 position = container.transform.position;
+                    Vector3 vector = GClass780.NormalizeFastSelf(position - botOwner_0.Position);
+                    Vector3 position2 = position - vector;
+
+                    NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
+                        position2,
+                        true,
+                        -1f,
+                        false,
+                        true,
+                        true
+                    );
+
+                    LootingBots.log.logDebug(
+                        $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner_0.Profile?.Info.Nickname.TrimEnd()} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
+                    );
+
+                    if (pathStatus == NavMeshPathStatus.PathInvalid)
+                    {
+                        ContainerDataMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
+                        ContainerDataMap.addNonNavigableContainer(botOwner_0.Id, container.Id);
+                    }
+                }
+                else
+                {
+                    LootingBots.log.logWarning(
+                        $"No valid path for container: {container.name}. Temporarily ignored"
+                    );
+                    ContainerDataMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
+                    ContainerDataMap.addNonNavigableContainer(botOwner_0.Id, container.Id);
                 }
             }
         }
@@ -301,17 +394,18 @@ namespace LootingBots.Patch
         {
             ItemAdder itemAdder = new ItemAdder(___botOwner_0);
             Item item = container.ItemOwner.Items.ToArray()[0];
-            Logger.LogDebug("Trying to add items");
+            LootingBots.log.logDebug($"Trying to add items from: {item.Name.Localized()}");
 
             await itemAdder.lootNestedItems(item);
             ___botOwner_0.WeaponManager.Selector.TakeMainWeapon();
 
             // Increment loot wait timer in BotContainerData
-            BotContainerData botContainerData;
-            LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData);
+            BotContainerData botContainerData = ContainerDataMap.getContainerData(___botOwner_0.Id);
+
             botContainerData.waitAfterLooting =
                 Time.time + LootingBots.timeToWaitBetweenContainers.Value;
-            LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
+
+            ContainerDataMap.setContainerData(___botOwner_0.Id, botContainerData);
         }
     }
 
@@ -334,18 +428,19 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            if (!LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role))
+            if (
+                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(
+                    ___botOwner_0.Profile.Info.Settings.Role
+                )
+            )
             {
                 return;
             }
 
-            BotContainerData botContainerData;
-
-            if (!LootMap.containerDataMap.TryGetValue(___botOwner_0.Id, out botContainerData))
-            {
-                botContainerData = new BotContainerData();
-                LootMap.containerDataMap.Add(___botOwner_0.Id, botContainerData);
-            }
+            // Call method to clear non navigable containers on a timer
+            BotContainerData botContainerData = ContainerDataMap.refreshNonNavigableContainers(
+                ___botOwner_0.Id
+            );
 
             // Only apply container detection if there is no active corpse and if the bot is not a sniper bot
             if (
@@ -358,13 +453,14 @@ namespace LootingBots.Patch
                 // If we have an active container already do not scan
                 if (botContainerData?.activeContainer)
                 {
-                    Logger.LogWarning(
+                    LootingBots.log.logWarning(
                         $"Bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} existing container: {botContainerData.activeContainer.name}"
                     );
+                    // Set ShallLoot to true
+                    ___bool_2 = true;
                     return;
                 }
 
-                string[] visitedContainers = botContainerData.visitedContainerIds;
                 LootableContainer closestContainer = null;
                 float shortestDist = -1f;
 
@@ -391,10 +487,7 @@ namespace LootingBots.Patch
 
                     if (
                         containerObj != null
-                        && (
-                            visitedContainers == null
-                            || !visitedContainers.Contains(containerObj.Id)
-                        )
+                        && !ContainerDataMap.isContainerIgnored(___botOwner_0.Id, containerObj.Id)
                     )
                     {
                         // If we havent already visted the container, calculate its distance and save the container with the smallest distance
@@ -425,11 +518,13 @@ namespace LootingBots.Patch
 
                 if (closestContainer != null)
                 {
-                    Logger.LogWarning($"Clostest container: {closestContainer.name.Localized()}");
-                    Logger.LogWarning($"Last visited container count: {visitedContainers?.Length}");
+                    LootingBots.log.logDebug(
+                        $"Clostest container: {closestContainer.name.Localized()}"
+                    );
                     // Add closest container found to container map
                     botContainerData.activeContainer = closestContainer;
-                    LootMap.containerDataMap[___botOwner_0.Id] = botContainerData;
+
+                    ContainerDataMap.setContainerData(___botOwner_0.Id, botContainerData);
 
                     // Set ShallLoot to true
                     ___bool_2 = true;

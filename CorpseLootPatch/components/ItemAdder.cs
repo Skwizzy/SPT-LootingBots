@@ -258,9 +258,10 @@ namespace LootingBots.Patch.Util
             if (isPistol && holster != null && gearValue.holster.value < lootValue)
             {
                 log.logDebug(
-                    $"Trying to swap {holster.Name.Localized()} with {lootWeapon.Name.Localized()}"
+                    $"Trying to swap {holster.Name.Localized()} (₽{gearValue.holster.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
                 );
                 action.swap = getSwapAction(holster, lootWeapon);
+                gearValue.holster = new ValuePair(lootWeapon.Id, lootValue);
             }
             else if (!isPistol && primary != null)
             {
@@ -283,22 +284,27 @@ namespace LootingBots.Patch.Util
                                 await transactionController.tryEquipItem(lootWeapon);
                             }
                         );
+
+                        gearValue.secondary = gearValue.primary;
+                        gearValue.primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                     else
                     {
                         log.logDebug(
-                            $"Trying to swap {primary.Name.Localized()} with {lootWeapon.Name.Localized()}"
+                            $"Trying to swap {primary.Name.Localized()} (₽{gearValue.primary.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
                         );
                         action.swap = getSwapAction(primary, lootWeapon);
+                        gearValue.primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
                 // If the secondary is worth less than the looted weapon, swap the secondary
                 else if (secondary != null && gearValue.secondary.value < lootValue)
                 {
                     log.logDebug(
-                        $"Trying to swap {secondary.Name.Localized()} with {lootWeapon.Name.Localized()}"
+                        $"Trying to swap {secondary.Name.Localized()} (₽{gearValue.secondary.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
                     );
                     action.swap = getSwapAction(secondary, lootWeapon);
+                    gearValue.secondary = new ValuePair(secondary.Id, lootValue);
                 }
             }
 
@@ -399,6 +405,7 @@ namespace LootingBots.Patch.Util
                         nestedItem =>
                             nestedItem.Id != parentItem.Id
                             && nestedItem.Id == nestedItem.GetRootItem().Id
+                            && !nestedItem.QuestItem
                     )
                     .ToArray();
 

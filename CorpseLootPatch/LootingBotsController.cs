@@ -164,7 +164,7 @@ namespace LootingBots
 
             new ContainerLooting().Enable();
             new CorpseLootSettingsPatch().Enable();
-            new LootCorpsePatch().Enable();
+            new CorpseLootingPatch().Enable();
         }
 
         public void Update()
