@@ -24,7 +24,7 @@ namespace LootingBots.Patch
         {
             instance = __instance;
             BotType enabledTypes = LootingBots.lootingEnabledBots.Value;
-            if (enabledTypes.isLootingEnabled(___wildSpawnType_0))
+            if (enabledTypes.isBotEnabled(___wildSpawnType_0))
             {
                 enableLooting();
             }

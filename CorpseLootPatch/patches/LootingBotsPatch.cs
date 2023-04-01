@@ -59,7 +59,7 @@ namespace LootingBots.Patch
         {
             // If the bot does not have looting enabled, do not override the method
             if (
-                !LootingBots.lootingEnabledBots.Value.isLootingEnabled(
+                !LootingBots.lootingEnabledBots.Value.isBotEnabled(
                     ___botOwner_0.Profile.Info.Settings.Role
                 )
             )

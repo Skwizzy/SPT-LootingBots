@@ -105,7 +105,7 @@ namespace LootingBots.Patch
 
             // If there is not an active container or there is a body saved, execute the original method
             if (
-                !LootingBots.dynamicContainerLootingEnabled.Value
+                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role)
                 || !botContainerData?.activeContainer
                 || ___gclass263_0 != null
             )
@@ -187,7 +187,7 @@ namespace LootingBots.Patch
 
             // If there is no active container or if there is a corpse, execute the original method
             if (
-                !LootingBots.dynamicContainerLootingEnabled.Value
+                !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role)
                 || !botContainerData?.activeContainer
                 || ___gclass263_0 != null
             )
@@ -334,7 +334,7 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            if (!LootingBots.dynamicContainerLootingEnabled.Value)
+            if (!LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(___botOwner_0.Profile.Info.Settings.Role))
             {
                 return;
             }
@@ -350,6 +350,7 @@ namespace LootingBots.Patch
             // Only apply container detection if there is no active corpse and if the bot is not a sniper bot
             if (
                 botContainerData.waitAfterLooting < Time.time
+                && ___float_2 < Time.time
                 && ___gclass263_0 == null
                 && ___botOwner_0.Profile.Info.Settings.Role != WildSpawnType.marksman
             )

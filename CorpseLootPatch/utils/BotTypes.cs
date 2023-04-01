@@ -48,22 +48,21 @@ namespace LootingBots.Patch.Util
             return botType.HasFlag(BotType.Follower);
         }
 
-        public static bool isLootingEnabled(this BotType botType, WildSpawnType spawnType)
+        public static bool isBotEnabled(this BotType enabledTypes, WildSpawnType botType)
         {
-            BotType enabledTypes = LootingBots.lootingEnabledBots.Value;
             // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
             unchecked
             {
                 WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
                 WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
 
-                bool isPMC = spawnType == bear || spawnType == usec;
+                bool isPMC = botType == bear || botType == usec;
                 if (isPMC)
                 {
                     return enabledTypes.hasPmc();
                 }
 
-                switch (spawnType)
+                switch (botType)
                 {
                     case WildSpawnType.assault:
                     case WildSpawnType.assaultGroup:
