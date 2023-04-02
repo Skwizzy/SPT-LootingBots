@@ -406,6 +406,8 @@ namespace LootingBots.Patch.Util
                             nestedItem.Id != parentItem.Id
                             && nestedItem.Id == nestedItem.GetRootItem().Id
                             && !nestedItem.QuestItem
+                            && !isSingleUseKey(nestedItem)
+                        
                     )
                     .ToArray();
 
@@ -419,6 +421,11 @@ namespace LootingBots.Patch.Util
             } else {
                 log.logDebug($"No nested items found in {parentItem.Name}");
             }
+        }
+
+        public bool isSingleUseKey(Item item) {
+            KeyComponent key = item.GetItemComponent<KeyComponent>();
+            return key != null && key.Template.MaximumNumberOfUsage == 1;
         }
 
         /** Generates a SwapAction to send to the transaction controller*/
