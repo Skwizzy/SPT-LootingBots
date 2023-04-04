@@ -1,14 +1,9 @@
-using Aki.Reflection.Patching;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using EFT.InventoryLogic;
-using LootingBots.Patch.Util;
-using EFT.Interactive;
 using EFT;
-using Comfort.Common;
-using UnityEngine;
 
 namespace LootingBots.Patch.Util
 {
@@ -178,7 +173,6 @@ namespace LootingBots.Patch.Util
         */
         public TransactionController.EquipAction getEquipAction(Item lootItem)
         {
-            // TODO: Try to combine this into one call to get all 4 slots
             Item helmet = botInventoryController.Inventory.Equipment
                 .GetSlot(EquipmentSlot.Headwear)
                 .ContainedItem;
@@ -255,24 +249,46 @@ namespace LootingBots.Patch.Util
 
             float lootValue = itemAppraiser.getItemPrice(lootWeapon);
 
-            if (isPistol && holster != null && gearValue.holster.value < lootValue)
+            if (isPistol)
             {
-                log.logDebug(
-                    $"Trying to swap {holster.Name.Localized()} (₽{gearValue.holster.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
-                );
-                action.swap = getSwapAction(holster, lootWeapon);
-                gearValue.holster = new ValuePair(lootWeapon.Id, lootValue);
-            }
-            else if (!isPistol && primary != null)
-            {
-                // If we have a primary that is worth less than the looted weapon, move the primary to the secondary slot and equp the looted weapon.
-                // Otherwise just swap the primary wepon with the looted weapon
-                if (gearValue.primary.value < lootValue)
+                if (holster == null)
                 {
+                    action.move = new TransactionController.MoveAction(
+                        lootWeapon,
+                        botInventoryController.FindSlotToPickUp(lootWeapon)
+                    );
+                    gearValue.holster = new ValuePair(lootWeapon.Id, lootValue);
+                }
+                else if (holster != null && gearValue.holster.value < lootValue)
+                {
+                    log.logDebug(
+                        $"Trying to swap {holster.Name.Localized()} (₽{gearValue.holster.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
+                    );
+                    action.swap = getSwapAction(holster, lootWeapon);
+                    gearValue.holster = new ValuePair(lootWeapon.Id, lootValue);
+                }
+            }
+            else
+            {
+                // If we have no primary, just equip the weapon to primary
+                if (primary == null)
+                {
+                    action.move = new TransactionController.MoveAction(
+                        lootWeapon,
+                        botInventoryController.FindSlotToPickUp(lootWeapon)
+                    );
+                    gearValue.primary = new ValuePair(lootWeapon.Id, lootValue);
+                }
+                else if (gearValue.primary.value < lootValue)
+                {
+                    // If the loot weapon is worth more than the primary, by nature its also worth more than the secondary. Try to move the primary weapon to the secondary slot and equip the new weapon as the primary
                     if (secondary == null)
                     {
                         ItemAddress canEquipToSecondary = botInventoryController.FindSlotToPickUp(
                             primary
+                        );
+                        log.logDebug(
+                            $"Moving {primary.Name.Localized()} (₽{gearValue.primary.value}) to secondary and equipping {lootWeapon.Name.Localized()} (₽{lootValue})"
                         );
                         action.move = new TransactionController.MoveAction(
                             primary,
@@ -288,17 +304,38 @@ namespace LootingBots.Patch.Util
                         gearValue.secondary = gearValue.primary;
                         gearValue.primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
+                    // In the case where we have a secondary, throw it, move the primary to secondary, and equip the loot weapon as primary
                     else
                     {
                         log.logDebug(
-                            $"Trying to swap {primary.Name.Localized()} (₽{gearValue.primary.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
+                            $"Trying to swap {secondary.Name.Localized()} (₽{gearValue.secondary.value}) with {primary.Name.Localized()} (₽{gearValue.primary.value}) and equip {lootWeapon.Name.Localized()} (₽{lootValue})"
                         );
-                        action.swap = getSwapAction(primary, lootWeapon);
+                        action.swap = getSwapAction(
+                            secondary,
+                            primary,
+                            null,
+                            false,
+                            async () =>
+                            {
+                                await Task.Delay(1000);
+                                await transactionController.tryEquipItem(lootWeapon);
+                            }
+                        );
+                        gearValue.secondary = gearValue.primary;
                         gearValue.primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
-                // If the secondary is worth less than the looted weapon, swap the secondary
-                else if (secondary != null && gearValue.secondary.value < lootValue)
+                // If there is no secondary weapon, equip to secondary
+                else if (secondary == null)
+                {
+                    action.move = new TransactionController.MoveAction(
+                        lootWeapon,
+                        botInventoryController.FindSlotToPickUp(lootWeapon)
+                    );
+                    gearValue.secondary = new ValuePair(lootWeapon.Id, lootValue);
+                }
+                // If the loot weapon is worth more than the secondary, swap it
+                else if (gearValue.secondary.value < lootValue)
                 {
                     log.logDebug(
                         $"Trying to swap {secondary.Name.Localized()} (₽{gearValue.secondary.value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
@@ -333,7 +370,7 @@ namespace LootingBots.Patch.Util
             ArmorComponent lootArmor = itemToLoot.GetItemComponent<ArmorComponent>();
             ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
 
-            // Equip if we found item with a better item class.
+            // Equip if we found item with a better armor class.
             // Equip if we found an item with more slots only if what we have equipped is the same or worse armor class
             return foundBetterArmor
                 || (
@@ -366,17 +403,17 @@ namespace LootingBots.Patch.Util
             HelmetComponent lootHelmet = itemToLoot.GetItemComponent<HelmetComponent>();
             ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
 
-            // If the equipped item is not an ArmorComponent then assume the lootArmor item is higher class
-            if (equippedArmor == null)
-            {
-                return lootArmor != null;
-            }
-
             bool foundBetterArmor = false;
 
             // If we are looting a helmet, check to see if it has a better armor class than what is equipped
             if (lootArmor != null && lootHelmet != null)
             {
+                // If the equipped item is not an ArmorComponent then assume the lootArmor item is higher class
+                if (equippedArmor == null)
+                {
+                    return lootArmor != null;
+                }
+
                 foundBetterArmor = equippedArmor.ArmorClass <= lootArmor.ArmorClass;
             }
             else if (lootArmor != null)
@@ -407,7 +444,6 @@ namespace LootingBots.Patch.Util
                             && nestedItem.Id == nestedItem.GetRootItem().Id
                             && !nestedItem.QuestItem
                             && !isSingleUseKey(nestedItem)
-                        
                     )
                     .ToArray();
 
@@ -418,12 +454,16 @@ namespace LootingBots.Patch.Util
                     );
                     await tryAddItemsToBot(containerItems);
                 }
-            } else {
+            }
+            else
+            {
                 log.logDebug($"No nested items found in {parentItem.Name}");
             }
         }
 
-        public bool isSingleUseKey(Item item) {
+        // Prevents bots from looting single use quest keys like "Unknown Key"
+        public bool isSingleUseKey(Item item)
+        {
             KeyComponent key = item.GetItemComponent<KeyComponent>();
             return key != null && key.Template.MaximumNumberOfUsage == 1;
         }
@@ -433,7 +473,8 @@ namespace LootingBots.Patch.Util
             Item toThrow,
             Item toEquip,
             TransactionController.ActionCallback callback = null,
-            bool tranferItems = false
+            bool tranferItems = false,
+            TransactionController.ActionCallback onComplete = null
         )
         {
             TransactionController.ActionCallback onSwapComplete = null;
@@ -454,10 +495,11 @@ namespace LootingBots.Patch.Util
                     ? callback
                     : async () =>
                     {
+                        await Task.Delay(1000);
                         // Try to equip the item after throwing
                         await transactionController.tryEquipItem(toEquip);
                     },
-                onSwapComplete
+                onComplete != null ? onComplete : onSwapComplete
             );
         }
     }

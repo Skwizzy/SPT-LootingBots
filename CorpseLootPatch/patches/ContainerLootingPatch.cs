@@ -214,7 +214,7 @@ namespace LootingBots.Patch
             if (Boolean_0)
             {
                 LootingBots.log.logWarning(
-                    $"Removing successfully looted container: {container.name}"
+                    $"Removing successfully looted container: {container.name} ({container.Id})"
                 );
                 ContainerDataMap.cleanup(ref ___botOwner_0, container, ref bool_2, ref bool_1);
                 ContainerDataMap.addVistedContainer(___botOwner_0.Id, container.Id);
@@ -363,9 +363,9 @@ namespace LootingBots.Patch
                     NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
                         position2,
                         true,
-                        -1f,
+                        0.1f,
                         false,
-                        true,
+                        false,
                         true
                     );
 
@@ -375,6 +375,9 @@ namespace LootingBots.Patch
 
                     if (pathStatus == NavMeshPathStatus.PathInvalid)
                     {
+                        LootingBots.log.logWarning(
+                            $"No valid path for container: {container.name}. Temporarily ignored"
+                        );
                         ContainerDataMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
                         ContainerDataMap.addNonNavigableContainer(botOwner_0.Id, container.Id);
                     }
@@ -382,7 +385,7 @@ namespace LootingBots.Patch
                 else
                 {
                     LootingBots.log.logWarning(
-                        $"No valid path for container: {container.name}. Temporarily ignored"
+                        $"Maximum navigation attempts exceeded for: {container.name}. Temporarily ignored"
                     );
                     ContainerDataMap.cleanup(ref botOwner_0, container, ref bool_2, ref bool_1);
                     ContainerDataMap.addNonNavigableContainer(botOwner_0.Id, container.Id);
@@ -428,6 +431,7 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
+            // Check to see if the current bot has container looting enabled
             if (
                 !LootingBots.dynamicContainerLootingEnabled.Value.isBotEnabled(
                     ___botOwner_0.Profile.Info.Settings.Role
@@ -442,12 +446,11 @@ namespace LootingBots.Patch
                 ___botOwner_0.Id
             );
 
-            // Only apply container detection if there is no active corpse and if the bot is not a sniper bot
+            // Only apply container detection if there is no active corpse and we are not in a delay between looting containers
             if (
                 botContainerData.waitAfterLooting < Time.time
                 && ___float_2 < Time.time
                 && ___gclass263_0 == null
-                && ___botOwner_0.Profile.Info.Settings.Role != WildSpawnType.marksman
             )
             {
                 // If we have an active container already do not scan
@@ -519,7 +522,7 @@ namespace LootingBots.Patch
                 if (closestContainer != null)
                 {
                     LootingBots.log.logDebug(
-                        $"Clostest container: {closestContainer.name.Localized()}"
+                        $"Clostest container: {closestContainer.name.Localized()} ({closestContainer.Id})"
                     );
                     // Add closest container found to container map
                     botContainerData.activeContainer = closestContainer;
