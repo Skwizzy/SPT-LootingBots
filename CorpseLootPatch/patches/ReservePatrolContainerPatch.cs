@@ -33,7 +33,7 @@ namespace LootingBots.Patch {
             {
                 botOwner = bot;
                 itemAdder = new ItemAdder(bot);
-                LootingBots.log.logWarning($"{___lootableContainer_0.name}");
+                LootingBots.log.logWarning($"Reserve patrol looting: {___lootableContainer_0.name}");
                 lootContainer(___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
             }
         }
@@ -42,7 +42,7 @@ namespace LootingBots.Patch {
         {
             if (container != null)
             {
-                LootingBots.log.logWarning(
+                LootingBots.log.logDebug(
                     $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
                 );
 

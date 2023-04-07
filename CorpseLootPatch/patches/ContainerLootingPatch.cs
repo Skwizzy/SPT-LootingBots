@@ -12,6 +12,22 @@ using System.Collections.Generic;
 
 namespace LootingBots.Patch
 {
+    // Degug spheres from DrakiaXYZ Waypoints https://github.com/DrakiaXYZ/SPT-Waypoints/blob/master/Helpers/GameObjectHelper.cs
+    public class GameObjectHelper
+    {
+        public static GameObject drawSphere(Vector3 position, float size, Color color)
+        {
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.GetComponent<Renderer>().material.color = color;
+            sphere.GetComponent<Collider>().enabled = false;
+            sphere.transform.position = new Vector3(position.x, position.y, position.z);
+            ;
+            sphere.transform.localScale = new Vector3(size, size, size);
+
+            return sphere;
+        }
+    }
+
     public class BotContainerData
     {
         // Current container that the bot will try to loot
@@ -29,8 +45,13 @@ namespace LootingBots.Patch
         // Amount of times a bot has tried to navigate to a single container
         public int navigationAttempts = 0;
 
+        // Amount of times a bot has not moved during the isCloseEnough check
+        public int stuckCount = 0;
+
         // Amount of time to wait before clearning the nonNavigableContainerIds array
         public float clearNonNavigableIdTimer = 0f;
+
+        public float dist;
     }
 
     public static class ContainerDataMap
@@ -60,6 +81,14 @@ namespace LootingBots.Patch
         {
             BotContainerData containerData = getContainerData(botId);
             containerData.navigationAttempts++;
+            setContainerData(botId, containerData);
+            return containerData;
+        }
+
+        public static BotContainerData updateStuckCount(int botId)
+        {
+            BotContainerData containerData = getContainerData(botId);
+            containerData.stuckCount++;
             setContainerData(botId, containerData);
             return containerData;
         }
@@ -119,6 +148,8 @@ namespace LootingBots.Patch
                 BotContainerData botContainerData = getContainerData(___botOwner_0.Id);
                 botContainerData.navigationAttempts = 0;
                 botContainerData.activeContainer = null;
+                botContainerData.dist = 0;
+
                 setContainerData(___botOwner_0.Id, botContainerData);
 
                 ___bool_2 = false;
@@ -273,14 +304,16 @@ namespace LootingBots.Patch
             }
 
             LootableContainer container = botContainerData.activeContainer;
-
+            float dist;
             if (
                 isCloseEnough(
                     ref ___float_0,
                     ref ___float_4,
                     ref ___bool_0,
+                    ___bool_1,
                     ref ___botOwner_0,
-                    container
+                    container,
+                    out dist
                 )
             )
             {
@@ -318,21 +351,69 @@ namespace LootingBots.Patch
             ref float float_0,
             ref float float_4,
             ref bool bool_0,
+            bool bool_1,
             ref BotOwner botOwner_0,
-            LootableContainer container
+            LootableContainer container,
+            out float dist
         )
         {
+            BotContainerData botContainerData = ContainerDataMap.getContainerData(botOwner_0.Id);
             if (float_0 < Time.time && container != null)
             {
                 float_0 = Time.time + 2f;
                 Vector3 vector = botOwner_0.Position - container.transform.position;
                 float y = vector.y;
                 vector.y = 0f;
-                float_4 = vector.magnitude;
-                bool_0 = (float_4 < 1.4f && Mathf.Abs(y) < 1.3f);
+                dist = float_4 = vector.magnitude;
+                bool_0 = (float_4 < 1.5f && Mathf.Abs(y) < 1.3f);
+                float changeInDist = Math.Abs(botContainerData.dist - dist);
+
+                if (changeInDist < 1 && !bool_1)
+                {
+                    // Quick and dirty door check
+                    LootingBots.log.logError(
+                        $"Bot {botOwner_0.Id} has not moved {changeInDist}. Container position: {container.transform.position.ToJson()}"
+                    );
+                    Collider[] array = Physics.OverlapSphere(
+                        botOwner_0.Position,
+                        1f,
+                        LayerMask.GetMask(
+                            new string[]
+                            {
+                                "Interactive",
+                                // "Deadbody",
+                                // "Loot"
+                            }
+                        ),
+                        QueryTriggerInteraction.Collide
+                    );
+
+                    foreach (Collider collider in array)
+                    {
+                        LootingBots.log.logDebug(collider.gameObject);
+                        Door door = collider.gameObject.GetComponentInParent<Door>();
+                        if (door != null && door.DoorState == EDoorState.Shut)
+                        {
+                            LootingBots.log.logError("Found door");
+                            botOwner_0.DoorOpener.Interact(door, EInteractionType.Open);
+                            float_0 = Time.time + 6f;
+                            return bool_0;
+                        }
+                    }
+
+                    ContainerDataMap.updateStuckCount(botOwner_0.Id);
+                }
+                else
+                {
+                    botContainerData.dist = dist;
+                    botContainerData.stuckCount = 0;
+                    ContainerDataMap.setContainerData(botOwner_0.Id, botContainerData);
+                }
+
                 return bool_0;
             }
 
+            dist = float_4;
             return bool_0;
         }
 
@@ -353,27 +434,46 @@ namespace LootingBots.Patch
                     botOwner_0.Id
                 );
 
-                if (containerData.navigationAttempts < 6)
+                if (containerData.stuckCount <= 4)
                 {
-                    float_1 = Time.time + 6f;
+                    float_1 = Time.time + 8f;
                     Vector3 position = container.transform.position;
                     Vector3 vector = GClass780.NormalizeFastSelf(position - botOwner_0.Position);
-                    Vector3 position2 = position - vector;
+                    Vector3 pointNearbyContainer = position - vector;
+
+                    NavMeshHit myNavHit;
+
+                    if (
+                        NavMesh.SamplePosition(
+                            pointNearbyContainer,
+                            out myNavHit,
+                            1,
+                            NavMesh.AllAreas
+                        )
+                    )
+                    {
+                        pointNearbyContainer = myNavHit.position;
+                    }
+
+                    // Debug
+                    // GameObjectHelper.drawSphere(position, 0.5f, Color.red);
+                    // GameObjectHelper.drawSphere(position - vector, 0.5f, Color.green);
+                    // GameObjectHelper.drawSphere(pointNearbyContainer, 0.5f, Color.blue);
 
                     NavMeshPathStatus pathStatus = botOwner_0.GoToPoint(
-                        position2,
+                        pointNearbyContainer,
                         true,
-                        0.1f,
+                        -1f,
                         false,
                         false,
                         true
                     );
 
                     LootingBots.log.logDebug(
-                        $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner_0.Profile?.Info.Nickname.TrimEnd()} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
+                        $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner_0.Id} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
                     );
 
-                    if (pathStatus == NavMeshPathStatus.PathInvalid)
+                    if (pathStatus != NavMeshPathStatus.PathComplete)
                     {
                         LootingBots.log.logWarning(
                             $"No valid path for container: {container.name}. Temporarily ignored"
@@ -441,10 +541,7 @@ namespace LootingBots.Patch
                 return;
             }
 
-            // Call method to clear non navigable containers on a timer
-            BotContainerData botContainerData = ContainerDataMap.refreshNonNavigableContainers(
-                ___botOwner_0.Id
-            );
+            BotContainerData botContainerData = ContainerDataMap.getContainerData(___botOwner_0.Id);
 
             // Only apply container detection if there is no active corpse and we are not in a delay between looting containers
             if (
@@ -457,7 +554,7 @@ namespace LootingBots.Patch
                 if (botContainerData?.activeContainer)
                 {
                     LootingBots.log.logWarning(
-                        $"Bot {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} existing container: {botContainerData.activeContainer.name}"
+                        $"Bot {___botOwner_0.Id} existing container: {botContainerData.activeContainer.name}"
                     );
                     // Set ShallLoot to true
                     ___bool_2 = true;
@@ -502,16 +599,7 @@ namespace LootingBots.Patch
                         Item container = containerObj.ItemOwner.Items.ToArray()[0];
 
                         // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
-                        NavMeshPath navMeshPath = new NavMeshPath();
-                        if (
-                            (shortestDist == -1f || dist < shortestDist)
-                            && NavMesh.CalculatePath(
-                                ___botOwner_0.Position,
-                                containerObj.transform.position,
-                                -1,
-                                navMeshPath
-                            )
-                        )
+                        if ((shortestDist == -1f || dist < shortestDist))
                         {
                             shortestDist = dist;
                             closestContainer = containerObj;
