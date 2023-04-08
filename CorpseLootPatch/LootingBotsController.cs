@@ -16,13 +16,15 @@ namespace LootingBots
         private const String MOD_NAME = "LootingBots";
         private const String MOD_VERSION = "1.0.1";
 
-        public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
-
+        // Container Looting
         public static ConfigEntry<bool> containerLootingEnabled;
         public static ConfigEntry<BotType> dynamicContainerLootingEnabled;
         public static ConfigEntry<float> timeToWaitBetweenContainers;
         public static ConfigEntry<float> detectContainerDistance;
+        public static ConfigEntry<bool> debugContainerNav;
 
+        // Corpse Looting
+        public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
         public static ConfigEntry<float> bodySeeDist;
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
@@ -41,17 +43,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enable looting of containers for bots on patrols that stop in front of lootable containers",
                     null,
-                    new ConfigurationManagerAttributes { Order = 3 }
+                    new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
             dynamicContainerLootingEnabled = Config.Bind(
                 "Container Looting",
                 "Enable dynamic looting",
-                 BotType.All,
+                BotType.All,
                 new ConfigDescription(
                     "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting",
                     null,
-                    new ConfigurationManagerAttributes { Order = 2 }
+                    new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
             timeToWaitBetweenContainers = Config.Bind(
@@ -61,7 +63,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "The amount of time the bot will wait after looting a container before trying to find the next nearest contianer",
                     null,
-                    new ConfigurationManagerAttributes { Order = 1 }
+                    new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
             detectContainerDistance = Config.Bind(
@@ -70,6 +72,16 @@ namespace LootingBots
                 25f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            debugContainerNav = Config.Bind(
+                "Container Looting",
+                "Debug: Show navigation points",
+                false,
+                new ConfigDescription(
+                    "Renders shperes where bots are trying to navigate when container looting. Green: Original desired destination. Red: Position of container. Blue: NavMesh corrected destination (where the bot will move).",
                     null,
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
