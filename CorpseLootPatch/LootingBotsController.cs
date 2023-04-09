@@ -81,7 +81,7 @@ namespace LootingBots
                 "Debug: Show navigation points",
                 false,
                 new ConfigDescription(
-                    "Renders shperes where bots are trying to navigate when container looting. Green: Original desired destination. Red: Position of container. Blue: NavMesh corrected destination (where the bot will move).",
+                    "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
