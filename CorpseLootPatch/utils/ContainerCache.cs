@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using EFT.Interactive;
 using EFT;
+using UnityEngine;
 using System.Collections.Generic;
 
 namespace LootingBots.Patch.Util
@@ -10,6 +11,8 @@ namespace LootingBots.Patch.Util
     {
         // Current container that the bot will try to loot
         public LootableContainer activeContainer;
+        // Center of the container's collider used to help in navigation
+        public Vector3 containerCenter;
 
         // Container ids that the bot has looted
         public string[] visitedContainerIds = new string[] { };
@@ -127,6 +130,7 @@ namespace LootingBots.Patch.Util
                 BotContainerData botContainerData = getContainerData(botOwner.Id);
                 botContainerData.navigationAttempts = 0;
                 botContainerData.activeContainer = null;
+                botContainerData.containerCenter = new Vector3();
                 botContainerData.dist = 0;
                 activeContainerCache.Remove(container.Id);
 

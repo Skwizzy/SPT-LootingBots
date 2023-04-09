@@ -133,6 +133,8 @@ namespace LootingBots.Patch
 
     public class ContainerManualUpdatePatch : ModulePatch
     {
+        public static float TimeToLoot = 8f;
+
         protected override MethodBase GetTargetMethod()
         {
             return typeof(GClass325).GetMethod(
@@ -175,7 +177,7 @@ namespace LootingBots.Patch
                     ref ___float_0,
                     ref ___float_4,
                     ref ___bool_0,
-                    ___bool_1,
+                    ref ___bool_1,
                     ref ___botOwner_0,
                     container,
                     out dist
@@ -186,7 +188,7 @@ namespace LootingBots.Patch
                 if (!___bool_1)
                 {
                     lootContainer(container, ___botOwner_0);
-                    ___float_5 = 18f + Time.time;
+                    ___float_5 = TimeToLoot + Time.time;
                     ___bool_1 = true;
                 }
 
@@ -200,13 +202,22 @@ namespace LootingBots.Patch
             // Stand and move to container
             ___botOwner_0.SetPose(1f);
             ___botOwner_0.SetTargetMoveSpeed(1f);
-            tryMoveToContainer(
+
+            // Initiate move to container. Will return false if the bot is not able to navigate using a NavMesh
+            bool canMove = tryMoveToContainer(
                 ref ___botOwner_0,
                 ref ___float_1,
                 container,
                 ref ___bool_1,
                 ref ___bool_2
             );
+
+            // If there is not a valid path to the container, ignore the container forever
+            if (!canMove)
+            {
+                ContainerCache.cleanup(ref ___botOwner_0, container, ref ___bool_2, ref ___bool_1);
+                ContainerCache.addNonNavigableContainer(___botOwner_0.Id, container.Id);
+            }
             return false;
         }
 
@@ -230,7 +241,7 @@ namespace LootingBots.Patch
                 // Check for door with 1f sphere. TODO: Change to Ray
                 Collider[] array = Physics.OverlapSphere(
                     botOwner.Position,
-                    1f,
+                    1.3f,
                     LayerMask.GetMask(new string[] { "Interactive", }),
                     QueryTriggerInteraction.Collide
                 );
@@ -243,13 +254,25 @@ namespace LootingBots.Patch
                     if (door?.DoorState == EDoorState.Shut)
                     {
                         LootingBots.log.logDebug("Opening door");
-                        botOwner.DoorOpener.Interact(door, EInteractionType.Open);
+                        GClass2596 interactionResult = new GClass2596(EInteractionType.Open);
+                        botOwner.SetTargetMoveSpeed(0f);
+                        botOwner.GetPlayer.CurrentState.StartDoorInteraction(
+                            door,
+                            interactionResult,
+                            null
+                        );
                         return true;
                     }
                     else if (door?.DoorState == EDoorState.Open)
                     {
                         LootingBots.log.logDebug("Closing door");
-                        botOwner.DoorOpener.Interact(door, EInteractionType.Close);
+                        GClass2596 interactionResult = new GClass2596(EInteractionType.Close);
+                        botOwner.SetTargetMoveSpeed(0f);
+                        botOwner.GetPlayer.CurrentState.StartDoorInteraction(
+                            door,
+                            interactionResult,
+                            null
+                        );
                         return true;
                     }
                 }
@@ -273,7 +296,7 @@ namespace LootingBots.Patch
             ref float closeEnoughTimer, // float_0
             ref float containerDist, // float_4
             ref bool isCloseEnough, // bool_0
-            bool hasLooted, // bool_1
+            ref bool hasLooted, // bool_1
             ref BotOwner botOwner, // botOwner_0
             LootableContainer container,
             out float dist
@@ -307,7 +330,7 @@ namespace LootingBots.Patch
         }
 
         // Orignal function is GClass325.method_10
-        private static void tryMoveToContainer(
+        private static bool tryMoveToContainer(
             ref BotOwner botOwner, // botOwner_0
             ref float tryMoveTimer, // float_1
             LootableContainer container,
@@ -315,77 +338,114 @@ namespace LootingBots.Patch
             ref bool ShallLoot // bool_2
         )
         {
-            botOwner.Steering.LookToMovingDirection();
-
-            if (tryMoveTimer < Time.time)
+            try
             {
-                BotContainerData containerData = ContainerCache.updateNavigationAttempts(
-                    botOwner.Id
-                );
+                botOwner.Steering.LookToMovingDirection();
 
-                // If the bot has not been stuck for more than 4 navigation checks, attempt to navigate to the container otherwise ignore the container forever
-                if (containerData.stuckCount <= 4)
+                if (tryMoveTimer < Time.time)
                 {
-                    tryMoveTimer = Time.time + 8f;
+                    BotContainerData containerData = ContainerCache.updateNavigationAttempts(
+                        botOwner.Id
+                    );
 
-                    NavMeshHit navMeshAlignedPoint;
-                    Vector3 position = container.transform.position;
-                    Vector3 vector = GClass780.NormalizeFastSelf(position - botOwner.Position);
-
-                    // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
-                    Vector3 pointNearbyContainer = NavMesh.SamplePosition(
-                        position,
-                        out navMeshAlignedPoint,
-                        1,
-                        NavMesh.AllAreas
-                    )
-                        ? navMeshAlignedPoint.position
-                        : position - vector;
-
-                    // Debug for bot container navigation
-                    if (LootingBots.debugContainerNav.Value)
+                    // If the bot has not been stuck for more than 4 navigation checks, attempt to navigate to the container otherwise ignore the container forever
+                    if (containerData.stuckCount <= 4)
                     {
-                        GameObjectHelper.drawSphere(position, 0.5f, Color.red);
-                        GameObjectHelper.drawSphere(position - vector, 0.5f, Color.green);
-                        GameObjectHelper.drawSphere(pointNearbyContainer, 0.5f, Color.blue);
+                        tryMoveTimer = Time.time + 6f;
+
+                        NavMeshHit navMeshAlignedPoint;
+                        Vector3 center = containerData.containerCenter;
+
+                        // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
+                        Vector3 pointNearbyContainer = NavMesh.SamplePosition(
+                            center,
+                            out navMeshAlignedPoint,
+                            1f,
+                            NavMesh.AllAreas
+                        )
+                            ? navMeshAlignedPoint.position
+                            : Vector3.zero;
+
+                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the container and causes the bot to shake violently while looting.
+                        // Add a small amount of padding by pushing the point away from the nearbyPoint
+                        Vector3 padding = center - pointNearbyContainer;
+                        padding.y = 0;
+                        padding.Normalize();
+
+                        // Make sure the point is still snapped to the NavMesh after its been pushed
+                        pointNearbyContainer = NavMesh.SamplePosition(
+                            center - padding,
+                            out navMeshAlignedPoint,
+                            1f,
+                            navMeshAlignedPoint.mask
+                        )
+                            ? navMeshAlignedPoint.position
+                            : pointNearbyContainer;
+
+                        // Debug for bot container navigation
+                        if (LootingBots.debugContainerNav.Value)
+                        {
+                            GameObjectHelper.drawSphere(
+                                container.transform.position,
+                                0.5f,
+                                Color.red
+                            );
+                            GameObjectHelper.drawSphere(center - padding, 0.5f, Color.green);
+                            if (pointNearbyContainer != Vector3.zero)
+                            {
+                                GameObjectHelper.drawSphere(pointNearbyContainer, 0.5f, Color.blue);
+                            }
+                            GameObjectHelper.drawSphere(center, 0.5f, Color.black);
+                        }
+
+                        // If we were able to snap the container position to a NavMesh, attempt to navigate
+                        if (pointNearbyContainer != Vector3.zero)
+                        {
+                            NavMeshPathStatus pathStatus = botOwner.GoToPoint(
+                                pointNearbyContainer,
+                                true,
+                                -1f,
+                                false,
+                                false,
+                                true
+                            );
+
+                            LootingBots.log.logDebug(
+                                $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner.Id} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
+                            );
+
+                            if (pathStatus != NavMeshPathStatus.PathComplete)
+                            {
+                                LootingBots.log.logWarning(
+                                    $"No valid path for container: {container.name}. Ignoring"
+                                );
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            LootingBots.log.logWarning(
+                                $"Unable to snap container position to NavMesh. Ignoring container {container.name}"
+                            );
+                            return false;
+                        }
                     }
-
-                    NavMeshPathStatus pathStatus = botOwner.GoToPoint(
-                        pointNearbyContainer,
-                        true,
-                        -1f,
-                        false,
-                        false,
-                        true
-                    );
-
-                    LootingBots.log.logDebug(
-                        $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner.Id} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
-                    );
-
-                    // If there is not a valid path to the container, ignore the container forever
-                    if (pathStatus != NavMeshPathStatus.PathComplete)
+                    else
                     {
                         LootingBots.log.logWarning(
-                            $"No valid path for container: {container.name}. Temporarily ignored"
+                            $"Maximum navigation attempts exceeded for: {container.name}.Ignoring"
                         );
-                        ContainerCache.cleanup(
-                            ref botOwner,
-                            container,
-                            ref ShallLoot,
-                            ref hasLooted
-                        );
-                        ContainerCache.addNonNavigableContainer(botOwner.Id, container.Id);
+                        return false;
                     }
                 }
-                else
-                {
-                    LootingBots.log.logWarning(
-                        $"Maximum navigation attempts exceeded for: {container.name}. Temporarily ignored"
-                    );
-                    ContainerCache.cleanup(ref botOwner, container, ref ShallLoot, ref hasLooted);
-                    ContainerCache.addNonNavigableContainer(botOwner.Id, container.Id);
-                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                LootingBots.log.logError(e.Message);
+                LootingBots.log.logError(e.StackTrace);
+                return false;
             }
         }
 
@@ -402,7 +462,7 @@ namespace LootingBots.Patch
             BotContainerData botContainerData = ContainerCache.getContainerData(botOwner.Id);
 
             botContainerData.waitAfterLooting =
-                Time.time + LootingBots.timeToWaitBetweenContainers.Value;
+                Time.time + LootingBots.timeToWaitBetweenContainers.Value + TimeToLoot;
 
             ContainerCache.setContainerData(botOwner.Id, botContainerData);
         }
@@ -458,6 +518,7 @@ namespace LootingBots.Patch
                 }
 
                 LootableContainer closestContainer = null;
+                Vector3 closesContainerCenter = new Vector3();
                 float shortestDist = -1f;
 
                 // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
@@ -477,6 +538,8 @@ namespace LootingBots.Patch
                     if (
                         containerObj != null
                         && !ContainerCache.isContainerIgnored(___botOwner_0.Id, containerObj.Id)
+                        && containerObj.isActiveAndEnabled
+                        && containerObj.DoorState != EDoorState.Locked
                     )
                     {
                         // If we havent already visted the container, calculate its distance and save the container with the smallest distance
@@ -492,6 +555,10 @@ namespace LootingBots.Patch
                         {
                             shortestDist = dist;
                             closestContainer = containerObj;
+                            closesContainerCenter = collider.bounds.center;
+                            // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
+                            closesContainerCenter.y =
+                                collider.bounds.center.y - collider.bounds.extents.y - 0.3f;
                         }
                     }
                 }
@@ -503,6 +570,7 @@ namespace LootingBots.Patch
                     );
                     // Add closest container found to container map
                     botContainerData.activeContainer = closestContainer;
+                    botContainerData.containerCenter = closesContainerCenter;
 
                     ContainerCache.setContainerData(___botOwner_0.Id, botContainerData);
 
