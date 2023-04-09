@@ -19,7 +19,7 @@ namespace LootingBots.Patch.Util
 
         public void init()
         {
-            this.log = LootingBots.log;
+            this.log = LootingBots.lootLog;
 
             if (LootingBots.useMarketPrices.Value)
             {

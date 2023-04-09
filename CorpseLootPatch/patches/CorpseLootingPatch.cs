@@ -41,7 +41,7 @@ namespace LootingBots.Patch
 
         public CorpseLootingPatch()
         {
-            log = LootingBots.log;
+            log = LootingBots.lootLog;
             itemAppraiser = LootingBots.itemAppraiser;
         }
 

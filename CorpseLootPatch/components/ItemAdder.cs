@@ -44,7 +44,7 @@ namespace LootingBots.Patch.Util
         {
             try
             {
-                this.log = LootingBots.log;
+                this.log = LootingBots.lootLog;
                 itemAppraiser = LootingBots.itemAppraiser;
 
                 // Initialize bot inventory controller

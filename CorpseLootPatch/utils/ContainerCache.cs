@@ -141,7 +141,7 @@ namespace LootingBots.Patch.Util
             }
             catch (Exception e)
             {
-                LootingBots.log.logError(e.StackTrace);
+                LootingBots.lootLog.logError(e.StackTrace);
             }
         }
     }

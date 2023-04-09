@@ -22,16 +22,19 @@ namespace LootingBots
         public static ConfigEntry<float> timeToWaitBetweenContainers;
         public static ConfigEntry<float> detectContainerDistance;
         public static ConfigEntry<bool> debugContainerNav;
+        public static ConfigEntry<LogUtils.LogLevel> containerLogLevels;
+
+        public static Log containerLog;
 
         // Corpse Looting
-        public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
+        public static ConfigEntry<LogUtils.LogLevel> corpseLogLevels;
         public static ConfigEntry<float> bodySeeDist;
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
         public static ConfigEntry<bool> useMarketPrices;
         public static ConfigEntry<bool> valueFromMods;
         public static ConfigEntry<BotType> lootingEnabledBots;
-        public static Log log;
+        public static Log lootLog;
         public static ItemAppraiser itemAppraiser = new ItemAppraiser();
 
         public void ContainerLootSettings()
@@ -43,7 +46,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enable looting of containers for bots on patrols that stop in front of lootable containers",
                     null,
-                    new ConfigurationManagerAttributes { Order = 4 }
+                    new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
             dynamicContainerLootingEnabled = Config.Bind(
@@ -53,7 +56,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting",
                     null,
-                    new ConfigurationManagerAttributes { Order = 3 }
+                    new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
             timeToWaitBetweenContainers = Config.Bind(
@@ -63,7 +66,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "The amount of time the bot will wait after looting a container before trying to find the next nearest contianer",
                     null,
-                    new ConfigurationManagerAttributes { Order = 2 }
+                    new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
             detectContainerDistance = Config.Bind(
@@ -72,6 +75,16 @@ namespace LootingBots
                 25f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
+            containerLogLevels = Config.Bind<LogUtils.LogLevel>(
+                "Container Looting",
+                "Log Levels",
+                LogUtils.LogLevel.Error,
+                new ConfigDescription(
+                    "Enable different levels of log messages to show in the logs",
                     null,
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
@@ -130,7 +143,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            enabledLogLevels = Config.Bind<LogUtils.LogLevel>(
+            corpseLogLevels = Config.Bind<LogUtils.LogLevel>(
                 "Corpse Looting",
                 "Log Levels",
                 LogUtils.LogLevel.Error,
@@ -172,7 +185,8 @@ namespace LootingBots
             CorpseLootSettings();
             WeaponLootSettings();
 
-            log = new Log(Logger);
+            lootLog = new Log(Logger, corpseLogLevels);
+            containerLog = new Log(Logger, containerLogLevels);
 
             new ContainerLooting().Enable();
             new CorpseLootSettingsPatch().Enable();
@@ -192,7 +206,7 @@ namespace LootingBots
                 && shoultInitAppraiser
             )
             {
-                log.logWarning($"Initializing item appraiser");
+                lootLog.logWarning($"Initializing item appraiser");
                 itemAppraiser.init();
             }
         }

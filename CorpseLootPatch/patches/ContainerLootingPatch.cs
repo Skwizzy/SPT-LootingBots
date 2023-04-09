@@ -39,7 +39,7 @@ namespace LootingBots.Patch
             }
             catch (Exception e)
             {
-                LootingBots.log.logError(e.StackTrace);
+                LootingBots.containerLog.logError(e.StackTrace);
             }
         }
     }
@@ -108,7 +108,7 @@ namespace LootingBots.Patch
             // If we have just looted a container, and the wait timer is finished cleanup the container from the map
             if (DoneLootingTimer)
             {
-                LootingBots.log.logWarning(
+                LootingBots.containerLog.logWarning(
                     $"Removing successfully looted container: {container.name} ({container.Id})"
                 );
                 ContainerCache.cleanup(ref botOwner, container, ref shallLoot, ref hasLooted);
@@ -116,7 +116,7 @@ namespace LootingBots.Patch
                 return;
             }
 
-            // TODO: Remove container if bot navigates too far away during patrol
+            // TODO: Not sure if needed. Remove container if bot navigates too far away during patrol
             // if (float_3 < Time.time)
             // {
             // 	float_3 = Time.time + 3f;
@@ -233,8 +233,8 @@ namespace LootingBots.Patch
 
             if (changeInDist < 1)
             {
-                LootingBots.log.logError(
-                    $"Bot {botOwner.Id} has not moved {changeInDist}. Container position: {container.transform.position.ToJson()}. Dist from container: {dist}"
+                LootingBots.containerLog.logError(
+                    $"(Stuck: {botContainerData.stuckCount}) Bot {botOwner.Id} has not moved {changeInDist}. Dist from container: {dist}"
                 );
 
                 // Check for door with 1f sphere. TODO: Change to Ray
@@ -252,7 +252,7 @@ namespace LootingBots.Patch
 
                     if (door?.DoorState == EDoorState.Shut)
                     {
-                        LootingBots.log.logDebug("Opening door");
+                        LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Opening door");
                         GClass2596 interactionResult = new GClass2596(EInteractionType.Open);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
@@ -264,7 +264,7 @@ namespace LootingBots.Patch
                     }
                     else if (door?.DoorState == EDoorState.Open)
                     {
-                        LootingBots.log.logDebug("Closing door");
+                        LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Closing door");
                         GClass2596 interactionResult = new GClass2596(EInteractionType.Close);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
@@ -309,7 +309,7 @@ namespace LootingBots.Patch
                 float y = vector.y;
                 vector.y = 0f;
                 dist = containerDist = vector.magnitude;
-                isCloseEnough = (containerDist < 1.5f && Mathf.Abs(y) < 1.3f);
+                isCloseEnough = (containerDist < 1.6f && Mathf.Abs(y) < 1.3f);
 
                 // If the bot is not looting anything, check to see if the bot is stuck on a door and open it
                 if (!hasLooted)
@@ -409,30 +409,30 @@ namespace LootingBots.Patch
                                 true
                             );
 
-                            LootingBots.log.logDebug(
+                            LootingBots.containerLog.logDebug(
                                 $"(Attempt: {containerData.navigationAttempts}) Bot {botOwner.Id} Moving to {container.ItemOwner.Items.ToArray()[0].Name.Localized()} status: {pathStatus}"
                             );
 
                             if (pathStatus != NavMeshPathStatus.PathComplete)
                             {
-                                LootingBots.log.logWarning(
-                                    $"No valid path for container: {container.name}. Ignoring"
+                                LootingBots.containerLog.logWarning(
+                                    $"Bot {botOwner.Id} has no valid path for container: {container.name}. Ignoring"
                                 );
                                 return false;
                             }
                         }
                         else
                         {
-                            LootingBots.log.logWarning(
-                                $"Unable to snap container position to NavMesh. Ignoring container {container.name}"
+                            LootingBots.containerLog.logWarning(
+                                $"Bot {botOwner.Id} unable to snap container position to NavMesh. Ignoring container {container.name}"
                             );
                             return false;
                         }
                     }
                     else
                     {
-                        LootingBots.log.logWarning(
-                            $"Maximum navigation attempts exceeded for: {container.name}.Ignoring"
+                        LootingBots.containerLog.logWarning(
+                            $"Bot {botOwner.Id} maximum navigation attempts exceeded for: {container.name}.Ignoring"
                         );
                         return false;
                     }
@@ -442,8 +442,8 @@ namespace LootingBots.Patch
             }
             catch (Exception e)
             {
-                LootingBots.log.logError(e.Message);
-                LootingBots.log.logError(e.StackTrace);
+                LootingBots.containerLog.logError(e.Message);
+                LootingBots.containerLog.logError(e.StackTrace);
                 return false;
             }
         }
@@ -452,7 +452,7 @@ namespace LootingBots.Patch
         {
             ItemAdder itemAdder = new ItemAdder(botOwner);
             Item item = container.ItemOwner.Items.ToArray()[0];
-            LootingBots.log.logDebug($"Trying to add items from: {item.Name.Localized()}");
+            LootingBots.containerLog.logDebug($"Bot {botOwner.Id} trying to add items from: {item.Name.Localized()}");
 
             await itemAdder.lootNestedItems(item);
             botOwner.WeaponManager.Selector.TakeMainWeapon();
@@ -508,7 +508,7 @@ namespace LootingBots.Patch
                 // If we have an active container already do not scan
                 if (botContainerData?.activeContainer)
                 {
-                    LootingBots.log.logWarning(
+                    LootingBots.containerLog.logWarning(
                         $"Bot {___botOwner_0.Id} existing container: {botContainerData.activeContainer.name}"
                     );
                     // Set ShallLoot to true
@@ -564,7 +564,7 @@ namespace LootingBots.Patch
 
                 if (closestContainer != null)
                 {
-                    LootingBots.log.logDebug(
+                    LootingBots.containerLog.logDebug(
                         $"Clostest container: {closestContainer.name.Localized()} ({closestContainer.Id})"
                     );
                     // Add closest container found to container map
