@@ -31,7 +31,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 
 ## Mod Settings (F12)
 **Container Looting**
-- `Enable reserve patrols` - Enables looting of containers for bots on patrols that stop in front of lootable containers (reserve patrols)
+- `Enable reserve patrols` - Enables looting of containers for bots on patrols that stop in front of lootable containers (reserve patrols). Not needed if using dynamic looting.
 - `Enable dynamic looting` - Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting. 
 - `Dynamic Looting: Dynamic looting: Delay between containers` - The amount of time the bot will wait after looting a container before trying to find the next nearest contianer
 - `Dynamic looting: Detect container distance` - Distance (in meters) a bot is able to detect a container
