@@ -42,7 +42,7 @@ namespace LootingBots
             containerLootingEnabled = Config.Bind(
                 "Container Looting",
                 "Enable reserve patrols",
-                true,
+                false,
                 new ConfigDescription(
                     "Enable looting of containers for bots on patrols that stop in front of lootable containers",
                     null,
