@@ -5,20 +5,22 @@ namespace LootingBots.Patch.Util
     public class Log
     {
         public BepInEx.Logging.ManualLogSource Logger;
+        public BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels;
 
-        public Log(BepInEx.Logging.ManualLogSource Logger)
+        public Log(BepInEx.Logging.ManualLogSource Logger, BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels)
         {
             this.Logger = Logger;
+            this.logLevels = logLevels;
         }
 
         public bool isDebug()
         {
-            return LootingBots.enabledLogLevels.Value.hasDebug();
+            return logLevels.Value.hasDebug();
         }
 
         public void logDebug(object data)
         {
-            if (LootingBots.enabledLogLevels.Value.hasDebug())
+            if (logLevels.Value.hasDebug())
             {
                 Logger.LogDebug(data);
             }
@@ -26,7 +28,7 @@ namespace LootingBots.Patch.Util
 
         public void logWarning(object data)
         {
-            if (LootingBots.enabledLogLevels.Value.hasWarning())
+            if (logLevels.Value.hasWarning())
             {
                 Logger.LogWarning(data);
             }
@@ -34,7 +36,7 @@ namespace LootingBots.Patch.Util
 
         public void logError(object data)
         {
-            if (LootingBots.enabledLogLevels.Value.hasError())
+            if (logLevels.Value.hasError())
             {
                 Logger.LogError(data);
             }

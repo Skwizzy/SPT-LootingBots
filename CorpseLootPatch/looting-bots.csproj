@@ -72,14 +72,18 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\3.5.3\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.5.3\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
+    <Reference Include="UnityEngine.AIModule" HintPath="..\Shared\Managed\UnityEngine.AIModule.dll" Private="False" />
+
+
   </ItemGroup>
   
   <ItemGroup>
     <Compile Include="LootingBotsController.cs" />
-    <Compile Include="LootingBotsPatch.cs" />
-    <Compile Include="CorpseLootSettingsPatch.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
+    <Compile Include="components\*.cs" />
+    <Compile Include="patches\*.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -91,8 +95,8 @@ ping -n  2 127.0.0.1 &gt;NUL
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>
-      copy "$(TargetPath)" "C:\Users\Defective Robot\Desktop\SPT\3.5.3\BepInEx\plugins\skwizzy.LootingBots.dll"
-      copy "$(TargetPath)" "C:\Users\Defective Robot\Desktop\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "M:\SPT\3.5.3\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "M:\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
     </PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -16,37 +16,92 @@ namespace LootingBots
         private const String MOD_NAME = "LootingBots";
         private const String MOD_VERSION = "1.0.1";
 
-        public static ConfigEntry<LogUtils.LogLevel> enabledLogLevels;
+        // Container Looting
+        public static ConfigEntry<bool> containerLootingEnabled;
+        public static ConfigEntry<BotType> dynamicContainerLootingEnabled;
+        public static ConfigEntry<float> timeToWaitBetweenContainers;
+        public static ConfigEntry<float> detectContainerDistance;
+        public static ConfigEntry<bool> debugContainerNav;
+        public static ConfigEntry<LogUtils.LogLevel> containerLogLevels;
 
-        public static ConfigEntry<bool> pmcLootingEnabled;
+        public static Log containerLog;
+
+        // Corpse Looting
+        public static ConfigEntry<LogUtils.LogLevel> corpseLogLevels;
         public static ConfigEntry<float> bodySeeDist;
         public static ConfigEntry<float> bodyLeaveDist;
         public static ConfigEntry<float> bodyLookPeriod;
         public static ConfigEntry<bool> useMarketPrices;
         public static ConfigEntry<bool> valueFromMods;
         public static ConfigEntry<BotType> lootingEnabledBots;
-        public static Log log;
+        public static Log lootLog;
         public static ItemAppraiser itemAppraiser = new ItemAppraiser();
 
-        public void Update()
+        public void ContainerLootSettings()
         {
-            bool shoultInitAppraiser =
-                (!useMarketPrices.Value && itemAppraiser.handbookData == null)
-                || (useMarketPrices.Value && !itemAppraiser.marketInitialized);
-
-            // Initialize the itemAppraiser when the BE instance comes online
-            if (
-                Singleton<ClientApplication<ISession>>.Instance != null
-                && Singleton<GClass2529>.Instance != null
-                && shoultInitAppraiser
-            )
-            {
-                log.logWarning($"Initializing item appraiser");
-                itemAppraiser.init();
-            }
+            containerLootingEnabled = Config.Bind(
+                "Container Looting",
+                "Enable reserve patrols",
+                false,
+                new ConfigDescription(
+                    "Enable looting of containers for bots on patrols that stop in front of lootable containers",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 5 }
+                )
+            );
+            dynamicContainerLootingEnabled = Config.Bind(
+                "Container Looting",
+                "Enable dynamic looting",
+                BotType.All,
+                new ConfigDescription(
+                    "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }
+                )
+            );
+            timeToWaitBetweenContainers = Config.Bind(
+                "Container Looting",
+                "Dynamic looting: Delay between containers",
+                45f,
+                new ConfigDescription(
+                    "The amount of time the bot will wait after looting a container before trying to find the next nearest contianer",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
+            );
+            detectContainerDistance = Config.Bind(
+                "Container Looting",
+                "Dynamic looting: Detect container distance",
+                25f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a container",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
+            containerLogLevels = Config.Bind<LogUtils.LogLevel>(
+                "Container Looting",
+                "Log Levels",
+                LogUtils.LogLevel.Error,
+                new ConfigDescription(
+                    "Enable different levels of log messages to show in the logs",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            debugContainerNav = Config.Bind(
+                "Container Looting",
+                "Debug: Show navigation points",
+                false,
+                new ConfigDescription(
+                    "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 0 }
+                )
+            );
         }
 
-        public void Awake()
+        public void CorpseLootSettings()
         {
             lootingEnabledBots = Config.Bind(
                 "Corpse Looting",
@@ -88,7 +143,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            enabledLogLevels = Config.Bind<LogUtils.LogLevel>(
+            corpseLogLevels = Config.Bind<LogUtils.LogLevel>(
                 "Corpse Looting",
                 "Log Levels",
                 LogUtils.LogLevel.Error,
@@ -98,7 +153,10 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
+        }
 
+        public void WeaponLootSettings()
+        {
             useMarketPrices = Config.Bind(
                 "Weapon Looting",
                 "Use flea market prices",
@@ -119,10 +177,38 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
             );
+        }
 
-            log = new Log(Logger);
+        public void Awake()
+        {
+            ContainerLootSettings();
+            CorpseLootSettings();
+            WeaponLootSettings();
+
+            lootLog = new Log(Logger, corpseLogLevels);
+            containerLog = new Log(Logger, containerLogLevels);
+
+            new ContainerLooting().Enable();
             new CorpseLootSettingsPatch().Enable();
-            new LootCorpsePatch().Enable();
+            new CorpseLootingPatch().Enable();
+        }
+
+        public void Update()
+        {
+            bool shoultInitAppraiser =
+                (!useMarketPrices.Value && itemAppraiser.handbookData == null)
+                || (useMarketPrices.Value && !itemAppraiser.marketInitialized);
+
+            // Initialize the itemAppraiser when the BE instance comes online
+            if (
+                Singleton<ClientApplication<ISession>>.Instance != null
+                && Singleton<GClass2529>.Instance != null
+                && shoultInitAppraiser
+            )
+            {
+                lootLog.logWarning($"Initializing item appraiser");
+                itemAppraiser.init();
+            }
         }
     }
 }

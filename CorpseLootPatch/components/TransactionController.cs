@@ -80,7 +80,7 @@ namespace LootingBots.Patch.Util
                 $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()}";
 
             // Check to see if we can equip the item
-            GClass2419 ableToEquip = inventoryController.FindSlotToPickUp(item);
+            var ableToEquip = inventoryController.FindSlotToPickUp(item);
             if (ableToEquip != null)
             {
                 log.logWarning(
@@ -101,7 +101,7 @@ namespace LootingBots.Patch.Util
         {
             string botName =
                 $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()}";
-            GClass2421 ableToPickUp = inventoryController.FindGridToPickUp(
+            var ableToPickUp = inventoryController.FindGridToPickUp(
                 item,
                 inventoryController
             );
@@ -132,7 +132,7 @@ namespace LootingBots.Patch.Util
             try
             {
                 log.logDebug($"Moving item to: {moveAction.place.GetRootItem().Name.Localized()}");
-                GStruct321 value = GClass2426.Move(
+                var value = GClass2426.Move(
                     moveAction.toMove,
                     moveAction.place,
                     inventoryController,
