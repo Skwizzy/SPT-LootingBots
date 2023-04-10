@@ -3,6 +3,8 @@ import { DependencyContainer } from "tsyringe";
 import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import { Difficulty } from "@spt-aki/models/eft/common/tables/IBotType";
+import modSettings from 'config/settings.json';
 
 class DisableDiscardLimits implements IPostDBLoadMod {
   public postDBLoad(container: DependencyContainer): void {
