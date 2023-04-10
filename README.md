@@ -17,6 +17,8 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - When a bot goes to loot the primary weapon of a corpse they now attempt to loot everything from the corpse, equipping things in empty slots and swapping out gear for better gear.
   - If a bot cannot equip a piece of gear, they will attempt to place it in their inventory
   - Bots are now able to treat nearby containers similar to how they treat corpses and attempt to loot the items from the container
+    - Not all containers are navigable, relies heavily on the availablity of a nearby NavMesh that bots can use to navigate
+    - If a container is behind a door, bots will open the door if unlocked. Bots can also close doors if they are stuck on an open door.
 
 **Gear Swap Critria** 
 - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
@@ -29,7 +31,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 
 ## Mod Settings (F12)
 **Container Looting**
-- `Enable reserve patrols` - Enables looting of containers for bots on patrols that stop in front of lootable containers (reserve patrols)
+- `Enable reserve patrols` - Enables looting of containers for bots on patrols that stop in front of lootable containers (reserve patrols). Not needed if using dynamic looting.
 - `Enable dynamic looting` - Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting. 
 - `Dynamic Looting: Dynamic looting: Delay between containers` - The amount of time the bot will wait after looting a container before trying to find the next nearest contianer
 - `Dynamic looting: Detect container distance` - Distance (in meters) a bot is able to detect a container
@@ -38,7 +40,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Enable looting` - Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid. Defaults to `all`
 - `Distance to see body` - Distance in meters to body until it can be "seen" by a bot
 - `Distance to forget body` - Distance in meters from a body until its "forgotten" by a bot
-- `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Waring - Changing lower than 8 seconds may result in issues
+- `Looting time (*)` - Time in seconds the bot will stand over a corpse. *Warning - Changing lower than 8 seconds may result in issues
 - `Log Levels` - Enable different levels of log messages to show in the logs
 
 **Weapon Loot Settings**
@@ -77,9 +79,5 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 - `user/mods/Skwizzy-NoDiscardLimits-1.0.0` - Small server plugin that sets DiscardLimitsEnabled to false in the server/globals/config. Fixes issues with PMC bots throwing exceptions when discarding items with DiscardLimits (this is the EFT live RMT protection logic)
 
 ## Install instructions
-Simply extract the contents of the .rar file into your SPT directory.
-
-## Unknowns:
-- Sometimes bots will not loot corpses even after a large amount of time has passed. Need to investigate the base EFT logic and see if I can improve this check
-- Do bots despawn after a certain amount of time has passed? Could be problematic if bots with loot randomly disappear mid raid
+Simply extract the contents of the .zip file into your SPT directory.
     
