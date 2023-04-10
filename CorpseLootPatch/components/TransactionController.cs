@@ -132,7 +132,7 @@ namespace LootingBots.Patch.Util
             try
             {
                 log.logDebug($"Moving item to: {moveAction.place.GetRootItem().Name.Localized()}");
-                var value = GClass2426.Move(
+                var value = GClass2429.Move(
                     moveAction.toMove,
                     moveAction.place,
                     inventoryController,

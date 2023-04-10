@@ -48,7 +48,7 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass325).GetMethod(
+            return typeof(GClass326).GetMethod(
                 "UpdateCheck",
                 BindingFlags.Public | BindingFlags.Instance
             );
@@ -56,9 +56,9 @@ namespace LootingBots.Patch
 
         [PatchPrefix]
         private static bool PatchPrefix(
-            ref GClass325 __instance,
+            ref GClass326 __instance,
             ref BotOwner ___botOwner_0,
-            ref GClass263 ___gclass263_0,
+            ref GClass264 ___gclass264_0,
             ref float ___float_5,
             ref bool ___bool_1,
             ref bool ___bool_2
@@ -75,7 +75,7 @@ namespace LootingBots.Patch
                     ___botOwner_0.Profile.Info.Settings.Role
                 )
                 || !botContainerData?.activeContainer
-                || ___gclass263_0 != null
+                || ___gclass264_0 != null
             )
             {
                 return true;
@@ -96,7 +96,7 @@ namespace LootingBots.Patch
             return true;
         }
 
-        // Original function is GClass325.method_2
+        // Original function is GClass326.method_2
         public static void checkContainerStatus(
             bool DoneLootingTimer, // Boolean_0
             ref BotOwner botOwner, // botOwner_0
@@ -136,7 +136,7 @@ namespace LootingBots.Patch
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass325).GetMethod(
+            return typeof(GClass326).GetMethod(
                 "ManualUpdate",
                 BindingFlags.Public | BindingFlags.Instance
             );
@@ -145,7 +145,7 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static bool PatchPrefix(
             ref BotOwner ___botOwner_0,
-            ref GClass263 ___gclass263_0,
+            ref GClass264 ___gclass264_0,
             ref float ___float_0,
             ref float ___float_4,
             ref float ___float_1,
@@ -163,7 +163,7 @@ namespace LootingBots.Patch
                     ___botOwner_0.Profile.Info.Settings.Role
                 )
                 || !botContainerData?.activeContainer
-                || ___gclass263_0 != null
+                || ___gclass264_0 != null
             )
             {
                 return true;
@@ -253,7 +253,7 @@ namespace LootingBots.Patch
                     if (door?.DoorState == EDoorState.Shut)
                     {
                         LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Opening door");
-                        GClass2596 interactionResult = new GClass2596(EInteractionType.Open);
+                        GClass2599 interactionResult = new GClass2599(EInteractionType.Open);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
                             door,
@@ -265,7 +265,7 @@ namespace LootingBots.Patch
                     else if (door?.DoorState == EDoorState.Open)
                     {
                         LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Closing door");
-                        GClass2596 interactionResult = new GClass2596(EInteractionType.Close);
+                        GClass2599 interactionResult = new GClass2599(EInteractionType.Close);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
                             door,
@@ -290,7 +290,7 @@ namespace LootingBots.Patch
             return false;
         }
 
-        // Original function GClass325.method_1
+        // Original function GClass326.method_1
         private static bool isCloseEnough(
             ref float closeEnoughTimer, // float_0
             ref float containerDist, // float_4
@@ -328,7 +328,7 @@ namespace LootingBots.Patch
             return isCloseEnough;
         }
 
-        // Orignal function is GClass325.method_10
+        // Orignal function is GClass326.method_10
         private static bool tryMoveToContainer(
             ref BotOwner botOwner, // botOwner_0
             ref float tryMoveTimer, // float_1
@@ -471,7 +471,7 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass325).GetMethod(
+            return typeof(GClass326).GetMethod(
                 "method_3",
                 BindingFlags.NonPublic | BindingFlags.Instance
             );
@@ -479,10 +479,10 @@ namespace LootingBots.Patch
 
         [PatchPrefix]
         private static void PatchPrefix(
-            ref GClass325 __instance,
+            ref GClass326 __instance,
             ref BotOwner ___botOwner_0,
             ref float ___float_2,
-            ref GClass263 ___gclass263_0,
+            ref GClass264 ___gclass264_0,
             ref bool ___bool_2
         )
         {
@@ -502,7 +502,7 @@ namespace LootingBots.Patch
             if (
                 botContainerData.waitAfterLooting < Time.time
                 && ___float_2 < Time.time
-                && ___gclass263_0 == null
+                && ___gclass264_0 == null
             )
             {
                 // If we have an active container already do not scan

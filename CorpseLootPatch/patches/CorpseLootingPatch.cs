@@ -48,14 +48,14 @@ namespace LootingBots.Patch
         protected override MethodBase GetTargetMethod()
         {
             // GClass325 => BotOwner.DeadBodyWork
-            return typeof(GClass325).GetMethod(
+            return typeof(GClass326).GetMethod(
                 "method_6",
                 BindingFlags.NonPublic | BindingFlags.Instance
             );
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(ref BotOwner ___botOwner_0, ref GClass263 ___gclass263_0)
+        private static bool PatchPrefix(ref BotOwner ___botOwner_0, ref GClass264 ___gclass264_0)
         {
             // If the bot does not have looting enabled, do not override the method
             if (
@@ -71,7 +71,7 @@ namespace LootingBots.Patch
 
             try
             {
-                lootCorpse(___gclass263_0);
+                lootCorpse(___gclass264_0);
                 return false;
             }
             catch (Exception e)
@@ -81,12 +81,12 @@ namespace LootingBots.Patch
             return true;
         }
 
-        public static async void lootCorpse(GClass263 ___gclass263_0)
+        public static async void lootCorpse(GClass264 ___gclass264_0)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
             // Initialize corpse inventory controller
-            Player corpse = ___gclass263_0.Player;
+            Player corpse = ___gclass264_0.Player;
             Type corpseType = corpse.GetType();
             FieldInfo corpseInventory = corpseType.BaseType.GetField(
                 "_inventoryController",
