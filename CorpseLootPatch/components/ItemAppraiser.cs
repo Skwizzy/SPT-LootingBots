@@ -1,8 +1,5 @@
 using EFT.InventoryLogic;
-using System.Threading.Tasks;
 using Comfort.Common;
-using System;
-using EFT.UI.Ragfair;
 using EFT;
 using System.Linq;
 using System.Collections.Generic;
@@ -38,7 +35,7 @@ namespace LootingBots.Patch.Util
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                handbookData = Singleton<GClass2529>.Instance.Items.ToDictionary((item) => item.Id);
+                handbookData = Singleton<GClass2532>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 
