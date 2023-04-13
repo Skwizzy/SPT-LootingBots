@@ -247,7 +247,7 @@ namespace LootingBots.Patch
 
             if (changeInDist < 1)
             {
-                LootingBots.containerLog.logError(
+                LootingBots.containerLog.logDebug(
                     $"(Stuck: {botContainerData.stuckCount}) Bot {botOwner.Id} has not moved {changeInDist}. Dist from container: {dist}"
                 );
 
