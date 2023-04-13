@@ -6,7 +6,7 @@
   "scripts": {
       "build": "npm run build:server && npm run build:client",
       "build:server": "cd ./NoDiscardLimit && npm run build",
-      "build:client": "cd ./CorpseLootPatch && dotnet build"
+      "build:client": "cd ./LootingBots && dotnet build"
   },
   "devDependencies": {
       "@types/node": "^16.18.18",

@@ -73,7 +73,7 @@
       <HintPath>..\..\..\3.5.5\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.5.5\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
-    <Reference Include="UnityEngine.AIModule" HintPath="..\Shared\Managed\UnityEngine.AIModule.dll" Private="False" />
+    <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.5.5\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
 
 
   </ItemGroup>
@@ -95,8 +95,8 @@ ping -n  2 127.0.0.1 &gt;NUL
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>
-      copy "$(TargetPath)" "M:\SPT\3.5.5\BepInEx\plugins\skwizzy.LootingBots.dll"
-      copy "$(TargetPath)" "M:\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "C:\SPT\3.5.5\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "C:\SPT\My Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
     </PostBuildEvent>
   </PropertyGroup>
 </Project>

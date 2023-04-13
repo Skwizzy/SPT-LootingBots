@@ -132,6 +132,7 @@ namespace LootingBots.Patch.Util
                 botContainerData.activeContainer = null;
                 botContainerData.containerCenter = new Vector3();
                 botContainerData.dist = 0;
+                botContainerData.stuckCount = 0;
                 activeContainerCache.Remove(container.Id);
 
                 setContainerData(botOwner.Id, botContainerData);

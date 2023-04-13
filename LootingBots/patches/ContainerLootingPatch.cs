@@ -32,6 +32,7 @@ namespace LootingBots.Patch
         {
             try
             {
+                new CleanCacheOnDeadPatch().Enable();
                 new ReservePatrolContainerPatch().Enable();
                 new FindNearestContainerPatch().Enable();
                 new ContainerManualUpdatePatch().Enable();
@@ -41,6 +42,19 @@ namespace LootingBots.Patch
             {
                 LootingBots.containerLog.logError(e.StackTrace);
             }
+        }
+    }
+
+    public class CleanCacheOnDeadPatch : ModulePatch {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player).GetMethod("OnDead", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+        }
+
+        [PatchPrefix]
+        private static void PatchPrefix(ref Player __instance) {
+            LootingBots.containerLog.logDebug($"Bot {__instance.Id} is dead. Removing bot data from container cache.");
+            ContainerCache.botDataCache.Remove(__instance.Id);
         }
     }
 
@@ -441,7 +455,7 @@ namespace LootingBots.Patch
                 return true;
             }
             catch (Exception e)
-            {
+            { 
                 LootingBots.containerLog.logError(e.Message);
                 LootingBots.containerLog.logError(e.StackTrace);
                 return false;
@@ -454,7 +468,12 @@ namespace LootingBots.Patch
             Item item = container.ItemOwner.Items.ToArray()[0];
             LootingBots.containerLog.logDebug($"Bot {botOwner.Id} trying to add items from: {item.Name.Localized()}");
 
+            // Trigger open interaction on container
+            botOwner.LootOpener.Interact(container, EInteractionType.Open);
             await itemAdder.lootNestedItems(item);
+            
+            // Close container and switch to main weapon
+            botOwner.LootOpener.Interact(container, EInteractionType.Close);
             botOwner.WeaponManager.Selector.TakeMainWeapon();
 
             // Increment loot wait timer in BotContainerData
