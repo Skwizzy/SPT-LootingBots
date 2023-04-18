@@ -1,10 +1,11 @@
 using BepInEx;
 using BepInEx.Configuration;
 using System;
-using LootingBots.Patch;
-using LootingBots.Patch.Util;
 using Comfort.Common;
 using EFT;
+using LootingBots.Patch;
+using LootingBots.Patch.Util;
+using LootingBots.Patch.Components;
 
 namespace LootingBots
 {
@@ -188,9 +189,10 @@ namespace LootingBots
             lootLog = new Log(Logger, corpseLogLevels);
             containerLog = new Log(Logger, containerLogLevels);
 
+            new LootSettingsPatch().Enable();
             new ContainerLooting().Enable();
-            new CorpseLootSettingsPatch().Enable();
             new CorpseLootingPatch().Enable();
+            new LooseLootPatch().Enable();
         }
 
         public void Update()
