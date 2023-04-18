@@ -3,9 +3,10 @@ using System;
 using System.Linq;
 using System.Reflection;
 using EFT.InventoryLogic;
-using LootingBots.Patch.Util;
 using EFT.Interactive;
 using EFT;
+using LootingBots.Patch.Components;
+
 
 namespace LootingBots.Patch {
    public class ReservePatrolContainerPatch : ModulePatch

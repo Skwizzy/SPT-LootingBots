@@ -2,9 +2,10 @@ using EFT.InventoryLogic;
 using System.Threading.Tasks;
 using Comfort.Common;
 using System;
+using LootingBots.Patch.Util;
 using EFT;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Patch.Components
 {
     public class TransactionController
     {

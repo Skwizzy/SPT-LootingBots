@@ -4,8 +4,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using EFT.InventoryLogic;
 using EFT;
+using LootingBots.Patch.Util;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Patch.Components
 {
     public class GearValue
     {

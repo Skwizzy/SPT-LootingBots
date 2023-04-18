@@ -3,8 +3,9 @@ using Comfort.Common;
 using EFT;
 using System.Linq;
 using System.Collections.Generic;
+using LootingBots.Patch.Util;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Patch.Components
 {
     public class ItemAppraiser
     {

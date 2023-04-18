@@ -5,33 +5,11 @@ using System.Reflection;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 using EFT;
+using LootingBots.Patch.Components;
+
 
 namespace LootingBots.Patch
 {
-    /** For Debugging */
-    public class PickupActionPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(GClass452).GetMethod(
-                "PickupAction",
-                BindingFlags.Public | BindingFlags.Instance
-            );
-        }
-
-        [PatchPrefix]
-        private static bool PatchPrefix(
-            Player owner,
-            GInterface264 possibleAction,
-            Item rootItem,
-            Player lootItemLastOwner
-        )
-        {
-            Logger.LogDebug($"Someone is picking up: {rootItem.Name.Localized()}");
-            return true;
-        }
-    }
-
     public class CorpseLootingPatch : ModulePatch
     {
         private static ItemAdder itemAdder;
