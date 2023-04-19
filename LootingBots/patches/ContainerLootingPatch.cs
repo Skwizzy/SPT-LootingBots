@@ -31,7 +31,7 @@ namespace LootingBots.Patch
             try
             {
                 new ReservePatrolContainerPatch().Enable();
-                new FindNearestContainerPatch().Enable();
+                new HasNearbyContainerPatch().Enable();
                 new ContainerManualUpdatePatch().Enable();
                 new ContainerUpdateCheckPatch().Enable();
             }
@@ -259,7 +259,7 @@ namespace LootingBots.Patch
         }
     }
 
-    public class FindNearestContainerPatch : ModulePatch
+    public class HasNearbyContainerPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {

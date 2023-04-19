@@ -30,9 +30,10 @@ namespace LootingBots.Patch.Components
 
             BotLootData botLootData = LootCache.getLootData(botOwner.Id);
 
-            if (itemAdder == null) {
+            if (itemAdder == null && botOwner != null)
+            {
                 itemAdder = new ItemAdder(botOwner);
-            } 
+            }
 
             if (
                 botLootData.waitAfterLooting < Time.time
@@ -40,7 +41,6 @@ namespace LootingBots.Patch.Components
                 && !botLootData.hasActiveLootable()
             )
             {
-                LootingBots.containerLog.logDebug("finding lootable");
                 findLootable();
             }
         }
@@ -52,7 +52,7 @@ namespace LootingBots.Patch.Components
 
             LootableContainer closestContainer = null;
             LootItem closestItem = null;
-            Vector3 closesContainerCenter = new Vector3();
+            Vector3 closestLootableCenter = new Vector3();
             float shortestDist = -1f;
 
             // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
@@ -77,7 +77,9 @@ namespace LootingBots.Patch.Components
                     && containerObj.DoorState != EDoorState.Locked;
 
                 bool canLootItem =
-                    lootItem != null && !LootCache.isLootIgnored(botOwner.Id, lootItem.ItemId);
+                    lootItem != null
+                    && lootItem?.ItemOwner?.RootItem != null
+                    && !LootCache.isLootIgnored(botOwner.Id, lootItem.ItemOwner.RootItem.Id);
 
                 if (canLootContainer || canLootItem)
                 {
@@ -98,17 +100,17 @@ namespace LootingBots.Patch.Components
                         {
                             closestItem = null;
                             closestContainer = containerObj;
-                            closesContainerCenter = collider.bounds.center;
-                            // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                            closesContainerCenter.y =
-                                collider.bounds.center.y - collider.bounds.extents.y - 0.3f;
                         }
                         else
                         {
                             closestContainer = null;
-                            closesContainerCenter = Vector3.zero;
                             closestItem = lootItem;
                         }
+
+                        closestLootableCenter = collider.bounds.center;
+                        // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
+                        closestLootableCenter.y =
+                            collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
                     }
                 }
             }
@@ -120,7 +122,7 @@ namespace LootingBots.Patch.Components
                 );
                 // Add closest container found to container map
                 botLootData.activeContainer = closestContainer;
-                botLootData.lootObjectCenter = closesContainerCenter;
+                botLootData.lootObjectCenter = closestLootableCenter;
 
                 LootCache.setLootData(botOwner.Id, botLootData);
             }
@@ -131,7 +133,7 @@ namespace LootingBots.Patch.Components
                 );
                 // Add closest container found to container map
                 botLootData.activeItem = closestItem;
-                botLootData.lootObjectCenter = closestItem.transform.position;
+                botLootData.lootObjectCenter = closestLootableCenter;
 
                 LootCache.setLootData(botOwner.Id, botLootData);
             }
@@ -154,16 +156,18 @@ namespace LootingBots.Patch.Components
             LootCache.incrementLootTimer(botOwner.Id);
         }
 
-        public async void lootItem(LootItem lootItem)
+        public async void lootItem()
         {
-            Item item = lootItem.ItemOwner.RootItem;
+            BotLootData botLootData = LootCache.getLootData(botOwner.Id);
+            Item item = botLootData.activeItem.ItemOwner.RootItem;
 
             LootingBots.containerLog.logDebug(
                 $"Bot {botOwner.Id} trying to pick up loose item: {item.Name.Localized()}"
             );
+            botOwner.GetPlayer.UpdateInteractionCast();
 
             await itemAdder.tryAddItemsToBot(new Item[] { item });
-            botOwner.WeaponManager.Selector.TakeMainWeapon();
+            botOwner.GetPlayer.CurrentState.Pickup(false, null);
 
             LootCache.incrementLootTimer(botOwner.Id);
         }
@@ -237,15 +241,11 @@ namespace LootingBots.Patch.Components
         public bool isCloseEnough(out float dist)
         {
             BotLootData lootData = LootCache.getLootData(botOwner.Id);
-            Vector3 position =
-                lootData?.activeContainer?.transform?.position
-                ?? lootData.activeItem.transform.position;
-
-            Vector3 vector = botOwner.Position - position;
+            Vector3 vector = botOwner.Position - lootData.destination;
             float y = vector.y;
             vector.y = 0f;
             dist = vector.magnitude;
-            return (dist < 1.6f && Mathf.Abs(y) < 1.3f);
+            return dist < 0.5f;
         }
 
         public bool tryMoveToLoot(ref float tryMoveTimer)
@@ -289,7 +289,7 @@ namespace LootingBots.Patch.Components
                         padding.Normalize();
 
                         // Make sure the point is still snapped to the NavMesh after its been pushed
-                        pointNearbyContainer = NavMesh.SamplePosition(
+                        botLootData.destination = pointNearbyContainer = NavMesh.SamplePosition(
                             center - padding,
                             out navMeshAlignedPoint,
                             1f,
@@ -332,6 +332,8 @@ namespace LootingBots.Patch.Components
                                 );
                                 return false;
                             }
+
+                            LootCache.setLootData(botOwner.Id, botLootData);
                         }
                         else
                         {

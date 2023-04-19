@@ -14,10 +14,15 @@ namespace LootingBots.Patch.Util
 
         // Current container that the bot will try to loot
         public LootableContainer activeContainer;
+        
+        // Current loose item that the bot will try to loot
         public LootItem activeItem;
-
+        
         // Center of the container's collider used to help in navigation
         public Vector3 lootObjectCenter;
+
+        // Where the bot will try to move to
+        public Vector3 destination;
 
         // Container ids that the bot has looted
         public string[] visitedContainerIds = new string[] { };
