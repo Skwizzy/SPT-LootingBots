@@ -151,7 +151,7 @@ namespace LootingBots.Patch.Components
             botOwner.LootOpener.Interact(container, EInteractionType.Open);
             await itemAdder.lootNestedItems(item);
 
-            // Close container and switch to main weapon
+            // // Close container and switch to main weapon
             botOwner.WeaponManager.Selector.TakeMainWeapon();
             LootCache.incrementLootTimer(botOwner.Id);
         }
@@ -170,9 +170,11 @@ namespace LootingBots.Patch.Components
             botOwner.GetPlayer.CurrentState.Pickup(false, null);
 
             LootCache.incrementLootTimer(botOwner.Id);
+            LootCache.cleanup(ref botOwner, item.Id);
+            LootCache.addVisitedLoot(botOwner.Id, item.Id);
         }
 
-        public bool shouldInteractDoor(BotOwner botOwner, float dist, LootableContainer container)
+        public bool shouldInteractDoor(float dist)
         {
             BotLootData botContainerData = LootCache.getLootData(botOwner.Id);
 
@@ -360,6 +362,11 @@ namespace LootingBots.Patch.Components
                 LootingBots.containerLog.logError(e.StackTrace);
                 return false;
             }
+        }
+
+        public void destroy()
+        {
+            Destroy(this);
         }
     }
 }

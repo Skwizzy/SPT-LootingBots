@@ -14,10 +14,10 @@ namespace LootingBots.Patch.Util
 
         // Current container that the bot will try to loot
         public LootableContainer activeContainer;
-        
+
         // Current loose item that the bot will try to loot
         public LootItem activeItem;
-        
+
         // Center of the container's collider used to help in navigation
         public Vector3 lootObjectCenter;
 
@@ -70,7 +70,10 @@ namespace LootingBots.Patch.Util
 
             if (lootData.activeContainer != null || lootData.activeItem != null)
             {
-                string id = lootData.activeContainer != null ? lootData.activeContainer.Id : lootData.activeItem.ItemOwner.RootItem.Id;
+                string id =
+                    lootData.activeContainer != null
+                        ? lootData.activeContainer.Id
+                        : lootData.activeItem.ItemOwner.RootItem.Id;
                 cacheActiveLootId(id, botId);
             }
         }
@@ -113,7 +116,7 @@ namespace LootingBots.Patch.Util
             setLootData(botId, containerData);
         }
 
-        public static void addVistedContainer(int botId, string containerId)
+        public static void addVisitedLoot(int botId, string containerId)
         {
             BotLootData containerData = getLootData(botId);
             containerData.visitedContainerIds = containerData.visitedContainerIds
@@ -155,28 +158,32 @@ namespace LootingBots.Patch.Util
         }
 
         // Original function is method_4
-        public static void cleanup(
-            ref BotOwner botOwner,
-            string lootId
-        )
+        public static void cleanup(ref BotOwner botOwner, string lootId)
         {
             try
             {
-                BotLootData botContainerData = getLootData(botOwner.Id);
-                botContainerData.navigationAttempts = 0;
-                botContainerData.activeContainer = null;
-                botContainerData.activeItem = null;
-                botContainerData.lootObjectCenter = new Vector3();
-                botContainerData.dist = 0;
-                botContainerData.stuckCount = 0;
+                BotLootData botLootData = getLootData(botOwner.Id);
+                botLootData.navigationAttempts = 0;
+                botLootData.activeContainer = null;
+                botLootData.activeItem = null;
+                botLootData.lootObjectCenter = new Vector3();
+                botLootData.dist = 0;
+                botLootData.stuckCount = 0;
                 activeLootCache.Remove(lootId);
 
-                setLootData(botOwner.Id, botContainerData);
+                setLootData(botOwner.Id, botLootData);
             }
             catch (Exception e)
             {
                 LootingBots.lootLog.logError(e.StackTrace);
             }
+        }
+
+        public static void destroy(int botId)
+        {
+            BotLootData botLootData = getLootData(botId);
+            botLootData.lootFinder.destroy();
+            LootCache.botDataCache.Remove(botId);
         }
     }
 }
