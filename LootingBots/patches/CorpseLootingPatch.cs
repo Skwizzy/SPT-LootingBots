@@ -77,11 +77,8 @@ namespace LootingBots.Patch
                 corpseInventory.GetValue(corpse);
 
             log.logWarning(
-                $"({itemAdder.botOwner_0.Profile.Info.Settings.Role}) {itemAdder.botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpse.Profile?.Info?.Settings?.Role}) {corpse.Profile?.Info.Nickname}"
+                $"({itemAdder.botOwner.Profile.Info.Settings.Role}) {itemAdder.botOwner.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpse.Profile?.Info?.Settings?.Role}) {corpse.Profile?.Info.Nickname}"
             );
-
-            // Calculate bots initial gear value
-            itemAdder.calculateGearValue();
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(
@@ -108,7 +105,7 @@ namespace LootingBots.Patch
 
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
             log.logDebug("Changing to main wep");
-            itemAdder.botOwner_0.WeaponManager.Selector.TakeMainWeapon();
+            itemAdder.botOwner.WeaponManager.Selector.TakeMainWeapon();
 
             watch.Stop();
             log.logDebug(
