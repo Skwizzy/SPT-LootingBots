@@ -112,7 +112,7 @@ namespace LootingBots.Patch
                 LootCache.cleanup(ref botOwner, container.Id);
                 shallLoot = false;
                 hasLooted = false;
-                LootCache.addVistedContainer(botOwner.Id, container.Id);
+                LootCache.addVisitedLoot(botOwner.Id, container.Id);
                 return;
             }
 
@@ -178,7 +178,6 @@ namespace LootingBots.Patch
                     ref ___bool_0,
                     ref ___bool_1,
                     ref ___botOwner_0,
-                    container,
                     out dist
                 )
             )
@@ -223,28 +222,19 @@ namespace LootingBots.Patch
             ref bool isCloseEnough, // bool_0
             ref bool hasLooted, // bool_1
             ref BotOwner botOwner, // botOwner_0
-            LootableContainer container,
             out float dist
         )
         {
-            BotLootData botContainerData = LootCache.getLootData(botOwner.Id);
-            if (closeEnoughTimer < Time.time && container != null)
+            BotLootData botLootData = LootCache.getLootData(botOwner.Id);
+            if (closeEnoughTimer < Time.time)
             {
                 closeEnoughTimer = Time.time + 2f;
-                Vector3 vector = botOwner.Position - container.transform.position;
-                float y = vector.y;
-                vector.y = 0f;
-                dist = containerDist = vector.magnitude;
-                isCloseEnough = (containerDist < 1.6f && Mathf.Abs(y) < 1.3f);
+                isCloseEnough = botLootData.lootFinder.isCloseEnough(out dist);
 
                 // If the bot is not looting anything, check to see if the bot is stuck on a door and open it
                 if (!hasLooted)
                 {
-                    bool canInteract = botContainerData.lootFinder.shouldInteractDoor(
-                        botOwner,
-                        dist,
-                        container
-                    );
+                    bool canInteract = botLootData.lootFinder.shouldInteractDoor(dist);
 
                     if (canInteract)
                     {

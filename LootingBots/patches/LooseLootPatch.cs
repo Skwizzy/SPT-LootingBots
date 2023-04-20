@@ -85,7 +85,13 @@ namespace LootingBots.Patch
                         );
                         ___lootItem_0 = null;
                     }
-                } else {
+                    else
+                    {
+                        botLootData.lootFinder.shouldInteractDoor(dist);
+                    }
+                }
+                else
+                {
                     ___float_4 = Time.time + 1.5f;
                 }
 
@@ -126,7 +132,7 @@ namespace LootingBots.Patch
                     null
                 );
 
-                ___float_5 = Time.time + 4f; 
+                ___float_5 = Time.time + 4f;
                 return false;
             }
 
@@ -183,11 +189,14 @@ namespace LootingBots.Patch
         {
             BotLootData botLootData = LootCache.getLootData(___botOwner_0.Id);
 
-            if (botLootData.activeItem != null && item.ItemOwner.RootItem.Id.Equals(botLootData.activeItem.ItemOwner.RootItem.Id))
+            if (
+                botLootData.activeItem != null
+                && item.ItemOwner.RootItem.Id.Equals(botLootData.activeItem.ItemOwner.RootItem.Id)
+            )
             {
                 string itemId = item.ItemOwner.RootItem.Id;
                 LootCache.cleanup(ref ___botOwner_0, itemId);
-                LootCache.addVistedContainer(___botOwner_0.Id, itemId);
+                LootCache.addVisitedLoot(___botOwner_0.Id, itemId);
                 ___lootItem_0 = null;
                 ___bool_0 = false;
                 LootingBots.containerLog.logWarning(
