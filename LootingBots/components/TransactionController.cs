@@ -102,10 +102,7 @@ namespace LootingBots.Patch.Components
         {
             string botName =
                 $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()}";
-            var ableToPickUp = inventoryController.FindGridToPickUp(
-                item,
-                inventoryController
-            );
+            var ableToPickUp = inventoryController.FindGridToPickUp(item, inventoryController);
 
             if (
                 ableToPickUp != null
@@ -132,7 +129,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                log.logDebug($"Moving item to: {moveAction.place.GetRootItem().Name.Localized()}");
+                log.logDebug($"Moving item to: {moveAction.place.Container.ID.Localized()}");
                 var value = GClass2429.Move(
                     moveAction.toMove,
                     moveAction.place,
