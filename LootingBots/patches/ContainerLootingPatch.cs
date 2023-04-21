@@ -197,10 +197,6 @@ namespace LootingBots.Patch
                 return false;
             }
 
-            // Stand and move to container
-            ___botOwner_0.SetPose(1f);
-            ___botOwner_0.SetTargetMoveSpeed(1f);
-
             // Initiate move to container. Will return false if the bot is not able to navigate using a NavMesh
             bool canMove = botContainerData.lootFinder.tryMoveToLoot(ref ___float_1);
 

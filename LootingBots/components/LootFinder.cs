@@ -254,6 +254,9 @@ namespace LootingBots.Patch.Components
         {
             try
             {
+                // Stand and move to container
+                botOwner.SetPose(1f);
+                botOwner.SetTargetMoveSpeed(1f);
                 botOwner.Steering.LookToMovingDirection();
 
                 if (tryMoveTimer < Time.time)
