@@ -31,7 +31,7 @@ namespace LootingBots.Patch.Components
     {
         public Log log;
         public TransactionController transactionController;
-        public BotOwner botOwner_0;
+        public BotOwner botOwner;
         public InventoryControllerClass botInventoryController;
 
         private static ItemAppraiser itemAppraiser;
@@ -41,7 +41,7 @@ namespace LootingBots.Patch.Components
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int currentBodyArmorClass = 0;
 
-        public ItemAdder(BotOwner botOwner_0)
+        public ItemAdder(BotOwner botOwner)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace LootingBots.Patch.Components
                 itemAppraiser = LootingBots.itemAppraiser;
 
                 // Initialize bot inventory controller
-                Type botOwnerType = botOwner_0.GetPlayer.GetType();
+                Type botOwnerType = botOwner.GetPlayer.GetType();
                 FieldInfo botInventory = botOwnerType.BaseType.GetField(
                     "_inventoryController",
                     BindingFlags.NonPublic
@@ -58,11 +58,11 @@ namespace LootingBots.Patch.Components
                         | BindingFlags.Instance
                 );
 
-                this.botOwner_0 = botOwner_0;
+                this.botOwner = botOwner;
                 this.botInventoryController = (InventoryControllerClass)
-                    botInventory.GetValue(botOwner_0.GetPlayer);
+                    botInventory.GetValue(botOwner.GetPlayer);
                 this.transactionController = new TransactionController(
-                    this.botOwner_0,
+                    this.botOwner,
                     this.botInventoryController,
                     this.log
                 );
@@ -79,6 +79,8 @@ namespace LootingBots.Patch.Components
 
                 this.currentBodyArmorClass =
                     currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
+
+                calculateGearValue();
             }
             catch (Exception e)
             {
@@ -165,6 +167,8 @@ namespace LootingBots.Patch.Components
                     log.logDebug("Item was null");
                 }
             }
+
+            botOwner.WeaponManager.Selector.TakeMainWeapon();
         }
 
         /**
@@ -191,7 +195,7 @@ namespace LootingBots.Patch.Components
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             TransactionController.SwapAction swapAction = null;
 
-            if (lootItem is Weapon)
+            if ((lootItem.Template is WeaponTemplate) && !((Weapon)lootItem).IsFlareGun)
             {
                 return getWeaponEquipAction(lootItem as Weapon);
             }
@@ -294,6 +298,7 @@ namespace LootingBots.Patch.Components
                         action.move = new TransactionController.MoveAction(
                             primary,
                             canEquipToSecondary,
+                            null,
                             async () =>
                             {
                                 // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
