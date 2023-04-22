@@ -195,7 +195,7 @@ namespace LootingBots.Patch
                 LootCache.AddVisitedLoot(___botOwner_0.Id, itemId);
                 ___lootItem_0 = null;
                 ___bool_0 = false;
-                LootingBots.ContainerLog.LogWarning(
+                LootingBots.LootLog.LogWarning(
                     $"Removing successfully looted loose item: {item.ItemOwner.RootItem.Name.Localized()} ({itemId})"
                 );
             }

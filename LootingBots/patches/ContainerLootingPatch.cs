@@ -33,14 +33,14 @@ namespace LootingBots.Patch
         {
             try
             {
-                new ReservePatrolContainerPatch().Enable();
+                // new ReservePatrolContainerPatch().Enable();
                 new HasNearbyContainerPatch().Enable();
                 new ContainerManualUpdatePatch().Enable();
                 new ContainerUpdateCheckPatch().Enable();
             }
             catch (Exception e)
             {
-                LootingBots.ContainerLog.LogError(e.StackTrace);
+                LootingBots.LootLog.LogError(e.StackTrace);
             }
         }
     }
@@ -68,16 +68,10 @@ namespace LootingBots.Patch
             BotLootData botContainerData = LootCache.GetLootData(___botOwner_0.Id);
 
             // Check if we have looted an item and the wait timer has completed
-            bool Boolean_0 = ___bool_1 && ___float_5 < Time.time;
+            bool boolean_0 = ___bool_1 && ___float_5 < Time.time;
 
             // If there is not an active container or there is a body saved, execute the original method
-            if (
-                !LootingBots.DynamicContainerLootingEnabled.Value.IsBotEnabled(
-                    ___botOwner_0.Profile.Info.Settings.Role
-                )
-                || !botContainerData?.ActiveContainer
-                || ___gclass264_0 != null
-            )
+            if (!botContainerData?.ActiveContainer || ___gclass264_0 != null)
             {
                 return true;
             }
@@ -86,11 +80,11 @@ namespace LootingBots.Patch
             if (___bool_2)
             {
                 CheckContainerStatus(
-                    Boolean_0,
+                    boolean_0,
                     ref ___botOwner_0,
                     ref ___bool_2,
                     ref ___bool_1,
-                    (LootableContainer)botContainerData.ActiveContainer
+                    botContainerData.ActiveContainer
                 );
                 return false;
             }
@@ -109,7 +103,7 @@ namespace LootingBots.Patch
             // If we have just looted a container, and the wait timer is finished cleanup the container from the map
             if (doneLootingTimer)
             {
-                LootingBots.ContainerLog.LogWarning(
+                LootingBots.LootLog.LogWarning(
                     $"Removing successfully looted container: {container.name} ({container.Id})"
                 );
                 LootCache.Cleanup(ref botOwner, container.Id);
@@ -149,18 +143,12 @@ namespace LootingBots.Patch
             BotLootData botContainerData = LootCache.GetLootData(___botOwner_0.Id);
 
             // If there is no active container or if there is a corpse, execute the original method
-            if (
-                !LootingBots.DynamicContainerLootingEnabled.Value.IsBotEnabled(
-                    ___botOwner_0.Profile.Info.Settings.Role
-                )
-                || !botContainerData?.ActiveContainer
-                || ___gclass264_0 != null
-            )
+            if (!botContainerData?.ActiveContainer || ___gclass264_0 != null)
             {
                 return true;
             }
 
-            LootableContainer container = (LootableContainer)botContainerData.ActiveContainer;
+            LootableContainer container = botContainerData.ActiveContainer;
             if (
                 IsCloseEnough(
                     ref ___float_0,
@@ -262,7 +250,7 @@ namespace LootingBots.Patch
                 // If we have an active container mark ShallLoot as true
                 if (botContainerData?.ActiveContainer)
                 {
-                    LootingBots.ContainerLog.LogWarning(
+                    LootingBots.LootLog.LogWarning(
                         $"Bot {___botOwner_0.Id} existing container: {botContainerData.ActiveContainer.name}"
                     );
                     // Set ShallLoot to true

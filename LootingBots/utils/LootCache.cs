@@ -153,7 +153,7 @@ namespace LootingBots.Patch.Util
             BotLootData botContainerData = LootCache.GetLootData(botId);
 
             botContainerData.WaitAfterLooting =
-                Time.time + LootingBots.TimeToWaitBetweenContainers.Value + TimeToLoot;
+                Time.time + LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
 
             SetLootData(botId, botContainerData);
         }

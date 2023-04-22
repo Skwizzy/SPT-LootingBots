@@ -38,14 +38,14 @@ namespace LootingBots.Patch
         )
         {
             s_instance = __instance;
-            BotType enabledTypes = LootingBots.LootingEnabledBots.Value;
+            BotType enabledTypes = LootingBots.CorpseLootingEnabled.Value;
             if (enabledTypes.IsBotEnabled(___wildSpawnType_0))
             {
-                EnableLooting();
+                EnableCorpseLooting();
             }
         }
 
-        public static void EnableLooting()
+        public static void EnableCorpseLooting()
         {
             float seeDist = LootingBots.BodySeeDist.Value;
             float leaveDist = LootingBots.BodyLeaveDist.Value;
@@ -98,7 +98,7 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix(ref Player __instance)
         {
-            LootingBots.ContainerLog.LogDebug(
+            LootingBots.LootLog.LogDebug(
                 $"Bot {__instance.Id} is dead. Removing bot data from container cache."
             );
             LootCache.Destroy(__instance.Id);

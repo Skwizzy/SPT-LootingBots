@@ -26,11 +26,11 @@ namespace LootingBots.Patch
             ref bool ___bool_2
         )
         {
-            if (___ShallLoot && ___bool_2 && LootingBots.ContainerLootingEnabled.Value)
-            {
-                LootingBots.LootLog.LogWarning($"Reserve patrol looting: {___lootableContainer_0.name}");
-                LootContainer(bot, ___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
-            }
+            // if (___ShallLoot && ___bool_2 && LootingBots.ContainerLootingEnabled.Value)
+            // {
+            //     LootingBots.LootLog.LogWarning($"Reserve patrol looting: {___lootableContainer_0.name}");
+            //     LootContainer(bot, ___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
+            // }
         }
 
         public static async void LootContainer(BotOwner botOwner, Item container)

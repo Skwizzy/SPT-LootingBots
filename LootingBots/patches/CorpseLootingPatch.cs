@@ -31,7 +31,7 @@ namespace LootingBots.Patch
         {
             // If the bot does not have looting enabled, do not override the method
             if (
-                !LootingBots.LootingEnabledBots.Value.IsBotEnabled(
+                !LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
                     ___botOwner_0.Profile.Info.Settings.Role
                 )
             )
@@ -53,8 +53,6 @@ namespace LootingBots.Patch
 
         public static async void LootCorpse(BotOwner botOwner, GClass264 corpse)
         {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-
             BotLootData lootData = LootCache.GetLootData(botOwner.Id);
 
             // Initialize corpse inventory controller
@@ -100,11 +98,6 @@ namespace LootingBots.Patch
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
             Log.LogDebug("Changing to main wep");
             botOwner.WeaponManager.Selector.TakeMainWeapon();
-
-            watch.Stop();
-            Log.LogDebug(
-                $"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}"
-            );
         }
     }
 }
