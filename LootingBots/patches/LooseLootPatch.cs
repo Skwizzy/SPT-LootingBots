@@ -1,11 +1,11 @@
 using Aki.Reflection.Patching;
-using System.Reflection;
-using LootingBots.Patch.Util;
-using EFT.Interactive;
-using EFT;
 using UnityEngine;
-using EFT.InventoryLogic;
 using System;
+using System.Reflection;
+using EFT;
+using EFT.Interactive;
+using EFT.InventoryLogic;
+using LootingBots.Patch.Util;
 
 namespace LootingBots.Patch
 {
@@ -34,8 +34,8 @@ namespace LootingBots.Patch
         [PatchPostfix]
         private static void PatchPostfix(ref bool __result, ref BotOwner ___botOwner_0)
         {
-            BotLootData botLootData = LootCache.getLootData(___botOwner_0.Id);
-            if (botLootData.activeItem && !__result)
+            BotLootData botLootData = LootCache.GetLootData(___botOwner_0.Id);
+            if (botLootData.ActiveItem && !__result)
             {
                 __result = true;
             }
@@ -61,33 +61,32 @@ namespace LootingBots.Patch
             ref bool ___bool_0
         )
         {
-            BotLootData botLootData = LootCache.getLootData(___botOwner_0.Id);
-            bool navigatingToItem = botLootData.activeItem != null && !___bool_0;
+            BotLootData botLootData = LootCache.GetLootData(___botOwner_0.Id);
+            bool navigatingToItem = botLootData.ActiveItem != null && !___bool_0;
 
             if (navigatingToItem && ___float_7 < Time.time)
             {
-                float dist;
-                ___lootItem_0 = botLootData.activeItem;
-                ___bool_0 = botLootData.lootFinder.isCloseEnough(out dist);
+                ___lootItem_0 = botLootData.ActiveItem;
+                ___bool_0 = botLootData.LootFinder.IsCloseEnough(out float dist);
 
                 if (!___bool_0)
                 {
-                    bool canMove = botLootData.lootFinder.tryMoveToLoot(ref ___float_7);
+                    bool canMove = botLootData.LootFinder.TryMoveToLoot(ref ___float_7);
                     if (!canMove)
                     {
-                        LootCache.cleanup(ref ___botOwner_0, botLootData.activeItem.ItemId);
-                        LootCache.addNonNavigableLoot(
+                        LootCache.Cleanup(ref ___botOwner_0, botLootData.ActiveItem.ItemId);
+                        LootCache.AddNonNavigableLoot(
                             ___botOwner_0.Id,
-                            botLootData.activeItem.ItemOwner.RootItem.Id
+                            botLootData.ActiveItem.ItemOwner.RootItem.Id
                         );
                         Logger.LogWarning(
-                            $"Cannot navigate. Ignoring: {botLootData.activeItem.ItemOwner.RootItem.Name.Localized()}"
+                            $"Cannot navigate. Ignoring: {botLootData.ActiveItem.ItemOwner.RootItem.Name.Localized()}"
                         );
                         ___lootItem_0 = null;
                     }
                     else
                     {
-                        botLootData.lootFinder.shouldInteractDoor(dist);
+                        botLootData.LootFinder.ShouldInteractDoor(dist);
                     }
                 }
                 else
@@ -116,19 +115,17 @@ namespace LootingBots.Patch
         private static bool PatchPrefix(
             LootItem item,
             ref BotOwner ___botOwner_0,
-            ref LootItem ___lootItem_0,
-            ref bool ___bool_0,
             ref float ___float_5,
             ref GClass454 __instance
         )
         {
-            BotLootData botLootData = LootCache.getLootData(___botOwner_0.Id);
-            if (botLootData.activeItem != null)
+            BotLootData botLootData = LootCache.GetLootData(___botOwner_0.Id);
+            if (botLootData.ActiveItem != null)
             {
                 __instance.PickupAction(
                     ___botOwner_0.GetPlayer,
                     null,
-                    botLootData.activeItem.ItemOwner.RootItem,
+                    botLootData.ActiveItem.ItemOwner.RootItem,
                     null
                 );
 
@@ -155,14 +152,13 @@ namespace LootingBots.Patch
             Player owner,
             GInterface265 possibleAction,
             Item rootItem,
-            Player lootItemLastOwner,
-            ref GClass454 __instance
+            Player lootItemLastOwner
         )
         {
-            BotLootData botLootData = LootCache.getLootData(owner.Id);
-            string itemId = botLootData.activeItem.ItemOwner.RootItem.Id;
+            BotLootData botLootData = LootCache.GetLootData(owner.Id);
+            string itemId = botLootData.ActiveItem.ItemOwner.RootItem.Id;
 
-            Action lootItemDel = botLootData.lootFinder.lootItem;
+            Action lootItemDel = botLootData.LootFinder.LootItem;
             owner.CurrentState.Pickup(true, new Action(lootItemDel));
 
             return false;
@@ -187,19 +183,19 @@ namespace LootingBots.Patch
             LootItem item
         )
         {
-            BotLootData botLootData = LootCache.getLootData(___botOwner_0.Id);
+            BotLootData botLootData = LootCache.GetLootData(___botOwner_0.Id);
 
             if (
-                botLootData.activeItem != null
-                && item.ItemOwner.RootItem.Id.Equals(botLootData.activeItem.ItemOwner.RootItem.Id)
+                botLootData.ActiveItem != null
+                && item.ItemOwner.RootItem.Id.Equals(botLootData.ActiveItem.ItemOwner.RootItem.Id)
             )
             {
                 string itemId = item.ItemOwner.RootItem.Id;
-                LootCache.cleanup(ref ___botOwner_0, itemId);
-                LootCache.addVisitedLoot(___botOwner_0.Id, itemId);
+                LootCache.Cleanup(ref ___botOwner_0, itemId);
+                LootCache.AddVisitedLoot(___botOwner_0.Id, itemId);
                 ___lootItem_0 = null;
                 ___bool_0 = false;
-                LootingBots.containerLog.logWarning(
+                LootingBots.ContainerLog.LogWarning(
                     $"Removing successfully looted loose item: {item.ItemOwner.RootItem.Name.Localized()} ({itemId})"
                 );
             }

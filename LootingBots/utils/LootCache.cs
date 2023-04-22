@@ -1,189 +1,190 @@
 using System;
-using System.Linq;
-using EFT.Interactive;
-using EFT;
-using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+
+using EFT;
+using EFT.Interactive;
+
 using LootingBots.Patch.Components;
+
+using UnityEngine;
 
 namespace LootingBots.Patch.Util
 {
     public class BotLootData
     {
-        public LootFinder lootFinder;
+        public LootFinder LootFinder;
 
         // Current container that the bot will try to loot
-        public LootableContainer activeContainer;
+        public LootableContainer ActiveContainer;
 
         // Current loose item that the bot will try to loot
-        public LootItem activeItem;
+        public LootItem ActiveItem;
 
         // Center of the container's collider used to help in navigation
-        public Vector3 lootObjectCenter;
+        public Vector3 LootObjectCenter;
 
         // Where the bot will try to move to
-        public Vector3 destination;
+        public Vector3 Destination;
 
         // Container ids that the bot has looted
-        public string[] visitedContainerIds = new string[] { };
+        public string[] VisitedContainerIds = new string[] { };
 
         // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
-        public string[] nonNavigableContainerIds = new string[] { };
+        public string[] NonNavigableContainerIds = new string[] { };
 
         // Amount of time in seconds to wait after looting a container before finding the next container
-        public float waitAfterLooting = 0f;
+        public float WaitAfterLooting = 0f;
 
         // Amount of times a bot has tried to navigate to a single container
-        public int navigationAttempts = 0;
+        public int NavigationAttempts = 0;
 
         // Amount of times a bot has not moved during the isCloseEnough check
-        public int stuckCount = 0;
+        public int StuckCount = 0;
 
         // Amount of time to wait before clearning the nonNavigableContainerIds array
-        public float clearNonNavigableIdTimer = 0f;
+        public float ClearNonNavigableIdTimer = 0f;
 
         // Current distance from bot to container
-        public float dist;
+        public float Dist;
 
         public BotLootData(LootFinder lootFinder)
         {
-            this.lootFinder = lootFinder;
+            LootFinder = lootFinder;
         }
 
-        public bool hasActiveLootable()
+        public bool HasActiveLootable()
         {
-            return activeContainer != null || activeItem != null;
+            return ActiveContainer != null || ActiveItem != null;
         }
     }
 
     public static class LootCache
     {
-        public static Dictionary<int, BotLootData> botDataCache =
+        public static Dictionary<int, BotLootData> BotDataCache =
             new Dictionary<int, BotLootData>();
-        public static Dictionary<string, int> activeLootCache = new Dictionary<string, int>();
+        public static Dictionary<string, int> ActiveLootCache = new Dictionary<string, int>();
 
-        private static float TimeToLoot = 6f;
+        private static readonly float TimeToLoot = 6f;
 
-        public static void setLootData(int botId, BotLootData lootData)
+        public static void SetLootData(int botId, BotLootData lootData)
         {
-            botDataCache[botId] = lootData;
+            BotDataCache[botId] = lootData;
 
-            if (lootData.activeContainer != null || lootData.activeItem != null)
+            if (lootData.ActiveContainer != null || lootData.ActiveItem != null)
             {
                 string id =
-                    lootData.activeContainer != null
-                        ? lootData.activeContainer.Id
-                        : lootData.activeItem.ItemOwner.RootItem.Id;
-                cacheActiveLootId(id, botId);
+                    lootData.ActiveContainer != null
+                        ? lootData.ActiveContainer.Id
+                        : lootData.ActiveItem.ItemOwner.RootItem.Id;
+                CacheActiveLootId(id, botId);
             }
         }
 
-        public static BotLootData getLootData(int botId)
+        public static BotLootData GetLootData(int botId)
         {
-            BotLootData lootData;
 
-            if (!botDataCache.TryGetValue(botId, out lootData))
+            if (!BotDataCache.TryGetValue(botId, out BotLootData lootData))
             {
                 // containerData = new BotContainerData();
-                botDataCache.Add(botId, lootData);
+                BotDataCache.Add(botId, lootData);
             }
 
             return lootData;
         }
 
-        public static BotLootData updateNavigationAttempts(int botId)
+        public static BotLootData UpdateNavigationAttempts(int botId)
         {
-            BotLootData containerData = getLootData(botId);
-            containerData.navigationAttempts++;
-            setLootData(botId, containerData);
+            BotLootData containerData = GetLootData(botId);
+            containerData.NavigationAttempts++;
+            SetLootData(botId, containerData);
             return containerData;
         }
 
-        public static BotLootData updateStuckCount(int botId)
+        public static BotLootData UpdateStuckCount(int botId)
         {
-            BotLootData containerData = getLootData(botId);
-            containerData.stuckCount++;
-            setLootData(botId, containerData);
+            BotLootData containerData = GetLootData(botId);
+            containerData.StuckCount++;
+            SetLootData(botId, containerData);
             return containerData;
         }
 
-        public static void addNonNavigableLoot(int botId, string containerId)
+        public static void AddNonNavigableLoot(int botId, string containerId)
         {
-            BotLootData containerData = getLootData(botId);
-            containerData.nonNavigableContainerIds = containerData.nonNavigableContainerIds
+            BotLootData containerData = GetLootData(botId);
+            containerData.NonNavigableContainerIds = containerData.NonNavigableContainerIds
                 .Append(containerId)
                 .ToArray();
-            setLootData(botId, containerData);
+            SetLootData(botId, containerData);
         }
 
-        public static void addVisitedLoot(int botId, string containerId)
+        public static void AddVisitedLoot(int botId, string containerId)
         {
-            BotLootData containerData = getLootData(botId);
-            containerData.visitedContainerIds = containerData.visitedContainerIds
+            BotLootData containerData = GetLootData(botId);
+            containerData.VisitedContainerIds = containerData.VisitedContainerIds
                 .Append(containerId)
                 .ToArray();
-            setLootData(botId, containerData);
+            SetLootData(botId, containerData);
         }
 
-        public static void cacheActiveLootId(string containerId, int botId)
+        public static void CacheActiveLootId(string containerId, int botId)
         {
-            activeLootCache[containerId] = botId;
+            ActiveLootCache[containerId] = botId;
         }
 
-        public static bool isLootInUse(string containerId)
+        public static bool IsLootInUse(string containerId)
         {
-            int botId;
-            return activeLootCache.TryGetValue(containerId, out botId);
+            return ActiveLootCache.TryGetValue(containerId, out int botId);
         }
 
-        public static bool isLootIgnored(int botId, string containerId)
+        public static bool IsLootIgnored(int botId, string containerId)
         {
-            BotLootData botData = getLootData(botId);
+            BotLootData botData = GetLootData(botId);
             bool alreadyTried =
-                botData.nonNavigableContainerIds.Contains(containerId)
-                || botData.visitedContainerIds.Contains(containerId);
+                botData.NonNavigableContainerIds.Contains(containerId)
+                || botData.VisitedContainerIds.Contains(containerId);
 
-            return alreadyTried || isLootInUse(containerId);
+            return alreadyTried || IsLootInUse(containerId);
         }
 
-        public static void incrementLootTimer(int botId)
+        public static void IncrementLootTimer(int botId)
         {
             // Increment loot wait timer in BotContainerData
-            BotLootData botContainerData = LootCache.getLootData(botId);
+            BotLootData botContainerData = LootCache.GetLootData(botId);
 
-            botContainerData.waitAfterLooting =
-                Time.time + LootingBots.timeToWaitBetweenContainers.Value + TimeToLoot;
+            botContainerData.WaitAfterLooting =
+                Time.time + LootingBots.TimeToWaitBetweenContainers.Value + TimeToLoot;
 
-            LootCache.setLootData(botId, botContainerData);
+            SetLootData(botId, botContainerData);
         }
 
         // Original function is method_4
-        public static void cleanup(ref BotOwner botOwner, string lootId)
+        public static void Cleanup(ref BotOwner botOwner, string lootId)
         {
             try
             {
-                BotLootData botLootData = getLootData(botOwner.Id);
-                botLootData.navigationAttempts = 0;
-                botLootData.activeContainer = null;
-                botLootData.activeItem = null;
-                botLootData.lootObjectCenter = new Vector3();
-                botLootData.dist = 0;
-                botLootData.stuckCount = 0;
-                activeLootCache.Remove(lootId);
+                BotLootData botLootData = GetLootData(botOwner.Id);
+                botLootData.NavigationAttempts = 0;
+                botLootData.ActiveContainer = null;
+                botLootData.ActiveItem = null;
+                botLootData.LootObjectCenter = new Vector3();
+                botLootData.Dist = 0;
+                botLootData.StuckCount = 0;
+                ActiveLootCache.Remove(lootId);
 
-                setLootData(botOwner.Id, botLootData);
+                SetLootData(botOwner.Id, botLootData);
             }
             catch (Exception e)
             {
-                LootingBots.lootLog.logError(e.StackTrace);
+                LootingBots.LootLog.LogError(e.StackTrace);
             }
         }
 
-        public static void destroy(int botId)
+        public static void Destroy(int botId)
         {
-            BotLootData botLootData = getLootData(botId);
-            botLootData.lootFinder.destroy();
-            LootCache.botDataCache.Remove(botId);
+            BotLootData botLootData = GetLootData(botId);
+            botLootData.LootFinder.Destroy();
+            BotDataCache.Remove(botId);
         }
     }
 }

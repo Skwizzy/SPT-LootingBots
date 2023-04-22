@@ -1,109 +1,109 @@
-using EFT.InventoryLogic;
-using Comfort.Common;
-using EFT;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+
+using Comfort.Common;
+
+using EFT;
+using EFT.InventoryLogic;
+
 using LootingBots.Patch.Util;
 
 namespace LootingBots.Patch.Components
 {
     public class ItemAppraiser
     {
-        public Log log;
-        public Dictionary<string, EFT.HandBook.HandbookData> handbookData;
-        public Dictionary<string, float> marketData;
+        public Log Log;
+        public Dictionary<string, EFT.HandBook.HandbookData> HandbookData;
+        public Dictionary<string, float> MarketData;
 
-        public bool marketInitialized = false;
+        public bool MarketInitialized = false;
 
-        public void init()
+        public void Init()
         {
-            this.log = LootingBots.lootLog;
+            Log = LootingBots.LootLog;
 
-            if (LootingBots.useMarketPrices.Value)
+            if (LootingBots.UseMarketPrices.Value)
             {
                 Singleton<ClientApplication<ISession>>.Instance
                     .GetClientBackEndSession()
                     .RagfairGetPrices(
                         new Callback<Dictionary<string, float>>(
-                            (Result<Dictionary<string, float>> result) =>
-                            {
-                                marketData = result.Value;
-                            }
+                            (Result<Dictionary<string, float>> result) => MarketData = result.Value
                         )
                     );
-                marketInitialized = true;
+                MarketInitialized = true;
             }
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                handbookData = Singleton<GClass2532>.Instance.Items.ToDictionary((item) => item.Id);
+                HandbookData = Singleton<GClass2532>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 
         /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/
-        public float getItemPrice(Item lootItem)
+        public float GetItemPrice(Item lootItem)
         {
-            bool valueFromMods = LootingBots.valueFromMods.Value;
-            if (LootingBots.useMarketPrices.Value && marketData != null)
+            bool valueFromMods = LootingBots.ValueFromMods.Value;
+            if (LootingBots.UseMarketPrices.Value && MarketData != null)
             {
                 return lootItem is Weapon && valueFromMods
-                    ? getWeaponMarketPrice(lootItem as Weapon)
-                    : getItemMarketPrice(lootItem);
+                    ? GetWeaponMarketPrice(lootItem as Weapon)
+                    : GetItemMarketPrice(lootItem);
             }
 
-            if (handbookData != null)
+            if (HandbookData != null)
             {
                 return lootItem is Weapon && valueFromMods
-                    ? getWeaponHandbookPrice(lootItem as Weapon)
-                    : getItemHandbookPrice(lootItem);
+                    ? GetWeaponHandbookPrice(lootItem as Weapon)
+                    : GetItemHandbookPrice(lootItem);
             }
 
-            log.logDebug($"ItemAppraiser data is null");
+            Log.LogDebug($"ItemAppraiser data is null");
 
             return 0;
         }
 
-        public float getWeaponHandbookPrice(Weapon lootWeapon)
+        public float GetWeaponHandbookPrice(Weapon lootWeapon)
         {
-            log.logDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
             float finalPrice = lootWeapon.Mods.Aggregate(
                 0f,
-                (price, mod) => price += getItemHandbookPrice(mod)
+                (price, mod) => price += GetItemHandbookPrice(mod)
             );
-            log.logDebug(
-                $"Final price of attachments: {finalPrice} compared to full item {getItemHandbookPrice(lootWeapon)}"
+            Log.LogDebug(
+                $"Final price of attachments: {finalPrice} compared to full item {GetItemHandbookPrice(lootWeapon)}"
             );
 
             return finalPrice;
         }
 
         /** Gets the price of the item as stated from the beSession handbook values */
-        public float getItemHandbookPrice(Item lootItem)
+        public float GetItemHandbookPrice(Item lootItem)
         {
-            float price = handbookData[lootItem.TemplateId]?.Price ?? 0;
+            float price = HandbookData[lootItem.TemplateId]?.Price ?? 0;
 
-            log.logDebug($"Price of {lootItem.Name.Localized()} is {price}");
+            Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
             return price;
         }
 
-        public float getWeaponMarketPrice(Weapon lootWeapon)
+        public float GetWeaponMarketPrice(Weapon lootWeapon)
         {
-            log.logDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
             float finalPrice = lootWeapon.Mods.Aggregate(
                 0f,
-                (price, mod) => price += getItemMarketPrice(mod)
+                (price, mod) => price += GetItemMarketPrice(mod)
             );
-            log.logDebug(
-                $"Final price of attachments: {finalPrice} compared to item template {getItemMarketPrice(lootWeapon)}"
+            Log.LogDebug(
+                $"Final price of attachments: {finalPrice} compared to item template {GetItemMarketPrice(lootWeapon)}"
             );
 
             return finalPrice;
         }
 
-        public float getItemMarketPrice(Item lootItem)
+        public float GetItemMarketPrice(Item lootItem)
         {
-            float price = marketData[lootItem.TemplateId];
-            log.logDebug($"Price of {lootItem.Name.Localized()} is {price}");
+            float price = MarketData[lootItem.TemplateId];
+            Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
 
             return price;
         }

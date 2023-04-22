@@ -2,25 +2,19 @@ using Aki.Reflection.Patching;
 using System;
 using System.Linq;
 using System.Reflection;
+using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
-using EFT;
-using LootingBots.Patch.Components;
-
 
 namespace LootingBots.Patch
 {
     public class CorpseLootingPatch : ModulePatch
     {
-        private static ItemAdder itemAdder;
-
-        private static ItemAppraiser itemAppraiser;
-        private static Log log;
+        public static Log Log;
 
         public CorpseLootingPatch()
         {
-            log = LootingBots.lootLog;
-            itemAppraiser = LootingBots.itemAppraiser;
+            Log = LootingBots.LootLog;
         }
 
         protected override MethodBase GetTargetMethod()
@@ -37,7 +31,7 @@ namespace LootingBots.Patch
         {
             // If the bot does not have looting enabled, do not override the method
             if (
-                !LootingBots.lootingEnabledBots.Value.isBotEnabled(
+                !LootingBots.LootingEnabledBots.Value.IsBotEnabled(
                     ___botOwner_0.Profile.Info.Settings.Role
                 )
             )
@@ -45,11 +39,9 @@ namespace LootingBots.Patch
                 return true;
             }
 
-            itemAdder = new ItemAdder(___botOwner_0);
-
             try
             {
-                lootCorpse(___gclass264_0);
+                LootCorpse(___botOwner_0, ___gclass264_0);
                 return false;
             }
             catch (Exception e)
@@ -59,13 +51,15 @@ namespace LootingBots.Patch
             return true;
         }
 
-        public static async void lootCorpse(GClass264 ___gclass264_0)
+        public static async void LootCorpse(BotOwner botOwner, GClass264 corpse)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
+            BotLootData lootData = LootCache.GetLootData(botOwner.Id);
+
             // Initialize corpse inventory controller
-            Player corpse = ___gclass264_0.Player;
-            Type corpseType = corpse.GetType();
+            Player corpsePlayer = corpse.Player;
+            Type corpseType = corpsePlayer.GetType();
             FieldInfo corpseInventory = corpseType.BaseType.GetField(
                 "_inventoryController",
                 BindingFlags.NonPublic
@@ -76,8 +70,8 @@ namespace LootingBots.Patch
             InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
                 corpseInventory.GetValue(corpse);
 
-            log.logWarning(
-                $"({itemAdder.botOwner.Profile.Info.Settings.Role}) {itemAdder.botOwner.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpse.Profile?.Info?.Settings?.Role}) {corpse.Profile?.Info.Nickname}"
+            Log.LogWarning(
+                $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
             );
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
@@ -101,14 +95,14 @@ namespace LootingBots.Patch
                 .Select(slot => slot.ContainedItem)
                 .ToArray();
 
-            await itemAdder.tryAddItemsToBot(priorityItems);
+            await lootData.LootFinder.ItemAdder.TryAddItemsToBot(priorityItems);
 
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
-            log.logDebug("Changing to main wep");
-            itemAdder.botOwner.WeaponManager.Selector.TakeMainWeapon();
+            Log.LogDebug("Changing to main wep");
+            botOwner.WeaponManager.Selector.TakeMainWeapon();
 
             watch.Stop();
-            log.logDebug(
+            Log.LogDebug(
                 $"Total time spent looting (s): {(float)(watch.ElapsedMilliseconds / 1000f)}"
             );
         }

@@ -1,23 +1,29 @@
-using Aki.Reflection.Patching;
 using System.Reflection;
-using LootingBots.Patch.Util;
+
+using Aki.Reflection.Patching;
+
 using EFT;
-using UnityEngine;
+
 using LootingBots.Patch.Components;
+using LootingBots.Patch.Util;
+
+using UnityEngine;
 
 namespace LootingBots.Patch
 {
-    public class LootSettingsPatch {
-        public void Enable() {
+    public class LootSettingsPatch
+    {
+        public void Enable()
+        {
             new EnableCorpseLootingPatch().Enable();
             new AddLootFinderPatch().Enable();
             new CleanCacheOnDeadPatch().Enable();
         }
     }
-    
+
     public class EnableCorpseLootingPatch : ModulePatch
     {
-        private static BotDifficultySettingsClass instance;
+        private static BotDifficultySettingsClass s_instance;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -31,25 +37,25 @@ namespace LootingBots.Patch
             ref WildSpawnType ___wildSpawnType_0
         )
         {
-            instance = __instance;
-            BotType enabledTypes = LootingBots.lootingEnabledBots.Value;
-            if (enabledTypes.isBotEnabled(___wildSpawnType_0))
+            s_instance = __instance;
+            BotType enabledTypes = LootingBots.LootingEnabledBots.Value;
+            if (enabledTypes.IsBotEnabled(___wildSpawnType_0))
             {
-                enableLooting();
+                EnableLooting();
             }
         }
 
-        public static void enableLooting()
+        public static void EnableLooting()
         {
-            float seeDist = LootingBots.bodySeeDist.Value;
-            float leaveDist = LootingBots.bodyLeaveDist.Value;
-            float lookPeriod = LootingBots.bodyLookPeriod.Value;
+            float seeDist = LootingBots.BodySeeDist.Value;
+            float leaveDist = LootingBots.BodyLeaveDist.Value;
+            float lookPeriod = LootingBots.BodyLookPeriod.Value;
 
-            instance.FileSettings.Patrol.CAN_LOOK_TO_DEADBODIES = true;
-            instance.FileSettings.Mind.HOW_WORK_OVER_DEAD_BODY = 2;
-            instance.FileSettings.Patrol.DEAD_BODY_SEE_DIST = seeDist;
-            instance.FileSettings.Patrol.DEAD_BODY_LEAVE_DIST = leaveDist;
-            instance.FileSettings.Patrol.DEAD_BODY_LOOK_PERIOD = lookPeriod;
+            s_instance.FileSettings.Patrol.CAN_LOOK_TO_DEADBODIES = true;
+            s_instance.FileSettings.Mind.HOW_WORK_OVER_DEAD_BODY = 2;
+            s_instance.FileSettings.Patrol.DEAD_BODY_SEE_DIST = seeDist;
+            s_instance.FileSettings.Patrol.DEAD_BODY_LEAVE_DIST = leaveDist;
+            s_instance.FileSettings.Patrol.DEAD_BODY_LOOK_PERIOD = lookPeriod;
         }
     }
 
@@ -74,8 +80,8 @@ namespace LootingBots.Patch
         )
         {
             LootFinder lootFinder = player.gameObject.AddComponent<LootFinder>();
-            lootFinder.botOwner = __result;
-            LootCache.botDataCache.Add(player.Id, new BotLootData(lootFinder));
+            lootFinder.BotOwner = __result;
+            LootCache.BotDataCache.Add(player.Id, new BotLootData(lootFinder));
         }
     }
 
@@ -92,10 +98,10 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix(ref Player __instance)
         {
-            LootingBots.containerLog.logDebug(
+            LootingBots.ContainerLog.LogDebug(
                 $"Bot {__instance.Id} is dead. Removing bot data from container cache."
             );
-            LootCache.destroy(__instance.Id);
+            LootCache.Destroy(__instance.Id);
         }
     }
 }

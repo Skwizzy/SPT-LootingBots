@@ -1,11 +1,13 @@
 using BepInEx;
 using BepInEx.Configuration;
-using System;
+
 using Comfort.Common;
+
 using EFT;
+
 using LootingBots.Patch;
-using LootingBots.Patch.Util;
 using LootingBots.Patch.Components;
+using LootingBots.Patch.Util;
 
 namespace LootingBots
 {
@@ -13,34 +15,34 @@ namespace LootingBots
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
-        private const String MOD_GUID = "me.skwizzy.lootingbots";
-        private const String MOD_NAME = "LootingBots";
-        private const String MOD_VERSION = "1.0.2";
+        private const string MOD_GUID = "me.skwizzy.lootingbots";
+        private const string MOD_NAME = "LootingBots";
+        private const string MOD_VERSION = "1.0.2";
 
         // Container Looting
-        public static ConfigEntry<bool> containerLootingEnabled;
-        public static ConfigEntry<BotType> dynamicContainerLootingEnabled;
-        public static ConfigEntry<float> timeToWaitBetweenContainers;
-        public static ConfigEntry<float> detectContainerDistance;
-        public static ConfigEntry<bool> debugContainerNav;
-        public static ConfigEntry<LogUtils.LogLevel> containerLogLevels;
+        public static ConfigEntry<bool> ContainerLootingEnabled;
+        public static ConfigEntry<BotType> DynamicContainerLootingEnabled;
+        public static ConfigEntry<float> TimeToWaitBetweenContainers;
+        public static ConfigEntry<float> DetectContainerDistance;
+        public static ConfigEntry<bool> DebugContainerNav;
+        public static ConfigEntry<LogUtils.LogLevel> ContainerLogLevels;
 
-        public static Log containerLog;
+        public static Log ContainerLog;
 
         // Corpse Looting
-        public static ConfigEntry<LogUtils.LogLevel> corpseLogLevels;
-        public static ConfigEntry<float> bodySeeDist;
-        public static ConfigEntry<float> bodyLeaveDist;
-        public static ConfigEntry<float> bodyLookPeriod;
-        public static ConfigEntry<bool> useMarketPrices;
-        public static ConfigEntry<bool> valueFromMods;
-        public static ConfigEntry<BotType> lootingEnabledBots;
-        public static Log lootLog;
-        public static ItemAppraiser itemAppraiser = new ItemAppraiser();
+        public static ConfigEntry<LogUtils.LogLevel> CorpseLogLevels;
+        public static ConfigEntry<float> BodySeeDist;
+        public static ConfigEntry<float> BodyLeaveDist;
+        public static ConfigEntry<float> BodyLookPeriod;
+        public static ConfigEntry<bool> UseMarketPrices;
+        public static ConfigEntry<bool> ValueFromMods;
+        public static ConfigEntry<BotType> LootingEnabledBots;
+        public static Log LootLog;
+        public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
 
         public void ContainerLootSettings()
         {
-            containerLootingEnabled = Config.Bind(
+            ContainerLootingEnabled = Config.Bind(
                 "Container Looting",
                 "Enable reserve patrols",
                 false,
@@ -50,7 +52,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
-            dynamicContainerLootingEnabled = Config.Bind(
+            DynamicContainerLootingEnabled = Config.Bind(
                 "Container Looting",
                 "Enable dynamic looting",
                 BotType.All,
@@ -60,7 +62,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
-            timeToWaitBetweenContainers = Config.Bind(
+            TimeToWaitBetweenContainers = Config.Bind(
                 "Container Looting",
                 "Dynamic looting: Delay between containers",
                 45f,
@@ -70,7 +72,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
-            detectContainerDistance = Config.Bind(
+            DetectContainerDistance = Config.Bind(
                 "Container Looting",
                 "Dynamic looting: Detect container distance",
                 25f,
@@ -80,7 +82,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            containerLogLevels = Config.Bind<LogUtils.LogLevel>(
+            ContainerLogLevels = Config.Bind<LogUtils.LogLevel>(
                 "Container Looting",
                 "Log Levels",
                 LogUtils.LogLevel.Error,
@@ -90,7 +92,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
-            debugContainerNav = Config.Bind(
+            DebugContainerNav = Config.Bind(
                 "Container Looting",
                 "Debug: Show navigation points",
                 false,
@@ -104,7 +106,7 @@ namespace LootingBots
 
         public void CorpseLootSettings()
         {
-            lootingEnabledBots = Config.Bind(
+            LootingEnabledBots = Config.Bind(
                 "Corpse Looting",
                 "Enable looting",
                 BotType.All,
@@ -114,7 +116,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
-            bodySeeDist = Config.Bind(
+            BodySeeDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to see body",
                 25f,
@@ -124,7 +126,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
-            bodyLeaveDist = Config.Bind(
+            BodyLeaveDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to forget body",
                 50f,
@@ -134,7 +136,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
-            bodyLookPeriod = Config.Bind(
+            BodyLookPeriod = Config.Bind(
                 "Corpse Looting",
                 "Looting time (*)",
                 8.0f,
@@ -144,7 +146,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            corpseLogLevels = Config.Bind<LogUtils.LogLevel>(
+            CorpseLogLevels = Config.Bind<LogUtils.LogLevel>(
                 "Corpse Looting",
                 "Log Levels",
                 LogUtils.LogLevel.Error,
@@ -158,7 +160,7 @@ namespace LootingBots
 
         public void WeaponLootSettings()
         {
-            useMarketPrices = Config.Bind(
+            UseMarketPrices = Config.Bind(
                 "Weapon Looting",
                 "Use flea market prices",
                 false,
@@ -168,7 +170,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
-            valueFromMods = Config.Bind(
+            ValueFromMods = Config.Bind(
                 "Weapon Looting",
                 "Calculate value from attachments",
                 true,
@@ -186,8 +188,8 @@ namespace LootingBots
             CorpseLootSettings();
             WeaponLootSettings();
 
-            lootLog = new Log(Logger, corpseLogLevels);
-            containerLog = new Log(Logger, containerLogLevels);
+            LootLog = new Log(Logger, CorpseLogLevels);
+            ContainerLog = new Log(Logger, ContainerLogLevels);
 
             new LootSettingsPatch().Enable();
             new ContainerLooting().Enable();
@@ -198,8 +200,8 @@ namespace LootingBots
         public void Update()
         {
             bool shoultInitAppraiser =
-                (!useMarketPrices.Value && itemAppraiser.handbookData == null)
-                || (useMarketPrices.Value && !itemAppraiser.marketInitialized);
+                (!UseMarketPrices.Value && ItemAppraiser.HandbookData == null)
+                || (UseMarketPrices.Value && !ItemAppraiser.MarketInitialized);
 
             // Initialize the itemAppraiser when the BE instance comes online
             if (
@@ -208,8 +210,8 @@ namespace LootingBots
                 && shoultInitAppraiser
             )
             {
-                lootLog.logWarning($"Initializing item appraiser");
-                itemAppraiser.init();
+                LootLog.LogWarning($"Initializing item appraiser");
+                ItemAppraiser.Init();
             }
         }
     }

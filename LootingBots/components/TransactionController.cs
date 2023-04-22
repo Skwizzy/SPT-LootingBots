@@ -1,17 +1,20 @@
-using EFT.InventoryLogic;
-using System.Threading.Tasks;
-using Comfort.Common;
 using System;
-using LootingBots.Patch.Util;
+using System.Threading.Tasks;
+
+using Comfort.Common;
+
 using EFT;
+using EFT.InventoryLogic;
+
+using LootingBots.Patch.Util;
 
 namespace LootingBots.Patch.Components
 {
     public class TransactionController
     {
-        Log log;
-        InventoryControllerClass inventoryController;
-        BotOwner botOwner;
+        readonly Log _log;
+        readonly InventoryControllerClass _inventoryController;
+        readonly BotOwner _botOwner;
 
         public TransactionController(
             BotOwner botOwner,
@@ -19,23 +22,23 @@ namespace LootingBots.Patch.Components
             Log log
         )
         {
-            this.botOwner = botOwner;
-            this.inventoryController = inventoryController;
-            this.log = log;
+            _botOwner = botOwner;
+            _inventoryController = inventoryController;
+            _log = log;
         }
 
         public class EquipAction
         {
-            public SwapAction swap;
-            public MoveAction move;
+            public SwapAction Swap;
+            public MoveAction Move;
         }
 
         public class SwapAction
         {
-            public Item toThrow;
-            public Item toEquip;
-            public ActionCallback callback;
-            public ActionCallback onComplete;
+            public Item ToThrow;
+            public Item ToEquip;
+            public ActionCallback Callback;
+            public ActionCallback OnComplete;
 
             public SwapAction(
                 Item toThrow = null,
@@ -44,19 +47,19 @@ namespace LootingBots.Patch.Components
                 ActionCallback onComplete = null
             )
             {
-                this.toThrow = toThrow;
-                this.toEquip = toEquip;
-                this.callback = callback;
-                this.onComplete = onComplete;
+                ToThrow = toThrow;
+                ToEquip = toEquip;
+                Callback = callback;
+                OnComplete = onComplete;
             }
         }
 
         public class MoveAction
         {
-            public Item toMove;
-            public ItemAddress place;
-            public ActionCallback callback;
-            public ActionCallback onComplete;
+            public Item ToMove;
+            public ItemAddress Place;
+            public ActionCallback Callback;
+            public ActionCallback OnComplete;
 
             public MoveAction(
                 Item toMove = null,
@@ -65,44 +68,44 @@ namespace LootingBots.Patch.Components
                 ActionCallback onComplete = null
             )
             {
-                this.toMove = toMove;
-                this.place = place;
-                this.callback = callback;
-                this.onComplete = onComplete;
+                ToMove = toMove;
+                Place = place;
+                Callback = callback;
+                OnComplete = onComplete;
             }
         }
 
         public delegate Task ActionCallback();
 
         /** Tries to find an open Slot to equip the current item to. If a slot is found, issue a move action to equip the item */
-        public async Task<bool> tryEquipItem(Item item)
+        public async Task<bool> TryEquipItem(Item item)
         {
             string botName =
-                $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()}";
+                $"({_botOwner.Profile.Info.Settings.Role}) {_botOwner.Profile?.Info.Nickname.TrimEnd()}";
 
             // Check to see if we can equip the item
-            var ableToEquip = inventoryController.FindSlotToPickUp(item);
+            var ableToEquip = _inventoryController.FindSlotToPickUp(item);
             if (ableToEquip != null)
             {
-                log.logWarning(
+                _log.LogWarning(
                     $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
                 );
-                await moveItem(new MoveAction(item, ableToEquip));
+                await MoveItem(new MoveAction(item, ableToEquip));
 
                 return true;
             }
 
-            log.logDebug($"Cannot equip: {item.Name.Localized()}");
+            _log.LogDebug($"Cannot equip: {item.Name.Localized()}");
 
             return false;
         }
 
         /** Tries to find a valid grid for the item being looted. Checks all containers currently equipped to the bot. If there is a valid grid to place the item inside of, issue a move action to pick up the item */
-        public async Task<bool> tryPickupItem(Item item)
+        public async Task<bool> TryPickupItem(Item item)
         {
             string botName =
-                $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()}";
-            var ableToPickUp = inventoryController.FindGridToPickUp(item, inventoryController);
+                $"({_botOwner.Profile.Info.Settings.Role}) {_botOwner.Profile?.Info.Nickname.TrimEnd()}";
+            var ableToPickUp = _inventoryController.FindGridToPickUp(item, _inventoryController);
 
             if (
                 ableToPickUp != null
@@ -112,45 +115,45 @@ namespace LootingBots.Patch.Components
                     .Equals("securedcontainer")
             )
             {
-                log.logWarning(
+                _log.LogWarning(
                     $"{botName} is picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
                 );
-                await moveItem(new MoveAction(item, ableToPickUp));
+                await MoveItem(new MoveAction(item, ableToPickUp));
                 return true;
             }
 
-            log.logDebug($"No valid slot found for: {item.Name.Localized()}");
+            _log.LogDebug($"No valid slot found for: {item.Name.Localized()}");
 
             return false;
         }
 
         /** Moves an item to a specified item address. Supports executing a callback */
-        public async Task moveItem(MoveAction moveAction)
+        public async Task MoveItem(MoveAction moveAction)
         {
             try
             {
-                log.logDebug($"Moving item to: {moveAction.place.Container.ID.Localized()}");
+                _log.LogDebug($"Moving item to: {moveAction.Place.Container.ID.Localized()}");
                 var value = GClass2429.Move(
-                    moveAction.toMove,
-                    moveAction.place,
-                    inventoryController,
+                    moveAction.ToMove,
+                    moveAction.Place,
+                    _inventoryController,
                     true
                 );
 
-                if (moveAction.callback == null)
+                if (moveAction.Callback == null)
                 {
-                    await inventoryController.TryRunNetworkTransaction(value, null);
+                    await _inventoryController.TryRunNetworkTransaction(value, null);
                 }
                 else
                 {
                     TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
 
-                    await inventoryController.TryRunNetworkTransaction(
+                    await _inventoryController.TryRunNetworkTransaction(
                         value,
                         new Callback(
                             async (IResult result) =>
                             {
-                                await moveAction.callback();
+                                await moveAction.Callback();
                                 promise.TrySetResult(result);
                             }
                         )
@@ -159,29 +162,29 @@ namespace LootingBots.Patch.Components
                     await promise.Task;
                 }
 
-                if (moveAction.onComplete != null)
+                if (moveAction.OnComplete != null)
                 {
-                    await moveAction.onComplete();
+                    await moveAction.OnComplete();
                 }
             }
             catch (Exception e)
             {
-                log.logError(e);
+                _log.LogError(e);
             }
         }
 
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
-        public async Task throwAndEquip(SwapAction swapAction)
+        public async Task ThrowAndEquip(SwapAction swapAction)
         {
             try
             {
                 TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
-                Item toThrow = swapAction.toThrow;
+                Item toThrow = swapAction.ToThrow;
 
                 // Potentially use GClass2426.Swap instead?
 
-                log.logWarning($"Throwing item: {toThrow.Name.Localized()}");
-                inventoryController.ThrowItem(
+                _log.LogWarning($"Throwing item: {toThrow.Name.Localized()}");
+                _inventoryController.ThrowItem(
                     toThrow,
                     null,
                     new Callback(
@@ -189,7 +192,7 @@ namespace LootingBots.Patch.Components
                         {
                             if (result.Succeed)
                             {
-                                await swapAction.callback();
+                                await swapAction.Callback();
                             }
 
                             promise.TrySetResult(result);
@@ -200,14 +203,14 @@ namespace LootingBots.Patch.Components
 
                 await promise.Task;
 
-                if (swapAction.onComplete != null)
+                if (swapAction.OnComplete != null)
                 {
-                    await swapAction.onComplete();
+                    await swapAction.OnComplete();
                 }
             }
             catch (Exception e)
             {
-                log.logError(e);
+                _log.LogError(e);
             }
         }
     }
