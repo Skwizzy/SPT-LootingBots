@@ -66,7 +66,7 @@ namespace LootingBots.Patch
                     | BindingFlags.Instance
             );
             InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                corpseInventory.GetValue(corpse);
+                corpseInventory.GetValue(corpsePlayer);
 
             Log.LogWarning(
                 $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
