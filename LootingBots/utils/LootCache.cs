@@ -83,7 +83,6 @@ namespace LootingBots.Patch.Util
 
         public static BotLootData GetLootData(int botId)
         {
-
             if (!BotDataCache.TryGetValue(botId, out BotLootData lootData))
             {
                 // containerData = new BotContainerData();
@@ -182,9 +181,12 @@ namespace LootingBots.Patch.Util
 
         public static void Destroy(int botId)
         {
-            BotLootData botLootData = GetLootData(botId);
-            botLootData.LootFinder.Destroy();
-            BotDataCache.Remove(botId);
+            BotDataCache.TryGetValue(botId, out BotLootData botLootData);
+            if (botLootData != null)
+            {
+                botLootData.LootFinder.Destroy();
+                BotDataCache.Remove(botId);
+            }
         }
     }
 }
