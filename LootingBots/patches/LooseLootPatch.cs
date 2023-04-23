@@ -78,7 +78,7 @@ namespace LootingBots.Patch
                     }
                     else
                     {
-                        botLootData.LootFinder.ShouldInteractDoor(dist);
+                        botLootData.LootFinder.CheckIfStuck(dist);
                     }
                 }
                 else

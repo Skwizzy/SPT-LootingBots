@@ -36,20 +36,25 @@ namespace LootingBots.Patch.Components
                     return;
                 }
 
-                BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
-
-                if (ItemAdder == null && BotOwner != null)
+                if (BotOwner.BotState == EBotState.Active)
                 {
-                    ItemAdder = new ItemAdder(BotOwner);
-                }
+                    BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
 
-                if (
-                    botLootData.WaitAfterLooting < Time.time
-                    && _scanTimer < Time.time
-                    && !botLootData.HasActiveLootable()
-                )
-                {
-                    FindLootable();
+                    if (ItemAdder == null)
+                    {
+                        ItemAdder = new ItemAdder(BotOwner);
+                    }
+
+                    BotOwner.DoorOpener.Update();
+
+                    if (
+                        botLootData.WaitAfterLooting < Time.time
+                        && _scanTimer < Time.time
+                        && !botLootData.HasActiveLootable()
+                    )
+                    {
+                        FindLootable();
+                    }
                 }
             }
             catch (Exception e)
@@ -194,10 +199,9 @@ namespace LootingBots.Patch.Components
             LootCache.AddVisitedLoot(BotOwner.Id, item.Id);
         }
 
-        public bool ShouldInteractDoor(float dist)
+        public void CheckIfStuck(float dist)
         {
             BotLootData botContainerData = LootCache.GetLootData(BotOwner.Id);
-            bool canInteract = false;
 
             // Calculate change in distance and assume any change less than 1 means the bot hasnt moved.
             float changeInDist = Math.Abs(botContainerData.Dist - dist);
@@ -208,50 +212,8 @@ namespace LootingBots.Patch.Components
                     $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from container: {dist}"
                 );
 
-                // Check for door with 1f sphere. TODO: Change to Ray
-                Collider[] array = Physics.OverlapSphere(
-                    BotOwner.Position,
-                    1.3f,
-                    LayerMask.GetMask(new string[] { "Interactive", }),
-                    QueryTriggerInteraction.Collide
-                );
-
-                // Loop through colliders and find an interactable door. If one is found, try to interact and return out of the method.
-                foreach (Collider collider in array)
-                {
-                    Door door = collider.gameObject.GetComponentInParent<Door>();
-
-                    if (door?.DoorState == EDoorState.Shut)
-                    {
-                        LootingBots.LootLog.LogDebug($"Bot {BotOwner.Id} Opening door");
-                        GClass2599 interactionResult = new GClass2599(EInteractionType.Open);
-                        BotOwner.SetTargetMoveSpeed(0f);
-                        BotOwner.GetPlayer.CurrentState.StartDoorInteraction(
-                            door,
-                            interactionResult,
-                            null
-                        );
-                        canInteract = true;
-                    }
-                    else if (door?.DoorState == EDoorState.Open)
-                    {
-                        LootingBots.LootLog.LogDebug($"Bot {BotOwner.Id} Closing door");
-                        GClass2599 interactionResult = new GClass2599(EInteractionType.Close);
-                        BotOwner.SetTargetMoveSpeed(0f);
-                        BotOwner.GetPlayer.CurrentState.StartDoorInteraction(
-                            door,
-                            interactionResult,
-                            null
-                        );
-                        canInteract = true;
-                    }
-                }
-
-                if (!canInteract)
-                {
-                    // Bot is stuck, update stuck count
-                    LootCache.UpdateStuckCount(BotOwner.Id);
-                }
+                // Bot is stuck, update stuck count
+                LootCache.UpdateStuckCount(BotOwner.Id);
             }
             else
             {
@@ -260,14 +222,7 @@ namespace LootingBots.Patch.Components
                 botContainerData.StuckCount = 0;
             }
 
-            if (canInteract)
-            {
-                // Bot is trying to open door, reset stuckCount
-                botContainerData.StuckCount = 0;
-            }
-
             LootCache.SetLootData(BotOwner.Id, botContainerData);
-            return canInteract;
         }
 
         public bool IsCloseEnough(out float dist)

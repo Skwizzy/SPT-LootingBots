@@ -182,7 +182,7 @@ namespace LootingBots.Patch
             if (!canMove)
             {
                 ___bool_2 = false;
-                ___bool_1 = false; 
+                ___bool_1 = false;
             }
             return false;
         }
@@ -206,13 +206,8 @@ namespace LootingBots.Patch
                 // If the bot is not looting anything, check to see if the bot is stuck on a door and open it
                 if (!hasLooted)
                 {
-                    bool canInteract = botLootData.LootFinder.ShouldInteractDoor(dist);
-
-                    if (canInteract)
-                    {
-                        // closeEnoughTimer = Time.time + 6f;
-                        return isCloseEnough;
-                    }
+                    botLootData.LootFinder.CheckIfStuck(dist);
+                    return isCloseEnough;
                 }
             }
 
