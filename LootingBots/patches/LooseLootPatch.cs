@@ -74,14 +74,6 @@ namespace LootingBots.Patch
                     bool canMove = botLootData.LootFinder.TryMoveToLoot(ref ___float_7);
                     if (!canMove)
                     {
-                        LootCache.Cleanup(ref ___botOwner_0, botLootData.ActiveItem.ItemId);
-                        LootCache.AddNonNavigableLoot(
-                            ___botOwner_0.Id,
-                            botLootData.ActiveItem.ItemOwner.RootItem.Id
-                        );
-                        Logger.LogWarning(
-                            $"Cannot navigate. Ignoring: {botLootData.ActiveItem.ItemOwner.RootItem.Name.Localized()}"
-                        );
                         ___lootItem_0 = null;
                     }
                     else
@@ -191,7 +183,7 @@ namespace LootingBots.Patch
             )
             {
                 string itemId = item.ItemOwner.RootItem.Id;
-                LootCache.Cleanup(ref ___botOwner_0, itemId);
+                LootCache.Cleanup(___botOwner_0, itemId);
                 LootCache.AddVisitedLoot(___botOwner_0.Id, itemId);
                 ___lootItem_0 = null;
                 ___bool_0 = false;

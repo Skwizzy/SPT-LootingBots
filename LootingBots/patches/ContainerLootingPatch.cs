@@ -106,7 +106,7 @@ namespace LootingBots.Patch
                 LootingBots.LootLog.LogWarning(
                     $"Removing successfully looted container: {container.name} ({container.Id})"
                 );
-                LootCache.Cleanup(ref botOwner, container.Id);
+                LootCache.Cleanup(botOwner, container.Id);
                 shallLoot = false;
                 hasLooted = false;
                 LootCache.AddVisitedLoot(botOwner.Id, container.Id);
@@ -181,10 +181,8 @@ namespace LootingBots.Patch
             // If there is not a valid path to the container, ignore the container forever
             if (!canMove)
             {
-                LootCache.Cleanup(ref ___botOwner_0, container.Id);
                 ___bool_2 = false;
-                ___bool_1 = false;
-                LootCache.AddNonNavigableLoot(___botOwner_0.Id, container.Id);
+                ___bool_1 = false; 
             }
             return false;
         }

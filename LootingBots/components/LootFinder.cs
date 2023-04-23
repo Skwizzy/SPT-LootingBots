@@ -21,33 +21,40 @@ namespace LootingBots.Patch.Components
 
         public void Update()
         {
-            // Check to see if the current bot has container looting enabled
-            if (
-                !LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                    BotOwner.Profile.Info.Settings.Role
+            try
+            {
+                // Check to see if the current bot has container looting enabled
+                if (
+                    !LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    && !LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
                 )
-                && !LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                    BotOwner.Profile.Info.Settings.Role
+                {
+                    return;
+                }
+
+                BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
+
+                if (ItemAdder == null && BotOwner != null)
+                {
+                    ItemAdder = new ItemAdder(BotOwner);
+                }
+
+                if (
+                    botLootData.WaitAfterLooting < Time.time
+                    && _scanTimer < Time.time
+                    && !botLootData.HasActiveLootable()
                 )
-            )
-            {
-                return;
+                {
+                    FindLootable();
+                }
             }
-
-            BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
-
-            if (ItemAdder == null && BotOwner != null)
+            catch (Exception e)
             {
-                ItemAdder = new ItemAdder(BotOwner);
-            }
-
-            if (
-                botLootData.WaitAfterLooting < Time.time
-                && _scanTimer < Time.time
-                && !botLootData.HasActiveLootable()
-            )
-            {
-                FindLootable();
+                LootingBots.LootLog.LogError(e);
             }
         }
 
@@ -183,18 +190,19 @@ namespace LootingBots.Patch.Components
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
 
             LootCache.IncrementLootTimer(BotOwner.Id);
-            LootCache.Cleanup(ref BotOwner, item.Id);
+            LootCache.Cleanup(BotOwner, item.Id);
             LootCache.AddVisitedLoot(BotOwner.Id, item.Id);
         }
 
         public bool ShouldInteractDoor(float dist)
         {
             BotLootData botContainerData = LootCache.GetLootData(BotOwner.Id);
+            bool canInteract = false;
 
             // Calculate change in distance and assume any change less than 1 means the bot hasnt moved.
             float changeInDist = Math.Abs(botContainerData.Dist - dist);
 
-            if (changeInDist < 1)
+            if (changeInDist < 0.25f)
             {
                 LootingBots.LootLog.LogDebug(
                     $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from container: {dist}"
@@ -223,7 +231,7 @@ namespace LootingBots.Patch.Components
                             interactionResult,
                             null
                         );
-                        return true;
+                        canInteract = true;
                     }
                     else if (door?.DoorState == EDoorState.Open)
                     {
@@ -235,22 +243,31 @@ namespace LootingBots.Patch.Components
                             interactionResult,
                             null
                         );
-                        return true;
+                        canInteract = true;
                     }
                 }
 
-                // Bot is stuck, update stuck count
-                LootCache.UpdateStuckCount(BotOwner.Id);
+                if (!canInteract)
+                {
+                    // Bot is stuck, update stuck count
+                    LootCache.UpdateStuckCount(BotOwner.Id);
+                }
             }
             else
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
                 botContainerData.Dist = dist;
                 botContainerData.StuckCount = 0;
-                LootCache.SetLootData(BotOwner.Id, botContainerData);
             }
 
-            return false;
+            if (canInteract)
+            {
+                // Bot is trying to open door, reset stuckCount
+                botContainerData.StuckCount = 0;
+            }
+
+            LootCache.SetLootData(BotOwner.Id, botContainerData);
+            return canInteract;
         }
 
         public bool IsCloseEnough(out float dist)
@@ -265,6 +282,7 @@ namespace LootingBots.Patch.Components
 
         public bool TryMoveToLoot(ref float tryMoveTimer)
         {
+            bool canMove = true;
             try
             {
                 // Stand and move to container
@@ -283,7 +301,7 @@ namespace LootingBots.Patch.Components
                             : botLootData.ActiveItem.Name.Localized();
 
                     // If the bot has not been stuck for more than 4 navigation checks, attempt to navigate to the container otherwise ignore the container forever
-                    if (botLootData.StuckCount <= 4)
+                    if (botLootData.StuckCount < 2)
                     {
                         tryMoveTimer = Time.time + 2f;
                         Vector3 center = botLootData.LootObjectCenter;
@@ -346,7 +364,7 @@ namespace LootingBots.Patch.Components
                                 LootingBots.LootLog.LogWarning(
                                     $"Bot {BotOwner.Id} has no valid path to: {lootableName}. Ignoring"
                                 );
-                                return false;
+                                canMove = false;
                             }
 
                             LootCache.SetLootData(BotOwner.Id, botLootData);
@@ -356,26 +374,43 @@ namespace LootingBots.Patch.Components
                             LootingBots.LootLog.LogWarning(
                                 $"Bot {BotOwner.Id} unable to snap container position to NavMesh. Ignoring {lootableName}"
                             );
-                            return false;
+                            canMove = false;
                         }
                     }
                     else
                     {
-                        LootingBots.LootLog.LogWarning(
-                            $"Bot {BotOwner.Id} maximum navigation attempts exceeded for: {lootableName}. Ignoring"
+                        LootingBots.LootLog.LogError(
+                            $"Bot {BotOwner.Id} Has been stuck in place for too long trying to reach: {lootableName}. Ignoring"
                         );
-                        return false;
+                        canMove = false;
                     }
                 }
-
-                return true;
             }
             catch (Exception e)
             {
                 LootingBots.LootLog.LogError(e.Message);
                 LootingBots.LootLog.LogError(e.StackTrace);
-                return false;
             }
+
+            if (!canMove)
+            {
+                HandleNonNavigableLoot();
+            }
+
+            return canMove;
+        }
+
+        private void HandleNonNavigableLoot()
+        {
+            BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
+            string lootId =
+                botLootData.ActiveContainer != null
+                    ? botLootData.ActiveContainer.ItemOwner.Items.ToArray()[0].Id
+                    : botLootData.ActiveItem.ItemOwner.RootItem.Id;
+            LootCache.Cleanup(BotOwner, lootId);
+            LootCache.AddNonNavigableLoot(BotOwner.Id, lootId);
+            LootCache.IncrementLootTimer(BotOwner.Id, 30f);
+            BotOwner.PatrollingData.MoveUpdate();
         }
 
         public void Destroy()

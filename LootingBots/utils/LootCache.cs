@@ -136,29 +136,30 @@ namespace LootingBots.Patch.Util
             return ActiveLootCache.TryGetValue(containerId, out int botId);
         }
 
-        public static bool IsLootIgnored(int botId, string containerId)
+        public static bool IsLootIgnored(int botId, string lootId)
         {
             BotLootData botData = GetLootData(botId);
             bool alreadyTried =
-                botData.NonNavigableContainerIds.Contains(containerId)
-                || botData.VisitedContainerIds.Contains(containerId);
+                botData.NonNavigableContainerIds.Contains(lootId)
+                || botData.VisitedContainerIds.Contains(lootId);
 
-            return alreadyTried || IsLootInUse(containerId);
+            return alreadyTried || IsLootInUse(lootId);
         }
 
-        public static void IncrementLootTimer(int botId)
+        public static void IncrementLootTimer(int botId, float time = -1f)
         {
             // Increment loot wait timer in BotContainerData
-            BotLootData botContainerData = LootCache.GetLootData(botId);
+            BotLootData botContainerData = GetLootData(botId);
+            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
 
             botContainerData.WaitAfterLooting =
-                Time.time + LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
+                Time.time + timer;
 
             SetLootData(botId, botContainerData);
         }
 
         // Original function is method_4
-        public static void Cleanup(ref BotOwner botOwner, string lootId)
+        public static void Cleanup(BotOwner botOwner, string lootId)
         {
             try
             {
