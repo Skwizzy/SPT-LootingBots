@@ -111,8 +111,6 @@ namespace LootingBots.Patch.Components
                     Vector3 vector =
                         BotOwner.Position
                         - (containerObj?.transform?.position ?? lootItem.transform.position);
-                    float y = vector.y;
-                    vector.y = 0f;
                     float dist = vector.magnitude;
 
                     // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
@@ -203,13 +201,13 @@ namespace LootingBots.Patch.Components
         {
             BotLootData botContainerData = LootCache.GetLootData(BotOwner.Id);
 
-            // Calculate change in distance and assume any change less than 1 means the bot hasnt moved.
+            // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
             float changeInDist = Math.Abs(botContainerData.Dist - dist);
 
             if (changeInDist < 0.25f)
             {
                 LootingBots.LootLog.LogDebug(
-                    $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from container: {dist}"
+                    $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from loot: {dist}"
                 );
 
                 // Bot is stuck, update stuck count
@@ -232,7 +230,7 @@ namespace LootingBots.Patch.Components
             float y = vector.y;
             vector.y = 0f;
             dist = vector.magnitude;
-            return dist < 0.5f;
+            return dist < 0.85f && Math.Abs(y) < 0.5f;
         }
 
         public bool TryMoveToLoot(ref float tryMoveTimer)
@@ -255,10 +253,10 @@ namespace LootingBots.Patch.Components
                             ].Name.Localized()
                             : botLootData.ActiveItem.Name.Localized();
 
-                    // If the bot has not been stuck for more than 4 navigation checks, attempt to navigate to the container otherwise ignore the container forever
-                    if (botLootData.StuckCount < 2)
+                    // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the container otherwise ignore the container forever
+                    if (botLootData.StuckCount < 2 && botLootData.NavigationAttempts <= 30)
                     {
-                        tryMoveTimer = Time.time + 2f;
+                        tryMoveTimer = Time.time + 3f;
                         Vector3 center = botLootData.LootObjectCenter;
 
                         // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
@@ -271,7 +269,7 @@ namespace LootingBots.Patch.Components
                             ? navMeshAlignedPoint.position
                             : Vector3.zero;
 
-                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the container and causes the bot to shake violently while looting.
+                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
                         // Add a small amount of padding by pushing the point away from the nearbyPoint
                         Vector3 padding = center - pointNearbyContainer;
                         padding.y = 0;
@@ -287,7 +285,7 @@ namespace LootingBots.Patch.Components
                             ? navMeshAlignedPoint.position
                             : pointNearbyContainer;
 
-                        // Debug for bot container navigation
+                        // Debug for bot loot navigation
                         if (LootingBots.DebugLootNavigation.Value)
                         {
                             GameObjectHelper.DrawSphere(center, 0.5f, Color.red);
@@ -298,13 +296,13 @@ namespace LootingBots.Patch.Components
                             }
                         }
 
-                        // If we were able to snap the container position to a NavMesh, attempt to navigate
+                        // If we were able to snap the loot position to a NavMesh, attempt to navigate
                         if (pointNearbyContainer != Vector3.zero)
                         {
                             NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                                 pointNearbyContainer,
                                 true,
-                                -1f,
+                                1f,
                                 false,
                                 false,
                                 true
@@ -327,7 +325,7 @@ namespace LootingBots.Patch.Components
                         else
                         {
                             LootingBots.LootLog.LogWarning(
-                                $"Bot {BotOwner.Id} unable to snap container position to NavMesh. Ignoring {lootableName}"
+                                $"Bot {BotOwner.Id} unable to snap loot position to NavMesh. Ignoring {lootableName}"
                             );
                             canMove = false;
                         }
@@ -335,7 +333,7 @@ namespace LootingBots.Patch.Components
                     else
                     {
                         LootingBots.LootLog.LogError(
-                            $"Bot {BotOwner.Id} Has been stuck in place for too long trying to reach: {lootableName}. Ignoring"
+                            $"Bot {BotOwner.Id} Has been stuck trying to reach for too long: {lootableName}. Ignoring"
                         );
                         canMove = false;
                     }
