@@ -17,7 +17,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.0.2";
+        private const string MOD_VERSION = "1.1.0";
 
         // Loot Finder
         public static ConfigEntry<BotType> ContainerLootingEnabled;
@@ -38,20 +38,6 @@ namespace LootingBots
         public static ConfigEntry<float> BodyLookPeriod;
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
-
-        // public void ContainerLootSettings()
-        // {
-        //     ContainerLootingEnabled = Config.Bind(
-        //         "Container Looting",
-        //         "Enable reserve patrols",
-        //         false,
-        //         new ConfigDescription(
-        //             "Enable looting of containers for bots on patrols that stop in front of lootable containers",
-        //             null,
-        //             new ConfigurationManagerAttributes { Order = 5 }
-        //         )
-        //     );
-        // }
 
         public void LootFinderSettings()
         {

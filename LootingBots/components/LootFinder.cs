@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 
 using EFT;
 using EFT.Interactive;
@@ -172,9 +173,12 @@ namespace LootingBots.Patch.Components
             // Trigger open interaction on container
             BotOwner.LootOpener.Interact(container, EInteractionType.Open);
             await ItemAdder.LootNestedItems(item);
-            BotOwner.GetPlayer.UpdateInteractionCast();
+            
+            // Close container and switch to main weapon
+            FieldInfo movementContextInfo = BotOwner.GetPlayer.CurrentState.GetType().GetField("MovementContext", BindingFlags.NonPublic | BindingFlags.Instance);
+            var movementContext = (GClass1604)movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
+            movementContext.ReleaseDoorIfInteractingWithOne();
 
-            // // Close container and switch to main weapon
             BotOwner.WeaponManager.Selector.TakeMainWeapon();
             LootCache.IncrementLootTimer(BotOwner.Id);
         }
@@ -254,7 +258,7 @@ namespace LootingBots.Patch.Components
                             : botLootData.ActiveItem.Name.Localized();
 
                     // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the container otherwise ignore the container forever
-                    if (botLootData.StuckCount < 2 && botLootData.NavigationAttempts <= 30)
+                    if (botLootData.StuckCount < 1 && botLootData.NavigationAttempts <= 30)
                     {
                         tryMoveTimer = Time.time + 3f;
                         Vector3 center = botLootData.LootObjectCenter;
