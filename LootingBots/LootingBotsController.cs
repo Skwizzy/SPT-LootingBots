@@ -202,7 +202,7 @@ namespace LootingBots
             bool shoultInitAppraiser =
                 (!UseMarketPrices.Value && ItemAppraiser.HandbookData == null)
                 || (UseMarketPrices.Value && !ItemAppraiser.MarketInitialized);
-
+            
             // Initialize the itemAppraiser when the BE instance comes online
             if (
                 Singleton<ClientApplication<ISession>>.Instance != null
