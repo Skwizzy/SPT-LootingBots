@@ -18,6 +18,7 @@ namespace LootingBots.Patch
             new EnableCorpseLootingPatch().Enable();
             new AddLootFinderPatch().Enable();
             new CleanCacheOnDeadPatch().Enable();
+            new CleanCacheOnRaidEnd().Enable();
         }
     }
 
@@ -102,6 +103,26 @@ namespace LootingBots.Patch
                 $"Bot {__instance.Id} is dead. Removing bot data from container cache."
             );
             LootCache.Destroy(__instance.Id);
+        }
+    }
+
+    public class CleanCacheOnRaidEnd : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GameWorld).GetMethod(
+                "Dispose",
+                BindingFlags.Public | BindingFlags.Instance
+            );
+        }
+
+        [PatchPrefix]
+        private static void PatchPrefix()
+        {
+            LootingBots.LootLog.LogDebug(
+                $"Resetting Loot Cache"
+            );
+            LootCache.Reset();
         }
     }
 }
