@@ -67,6 +67,15 @@ namespace LootingBots.Patch.Util
 
         private static readonly float TimeToLoot = 6f;
 
+        public static void Reset() {
+            foreach(KeyValuePair<int, BotLootData> data in BotDataCache) {
+                data.Value.LootFinder.Destroy();
+            }
+
+            BotDataCache = new Dictionary<int, BotLootData>();
+            ActiveLootCache = new Dictionary<string, int>();
+        }
+
         public static void SetLootData(int botId, BotLootData lootData)
         {
             BotDataCache[botId] = lootData;
