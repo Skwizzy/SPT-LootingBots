@@ -5,6 +5,7 @@ using System.Reflection;
 using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
+using System.Threading.Tasks;
 
 namespace LootingBots.Patch
 {
@@ -41,7 +42,46 @@ namespace LootingBots.Patch
 
             try
             {
-                LootCorpse(___botOwner_0, ___gclass264_0);
+                BotLootData lootData = LootCache.GetLootData(___botOwner_0.Id);
+
+                // Initialize corpse inventory controller
+                Player corpsePlayer = ___gclass264_0.Player;
+                Type corpseType = corpsePlayer.GetType();
+                FieldInfo corpseInventory = corpseType.BaseType.GetField(
+                    "_inventoryController",
+                    BindingFlags.NonPublic
+                        | BindingFlags.Static
+                        | BindingFlags.Public
+                        | BindingFlags.Instance
+                );
+                InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
+                    corpseInventory.GetValue(corpsePlayer);
+
+                Item[] priorityItems = corpseInventoryController.Inventory.Equipment
+                    .GetSlotsByName(
+                        new EquipmentSlot[]
+                        {
+                            EquipmentSlot.Backpack,
+                            EquipmentSlot.ArmorVest,
+                            EquipmentSlot.TacticalVest,
+                            EquipmentSlot.Holster,
+                            EquipmentSlot.FirstPrimaryWeapon,
+                            EquipmentSlot.SecondPrimaryWeapon,
+                            EquipmentSlot.Headwear,
+                            EquipmentSlot.Earpiece,
+                            EquipmentSlot.Dogtag,
+                            EquipmentSlot.Pockets,
+                            EquipmentSlot.Scabbard,
+                            EquipmentSlot.FaceCover
+                        }
+                    )
+                    .Select(slot => slot.ContainedItem)
+                    .ToArray();
+
+                Log.LogWarning(
+                    $"({___botOwner_0.Profile.Info.Settings.Role}) {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
+                );
+                lootData.LootFinder.LootItems(priorityItems);
                 return false;
             }
             catch (Exception e)
@@ -49,60 +89,6 @@ namespace LootingBots.Patch
                 Logger.LogError(e.StackTrace);
             }
             return true;
-        }
-
-        public static async void LootCorpse(BotOwner botOwner, GClass264 corpse)
-        {
-            var watch = new System.Diagnostics.Stopwatch();
-
-            watch.Start();
-            BotLootData lootData = LootCache.GetLootData(botOwner.Id);
-
-            // Initialize corpse inventory controller
-            Player corpsePlayer = corpse.Player;
-            Type corpseType = corpsePlayer.GetType();
-            FieldInfo corpseInventory = corpseType.BaseType.GetField(
-                "_inventoryController",
-                BindingFlags.NonPublic
-                    | BindingFlags.Static
-                    | BindingFlags.Public
-                    | BindingFlags.Instance
-            );
-            InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                corpseInventory.GetValue(corpsePlayer);
-
-            Log.LogWarning(
-                $"({botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
-            );
-
-            Item[] priorityItems = corpseInventoryController.Inventory.Equipment
-                .GetSlotsByName(
-                    new EquipmentSlot[]
-                    {
-                        EquipmentSlot.Backpack,
-                        EquipmentSlot.ArmorVest,
-                        EquipmentSlot.TacticalVest,
-                        EquipmentSlot.Holster,
-                        EquipmentSlot.FirstPrimaryWeapon,
-                        EquipmentSlot.SecondPrimaryWeapon,
-                        EquipmentSlot.Headwear,
-                        EquipmentSlot.Earpiece,
-                        EquipmentSlot.Dogtag,
-                        EquipmentSlot.Pockets,
-                        EquipmentSlot.Scabbard,
-                        EquipmentSlot.FaceCover
-                    }
-                )
-                .Select(slot => slot.ContainedItem)
-                .ToArray();
-
-            await lootData.LootFinder.ItemAdder.TryAddItemsToBot(priorityItems);
-
-            // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
-            Log.LogDebug("Changing to main wep");
-            botOwner.WeaponManager.Selector.TakeMainWeapon();
-            watch.Stop();
-            Log.LogDebug($"Corpse loot Time: {watch.ElapsedMilliseconds / 1000f}s");
         }
     }
 }

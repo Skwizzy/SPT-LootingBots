@@ -19,6 +19,12 @@ namespace LootingBots.Patch.Components
         public ItemAdder ItemAdder;
         public static float TimeToLoot = 8f;
         private float _scanTimer;
+        private readonly Log _log;
+
+        public LootFinder()
+        {
+            _log = LootingBots.LootLog;
+        }
 
         public void Update()
         {
@@ -60,7 +66,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                LootingBots.LootLog.LogError(e);
+                _log.LogError(e);
             }
         }
 
@@ -141,9 +147,6 @@ namespace LootingBots.Patch.Components
 
             if (closestContainer != null)
             {
-                LootingBots.LootLog.LogDebug(
-                    $"Clostest container: {closestContainer.name.Localized()} ({closestContainer.Id})"
-                );
                 // Add closest container found to container map
                 botLootData.ActiveContainer = closestContainer;
                 botLootData.LootObjectCenter = closestLootableCenter;
@@ -153,9 +156,6 @@ namespace LootingBots.Patch.Components
             }
             else if (closestItem != null)
             {
-                LootingBots.LootLog.LogDebug(
-                    $"Clostest item: {closestItem.name.Localized()} ({closestItem.ItemId})"
-                );
                 // Add closest container found to container map
                 botLootData.ActiveItem = closestItem;
                 botLootData.LootObjectCenter = closestLootableCenter;
@@ -165,17 +165,30 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        public async void LootItems(Item[] items)
+        {
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
+
+            await ItemAdder.TryAddItemsToBot(items);
+            // _log.LogDebug("Changing to main wep");
+            BotOwner.WeaponManager.Selector.TakeMainWeapon();
+
+            watch.Stop();
+            _log.LogInfo($"Corpse loot Time: {watch.ElapsedMilliseconds / 1000f}s");
+        }
+
         public async void LootContainer(LootableContainer container)
         {
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
+
             Item item = container.ItemOwner.Items.ToArray()[0];
-            LootingBots.LootLog.LogDebug(
-                $"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}"
-            );
+            _log.LogDebug($"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}");
 
             // Trigger open interaction on container
             BotOwner.LootOpener.Interact(container, EInteractionType.Open);
+            await TransactionController.SimulatePlayerDelay(1000);
             await ItemAdder.LootNestedItems(item);
 
             // Close container and switch to main weapon
@@ -188,10 +201,9 @@ namespace LootingBots.Patch.Components
 
             BotOwner.WeaponManager.Selector.TakeMainWeapon();
             LootCache.IncrementLootTimer(BotOwner.Id);
+
             watch.Stop();
-            LootingBots.LootLog.LogDebug(
-                $"Container loot Time: {watch.ElapsedMilliseconds / 1000f}s"
-            );
+            _log.LogInfo($"Container loot Time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
         public async void LootItem()
@@ -199,7 +211,7 @@ namespace LootingBots.Patch.Components
             BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
             Item item = botLootData.ActiveItem.ItemOwner.RootItem;
 
-            LootingBots.LootLog.LogDebug(
+            _log.LogDebug(
                 $"Bot {BotOwner.Id} trying to pick up loose item: {item.Name.Localized()}"
             );
             BotOwner.GetPlayer.UpdateInteractionCast();
@@ -221,7 +233,7 @@ namespace LootingBots.Patch.Components
 
             if (changeInDist < 0.25f)
             {
-                LootingBots.LootLog.LogDebug(
+                _log.LogDebug(
                     $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from loot: {dist}"
                 );
 
@@ -323,13 +335,13 @@ namespace LootingBots.Patch.Components
                                 true
                             );
 
-                            LootingBots.LootLog.LogDebug(
+                            _log.LogDebug(
                                 $"(Attempt: {botLootData.NavigationAttempts}) Bot {BotOwner.Id} moving to {lootableName} status: {pathStatus}"
                             );
 
                             if (pathStatus != NavMeshPathStatus.PathComplete)
                             {
-                                LootingBots.LootLog.LogWarning(
+                                _log.LogWarning(
                                     $"Bot {BotOwner.Id} has no valid path to: {lootableName}. Ignoring"
                                 );
                                 canMove = false;
@@ -339,7 +351,7 @@ namespace LootingBots.Patch.Components
                         }
                         else
                         {
-                            LootingBots.LootLog.LogWarning(
+                            _log.LogWarning(
                                 $"Bot {BotOwner.Id} unable to snap loot position to NavMesh. Ignoring {lootableName}"
                             );
                             canMove = false;
@@ -347,7 +359,7 @@ namespace LootingBots.Patch.Components
                     }
                     else
                     {
-                        LootingBots.LootLog.LogError(
+                        _log.LogError(
                             $"Bot {BotOwner.Id} Has been stuck trying to reach for too long: {lootableName}. Ignoring"
                         );
                         canMove = false;
@@ -356,8 +368,8 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                LootingBots.LootLog.LogError(e.Message);
-                LootingBots.LootLog.LogError(e.StackTrace);
+                _log.LogError(e.Message);
+                _log.LogError(e.StackTrace);
             }
 
             if (!canMove)

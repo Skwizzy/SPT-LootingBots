@@ -190,6 +190,7 @@ namespace LootingBots
             WeaponLootSettings();
 
             LootLog = new Log(Logger, LootingLogLevels);
+            ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
             new LootSettingsPatch().Enable();
             new ContainerLooting().Enable();
