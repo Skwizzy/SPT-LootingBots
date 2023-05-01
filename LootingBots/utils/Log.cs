@@ -26,6 +26,14 @@ namespace LootingBots.Patch.Util
             }
         }
 
+        public void LogInfo(object data)
+        {
+            if (LogLevels.Value.HasInfo())
+            {
+                Logger.LogDebug(data);
+            }
+        }
+
         public void LogWarning(object data)
         {
             if (LogLevels.Value.HasWarning())

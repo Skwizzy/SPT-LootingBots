@@ -53,6 +53,9 @@ namespace LootingBots.Patch
 
         public static async void LootCorpse(BotOwner botOwner, GClass264 corpse)
         {
+            var watch = new System.Diagnostics.Stopwatch();
+
+            watch.Start();
             BotLootData lootData = LootCache.GetLootData(botOwner.Id);
 
             // Initialize corpse inventory controller
@@ -98,6 +101,8 @@ namespace LootingBots.Patch
             // After all equipment looting is done, attempt to change to the bots "main" weapon. Order follows primary -> secondary -> holster
             Log.LogDebug("Changing to main wep");
             botOwner.WeaponManager.Selector.TakeMainWeapon();
+            watch.Stop();
+            Log.LogDebug($"Corpse loot Time: {watch.ElapsedMilliseconds / 1000f}s");
         }
     }
 }

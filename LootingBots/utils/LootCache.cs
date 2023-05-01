@@ -67,9 +67,11 @@ namespace LootingBots.Patch.Util
 
         private static readonly float TimeToLoot = 6f;
 
-        public static void Reset() {
-            foreach(KeyValuePair<int, BotLootData> data in BotDataCache) {
-                data.Value.LootFinder.Destroy();
+        public static void Reset()
+        {
+            foreach (KeyValuePair<int, BotLootData> data in BotDataCache)
+            {
+                data.Value.LootFinder?.Destroy();
             }
 
             BotDataCache = new Dictionary<int, BotLootData>();
@@ -79,15 +81,6 @@ namespace LootingBots.Patch.Util
         public static void SetLootData(int botId, BotLootData lootData)
         {
             BotDataCache[botId] = lootData;
-
-            if (lootData.ActiveContainer != null || lootData.ActiveItem != null)
-            {
-                string id =
-                    lootData.ActiveContainer != null
-                        ? lootData.ActiveContainer.Id
-                        : lootData.ActiveItem.ItemOwner.RootItem.Id;
-                CacheActiveLootId(id, botId);
-            }
         }
 
         public static BotLootData GetLootData(int botId)
@@ -137,7 +130,7 @@ namespace LootingBots.Patch.Util
 
         public static void CacheActiveLootId(string containerId, int botId)
         {
-            ActiveLootCache[containerId] = botId;
+            ActiveLootCache.Add(containerId, botId);
         }
 
         public static bool IsLootInUse(string containerId)
@@ -161,8 +154,7 @@ namespace LootingBots.Patch.Util
             BotLootData botContainerData = GetLootData(botId);
             float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
 
-            botContainerData.WaitAfterLooting =
-                Time.time + timer;
+            botContainerData.WaitAfterLooting = Time.time + timer;
 
             SetLootData(botId, botContainerData);
         }
@@ -194,7 +186,7 @@ namespace LootingBots.Patch.Util
             BotDataCache.TryGetValue(botId, out BotLootData botLootData);
             if (botLootData != null)
             {
-                botLootData.LootFinder.Destroy();
+                botLootData.LootFinder?.Destroy();
                 BotDataCache.Remove(botId);
             }
         }

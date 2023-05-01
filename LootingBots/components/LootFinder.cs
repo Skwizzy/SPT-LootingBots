@@ -149,6 +149,7 @@ namespace LootingBots.Patch.Components
                 botLootData.LootObjectCenter = closestLootableCenter;
 
                 LootCache.SetLootData(BotOwner.Id, botLootData);
+                LootCache.CacheActiveLootId(closestContainer.Id, BotOwner.Id);
             }
             else if (closestItem != null)
             {
@@ -160,12 +161,14 @@ namespace LootingBots.Patch.Components
                 botLootData.LootObjectCenter = closestLootableCenter;
 
                 LootCache.SetLootData(BotOwner.Id, botLootData);
+                LootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.Id);
             }
         }
 
         public async void LootContainer(LootableContainer container)
         {
-            // ItemAdder itemAdder = new ItemAdder(botOwner);
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
             Item item = container.ItemOwner.Items.ToArray()[0];
             LootingBots.LootLog.LogDebug(
                 $"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}"
@@ -185,6 +188,10 @@ namespace LootingBots.Patch.Components
 
             BotOwner.WeaponManager.Selector.TakeMainWeapon();
             LootCache.IncrementLootTimer(BotOwner.Id);
+            watch.Stop();
+            LootingBots.LootLog.LogDebug(
+                $"Container loot Time: {watch.ElapsedMilliseconds / 1000f}s"
+            );
         }
 
         public async void LootItem()
