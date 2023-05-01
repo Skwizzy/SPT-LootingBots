@@ -20,7 +20,7 @@ namespace LootingBots.Patch.Components
 
         public void Init()
         {
-            Log = LootingBots.LootLog;
+            Log = LootingBots.ItemAppraiserLog;
 
             if (LootingBots.UseMarketPrices.Value)
             {

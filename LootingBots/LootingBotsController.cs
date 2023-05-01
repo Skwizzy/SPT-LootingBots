@@ -29,10 +29,11 @@ namespace LootingBots
         public static ConfigEntry<LogUtils.LogLevel> LootingLogLevels;
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<bool> ValueFromMods;
+        public static ConfigEntry<LogUtils.LogLevel> ItemAppraiserLogLevels;
         public static Log LootLog;
+        public static Log ItemAppraiserLog;
 
         // Corpse Looting
-        public static ConfigEntry<LogUtils.LogLevel> CorpseLogLevels;
         public static ConfigEntry<float> BodySeeDist;
         public static ConfigEntry<float> BodyLeaveDist;
         public static ConfigEntry<float> BodyLookPeriod;
@@ -145,16 +146,6 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            CorpseLogLevels = Config.Bind(
-                "Corpse Looting",
-                "Log Levels",
-                LogUtils.LogLevel.Error,
-                new ConfigDescription(
-                    "Enable different levels of log messages to show in the logs",
-                    null,
-                    new ConfigurationManagerAttributes { Order = 1 }
-                )
-            );
         }
 
         public void WeaponLootSettings()
@@ -166,7 +157,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.",
                     null,
-                    new ConfigurationManagerAttributes { Order = 1 }
+                    new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
             ValueFromMods = Config.Bind(
@@ -175,6 +166,16 @@ namespace LootingBots
                 true,
                 new ConfigDescription(
                     "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            ItemAppraiserLogLevels = Config.Bind(
+                "Weapon Looting",
+                "Log Levels",
+                LogUtils.LogLevel.Error,
+                new ConfigDescription(
+                    "Enables logs for the item apprasier that calcualtes the weapon values",
                     null,
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
@@ -188,7 +189,6 @@ namespace LootingBots
             CorpseLootSettings();
             WeaponLootSettings();
 
-            LootLog = new Log(Logger, CorpseLogLevels);
             LootLog = new Log(Logger, LootingLogLevels);
 
             new LootSettingsPatch().Enable();
@@ -202,7 +202,7 @@ namespace LootingBots
             bool shoultInitAppraiser =
                 (!UseMarketPrices.Value && ItemAppraiser.HandbookData == null)
                 || (UseMarketPrices.Value && !ItemAppraiser.MarketInitialized);
-            
+
             // Initialize the itemAppraiser when the BE instance comes online
             if (
                 Singleton<ClientApplication<ISession>>.Instance != null
@@ -210,7 +210,7 @@ namespace LootingBots
                 && shoultInitAppraiser
             )
             {
-                LootLog.LogWarning($"Initializing item appraiser");
+                LootLog.LogInfo($"Initializing item appraiser");
                 ItemAppraiser.Init();
             }
         }
