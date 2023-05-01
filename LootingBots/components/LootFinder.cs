@@ -175,7 +175,7 @@ namespace LootingBots.Patch.Components
             BotOwner.WeaponManager.Selector.TakeMainWeapon();
 
             watch.Stop();
-            _log.LogInfo($"Corpse loot Time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
         public async void LootContainer(LootableContainer container)
@@ -203,7 +203,7 @@ namespace LootingBots.Patch.Components
             LootCache.IncrementLootTimer(BotOwner.Id);
 
             watch.Stop();
-            _log.LogInfo($"Container loot Time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
         public async void LootItem()
@@ -334,10 +334,14 @@ namespace LootingBots.Patch.Components
                                 false,
                                 true
                             );
-
-                            _log.LogDebug(
-                                $"(Attempt: {botLootData.NavigationAttempts}) Bot {BotOwner.Id} moving to {lootableName} status: {pathStatus}"
-                            );
+                            
+                            // Log every 5 movement attempts to reduce noise
+                            if (botLootData.NavigationAttempts % 5 == 1)
+                            {
+                                _log.LogDebug(
+                                    $"(Attempt: {botLootData.NavigationAttempts}) Bot {BotOwner.Id} moving to {lootableName} status: {pathStatus}"
+                                );
+                            }
 
                             if (pathStatus != NavMeshPathStatus.PathComplete)
                             {
