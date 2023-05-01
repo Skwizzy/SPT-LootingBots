@@ -80,8 +80,7 @@ namespace LootingBots.Patch.Components
         /** Tries to find an open Slot to equip the current item to. If a slot is found, issue a move action to equip the item */
         public async Task<bool> TryEquipItem(Item item)
         {
-            string botName =
-                $"({_botOwner.Profile.Info.Settings.Role}) {_botOwner.Profile?.Info.Nickname.TrimEnd()}";
+            string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
 
             // Check to see if we can equip the item
             var ableToEquip = _inventoryController.FindSlotToPickUp(item);
@@ -103,8 +102,7 @@ namespace LootingBots.Patch.Components
         /** Tries to find a valid grid for the item being looted. Checks all containers currently equipped to the bot. If there is a valid grid to place the item inside of, issue a move action to pick up the item */
         public async Task<bool> TryPickupItem(Item item)
         {
-            string botName =
-                $"({_botOwner.Profile.Info.Settings.Role}) {_botOwner.Profile?.Info.Nickname.TrimEnd()}";
+            string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
             var ableToPickUp = _inventoryController.FindGridToPickUp(item, _inventoryController);
 
             if (
@@ -130,6 +128,11 @@ namespace LootingBots.Patch.Components
         /** Moves an item to a specified item address. Supports executing a callback */
         public async Task MoveItem(MoveAction moveAction)
         {
+            if (IsLootingInterrupted(_botOwner))
+            {
+                return;
+            }
+
             try
             {
                 _log.LogDebug($"Moving item to: {moveAction.Place.Container.ID.Localized()}");
@@ -143,6 +146,7 @@ namespace LootingBots.Patch.Components
                 if (moveAction.Callback == null)
                 {
                     await _inventoryController.TryRunNetworkTransaction(value, null);
+                    await SimulatePlayerDelay();
                 }
                 else
                 {
@@ -153,12 +157,17 @@ namespace LootingBots.Patch.Components
                         new Callback(
                             async (IResult result) =>
                             {
-                                await moveAction.Callback();
+                                if (result.Succeed)
+                                {
+                                    await SimulatePlayerDelay();
+                                    await moveAction.Callback();
+                                }
                                 promise.TrySetResult(result);
                             }
                         )
                     );
 
+                    await SimulatePlayerDelay();
                     await promise.Task;
                 }
 
@@ -176,6 +185,11 @@ namespace LootingBots.Patch.Components
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
         public async Task ThrowAndEquip(SwapAction swapAction)
         {
+            if (IsLootingInterrupted(_botOwner))
+            {
+                return;
+            }
+
             try
             {
                 TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
@@ -192,6 +206,7 @@ namespace LootingBots.Patch.Components
                         {
                             if (result.Succeed)
                             {
+                                await SimulatePlayerDelay();
                                 await swapAction.Callback();
                             }
 
@@ -200,6 +215,7 @@ namespace LootingBots.Patch.Components
                     ),
                     false
                 );
+                await SimulatePlayerDelay();
 
                 await promise.Task;
 
@@ -212,6 +228,29 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogError(e);
             }
+        }
+
+        public static Task SimulatePlayerDelay(int delay = 500)
+        {
+            return Task.Delay(delay);
+        }
+
+        /*
+            Check the bot Brain to see if the last decision it made was related to looting, otherwise this is an indicator the the bot is not supposed to be looting as was interrupted
+            due to combat, death, ect
+        */
+        public static bool IsLootingInterrupted(BotOwner botOwner)
+        {
+            if (
+                botOwner.Brain.LastDecision != BotLogicDecision.deadBody
+                && botOwner.Brain.LastDecision != BotLogicDecision.botTakeItem
+            )
+            {
+                LootingBots.LootLog.LogWarning($"Bot {botOwner.Id} was interrupted looting!");
+                return true;
+            }
+
+            return false;
         }
     }
 }

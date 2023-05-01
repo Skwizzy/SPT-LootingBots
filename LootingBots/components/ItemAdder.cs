@@ -76,8 +76,7 @@ namespace LootingBots.Patch.Components
                 ArmorComponent currentArmor = chest?.GetItemComponent<ArmorComponent>();
                 ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
 
-                CurrentBodyArmorClass =
-                    currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
+                CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
                 CalculateGearValue();
             }
@@ -126,6 +125,11 @@ namespace LootingBots.Patch.Components
         {
             foreach (Item item in items)
             {
+                if (TransactionController.IsLootingInterrupted(_botOwner))
+                {
+                    return;
+                }
+
                 if (item != null && item.Name != null)
                 {
                     _log.LogDebug($"Loot found: {item.Name.Localized()}");
@@ -438,6 +442,11 @@ namespace LootingBots.Patch.Components
         /** Searches throught the child items of a container and attempts to loot them */
         public async Task LootNestedItems(Item parentItem)
         {
+            if (TransactionController.IsLootingInterrupted(_botOwner))
+            {
+                return;
+            }
+
             Item[] nestedItems = parentItem.GetAllItems().ToArray();
             if (nestedItems.Length > 1)
             {
@@ -457,6 +466,7 @@ namespace LootingBots.Patch.Components
                     _log.LogDebug(
                         $"Looting {containerItems.Length} items from {parentItem.Name.Localized()}"
                     );
+                    await TransactionController.SimulatePlayerDelay(1000);
                     await TryAddItemsToBot(containerItems);
                 }
             }
@@ -493,12 +503,15 @@ namespace LootingBots.Patch.Components
             return new TransactionController.SwapAction(
                 toThrow,
                 toEquip,
-                callback ?? (async () =>
-                    {
-                        await Task.Delay(1000);
-                        // Try to equip the item after throwing
-                        await _transactionController.TryEquipItem(toEquip);
-                    }),
+                callback
+                    ?? (
+                        async () =>
+                        {
+                            await TransactionController.SimulatePlayerDelay(1000);
+                            // Try to equip the item after throwing
+                            await _transactionController.TryEquipItem(toEquip);
+                        }
+                    ),
                 onComplete ?? onSwapComplete
             );
         }
