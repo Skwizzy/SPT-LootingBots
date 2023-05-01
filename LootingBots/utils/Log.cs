@@ -30,7 +30,7 @@ namespace LootingBots.Patch.Util
         {
             if (LogLevels.Value.HasInfo())
             {
-                Logger.LogDebug(data);
+                Logger.LogInfo(data);
             }
         }
 
