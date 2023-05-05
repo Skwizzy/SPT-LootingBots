@@ -121,13 +121,13 @@ namespace LootingBots.Patch.Components
         * If bots are looting something that is equippable and they have nothing equipped in that slot, they will always equip it.
         * If the bot decides not to equip the item then it will attempt to put in an available container slot
         */
-        public async Task TryAddItemsToBot(Item[] items)
+        public async Task<bool> TryAddItemsToBot(Item[] items)
         {
             foreach (Item item in items)
             {
                 if (TransactionController.IsLootingInterrupted(_botOwner))
                 {
-                    return;
+                    return false;
                 }
 
                 if (item != null && item.Name != null)
@@ -171,7 +171,8 @@ namespace LootingBots.Patch.Components
                 }
             }
 
-            _botOwner.WeaponManager.Selector.TakeMainWeapon();
+            // _botOwner.WeaponManager.Selector.TakeMainWeapon();
+            return true;
         }
 
         /**
@@ -440,11 +441,11 @@ namespace LootingBots.Patch.Components
         }
 
         /** Searches throught the child items of a container and attempts to loot them */
-        public async Task LootNestedItems(Item parentItem)
+        public async Task<bool> LootNestedItems(Item parentItem)
         {
             if (TransactionController.IsLootingInterrupted(_botOwner))
             {
-                return;
+                return false;
             }
 
             Item[] nestedItems = parentItem.GetAllItems().ToArray();
@@ -474,6 +475,8 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogDebug($"No nested items found in {parentItem.Name}");
             }
+
+            return true;
         }
 
         // Prevents bots from looting single use quest keys like "Unknown Key"

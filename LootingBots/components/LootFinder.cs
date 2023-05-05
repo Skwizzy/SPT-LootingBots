@@ -30,18 +30,13 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                // Check to see if the current bot has container looting enabled
-                if (
-                    !LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
+                bool isLootFinderEnabled =
+                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
-                    && !LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
+                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
-                    )
-                )
-                {
-                    return;
-                }
+                    );
 
                 if (BotOwner.BotState == EBotState.Active)
                 {
@@ -55,7 +50,8 @@ namespace LootingBots.Patch.Components
                     BotOwner.DoorOpener.Update();
 
                     if (
-                        botLootData.WaitAfterLooting < Time.time
+                        isLootFinderEnabled
+                        && botLootData.WaitAfterLooting < Time.time
                         && _scanTimer < Time.time
                         && !botLootData.HasActiveLootable()
                     )
@@ -167,15 +163,21 @@ namespace LootingBots.Patch.Components
 
         public async void LootItems(Item[] items)
         {
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
+            try
+            {
+                var watch = new System.Diagnostics.Stopwatch();
+                watch.Start();
 
-            await ItemAdder.TryAddItemsToBot(items);
-            // _log.LogDebug("Changing to main wep");
-            BotOwner.WeaponManager.Selector.TakeMainWeapon();
+                await ItemAdder.TryAddItemsToBot(items);
+                UpdateActiveWeapon();
 
-            watch.Stop();
-            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+                watch.Stop();
+                _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+            }
+            catch (Exception e)
+            {
+                _log.LogError(e);
+            }
         }
 
         public async void LootContainer(LootableContainer container)
@@ -189,7 +191,11 @@ namespace LootingBots.Patch.Components
             // Trigger open interaction on container
             BotOwner.LootOpener.Interact(container, EInteractionType.Open);
             await TransactionController.SimulatePlayerDelay(1000);
-            await ItemAdder.LootNestedItems(item);
+
+            if (await ItemAdder.LootNestedItems(item))
+            {
+                LootCache.IncrementLootTimer(BotOwner.Id);
+            }
 
             // Close container and switch to main weapon
             FieldInfo movementContextInfo = BotOwner.GetPlayer.CurrentState
@@ -199,8 +205,7 @@ namespace LootingBots.Patch.Components
                 movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
             movementContext.ReleaseDoorIfInteractingWithOne();
 
-            BotOwner.WeaponManager.Selector.TakeMainWeapon();
-            LootCache.IncrementLootTimer(BotOwner.Id);
+            UpdateActiveWeapon();
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -216,12 +221,15 @@ namespace LootingBots.Patch.Components
             );
             BotOwner.GetPlayer.UpdateInteractionCast();
 
-            await ItemAdder.TryAddItemsToBot(new Item[] { item });
-            BotOwner.GetPlayer.CurrentState.Pickup(false, null);
+            if (await ItemAdder.TryAddItemsToBot(new Item[] { item }))
+            {
+                LootCache.IncrementLootTimer(BotOwner.Id);
+                LootCache.Cleanup(BotOwner, item.Id);
+                LootCache.AddVisitedLoot(BotOwner.Id, item.Id);
+            }
 
-            LootCache.IncrementLootTimer(BotOwner.Id);
-            LootCache.Cleanup(BotOwner, item.Id);
-            LootCache.AddVisitedLoot(BotOwner.Id, item.Id);
+            BotOwner.GetPlayer.CurrentState.Pickup(false, null);
+            UpdateActiveWeapon();
         }
 
         public void CheckIfStuck(float dist)
@@ -334,7 +342,7 @@ namespace LootingBots.Patch.Components
                                 false,
                                 true
                             );
-                            
+
                             // Log every 5 movement attempts to reduce noise
                             if (botLootData.NavigationAttempts % 5 == 1)
                             {
@@ -382,6 +390,15 @@ namespace LootingBots.Patch.Components
             }
 
             return canMove;
+        }
+
+        private void UpdateActiveWeapon()
+        {
+            if (BotOwner != null && BotOwner.WeaponManager?.Selector != null)
+            {
+                BotOwner.WeaponManager.UpdateWeaponsList();
+                BotOwner.WeaponManager.Selector.TakeMainWeapon();
+            }
         }
 
         private void HandleNonNavigableLoot()

@@ -242,11 +242,15 @@ namespace LootingBots.Patch.Components
         public static bool IsLootingInterrupted(BotOwner botOwner)
         {
             if (
-                botOwner.Brain.LastDecision != BotLogicDecision.deadBody
-                && botOwner.Brain.LastDecision != BotLogicDecision.botTakeItem
+                botOwner == null
+                || botOwner.Brain == null
+                || (
+                    botOwner.Brain.LastDecision != BotLogicDecision.deadBody
+                    && botOwner.Brain.LastDecision != BotLogicDecision.botTakeItem
+                )
             )
             {
-                LootingBots.LootLog.LogWarning($"Bot {botOwner.Id} was interrupted looting!");
+                LootingBots.LootLog.LogWarning($"Bot {botOwner?.Id} was interrupted looting!");
                 return true;
             }
 
