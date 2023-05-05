@@ -86,7 +86,7 @@ namespace LootingBots.Patch
             }
             catch (Exception e)
             {
-                Logger.LogError(e.StackTrace);
+                Logger.LogError(e);
             }
             return true;
         }

@@ -43,6 +43,7 @@ namespace LootingBots.Patch
             if (enabledTypes.IsBotEnabled(___wildSpawnType_0))
             {
                 EnableCorpseLooting();
+                EnableWeaponSwitching();
             }
         }
 
@@ -57,6 +58,11 @@ namespace LootingBots.Patch
             s_instance.FileSettings.Patrol.DEAD_BODY_SEE_DIST = seeDist;
             s_instance.FileSettings.Patrol.DEAD_BODY_LEAVE_DIST = leaveDist;
             s_instance.FileSettings.Patrol.DEAD_BODY_LOOK_PERIOD = lookPeriod;
+        }
+
+        public static void EnableWeaponSwitching() {
+            s_instance.FileSettings.Shoot.CHANCE_TO_CHANGE_WEAPON = 80;
+            s_instance.FileSettings.Shoot.CHANCE_TO_CHANGE_WEAPON_WITH_HELMET = 40;
         }
     }
 
