@@ -3,6 +3,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
+using Comfort.Common;
+
 using EFT;
 using EFT.InventoryLogic;
 
@@ -114,6 +116,26 @@ namespace LootingBots.Patch.Components
                 float value = LootingBots.ItemAppraiser.GetItemPrice(holster);
                 GearValue.Holster = new ValuePair(holster.Id, value);
             }
+        }
+
+        public async Task<IResult> SortTacVest()
+        {
+            SearchableItemClass tacVest = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem;
+
+            if (tacVest != null)
+            {
+                var result = LootUtils.SortContainer(tacVest, _botInventoryController);
+
+                if (result.Succeeded)
+                {
+                    return await _transactionController.TryRunNetworkTransaction(result);
+                }
+            }
+            _log.LogError("No rig!");
+            return null;
         }
 
         /**

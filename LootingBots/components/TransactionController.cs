@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Comfort.Common;
@@ -228,6 +229,10 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogError(e);
             }
+        }
+
+        public Task<IResult> TryRunNetworkTransaction(GStruct324 operationResult, Callback callback = null) {
+            return _inventoryController.TryRunNetworkTransaction(operationResult, callback);
         }
 
         public static Task SimulatePlayerDelay(int delay = 500)

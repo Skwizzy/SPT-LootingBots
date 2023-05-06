@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 using EFT;
 using EFT.Interactive;
@@ -26,7 +27,7 @@ namespace LootingBots.Patch.Components
             _log = LootingBots.LootLog;
         }
 
-        public void Update()
+        public async Task Update()
         {
             try
             {
@@ -45,6 +46,8 @@ namespace LootingBots.Patch.Components
                     if (ItemAdder == null)
                     {
                         ItemAdder = new ItemAdder(BotOwner);
+                        // Sort items in tacVest for better space management
+                        await ItemAdder.SortTacVest();
                     }
 
                     BotOwner.DoorOpener.Update();
