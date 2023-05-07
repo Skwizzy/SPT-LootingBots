@@ -176,6 +176,9 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
+                    // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
+                    await LootNestedItems(item);
+
                     // Check to see if we can pick up the item
                     bool ableToPickUp = await _transactionController.TryPickupItem(item);
 
@@ -184,8 +187,7 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    // If we cant pick up the item and it has nested slots, loot the items from the container
-                    await LootNestedItems(item);
+                    
                 }
                 else
                 {
@@ -490,7 +492,7 @@ namespace LootingBots.Patch.Components
                         $"Looting {containerItems.Length} items from {parentItem.Name.Localized()}"
                     );
                     await TransactionController.SimulatePlayerDelay(1000);
-                    await TryAddItemsToBot(containerItems);
+                    return await TryAddItemsToBot(containerItems);
                 }
             }
             else
@@ -532,6 +534,7 @@ namespace LootingBots.Patch.Components
                     ?? (
                         async () =>
                         {
+                            LootCache.AddVisitedLoot(_botOwner.Id, toThrow.Id);
                             await TransactionController.SimulatePlayerDelay(1000);
                             // Try to equip the item after throwing
                             await _transactionController.TryEquipItem(toEquip);
