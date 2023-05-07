@@ -60,7 +60,8 @@ namespace LootingBots.Patch
             s_instance.FileSettings.Patrol.DEAD_BODY_LOOK_PERIOD = lookPeriod;
         }
 
-        public static void EnableWeaponSwitching() {
+        public static void EnableWeaponSwitching()
+        {
             s_instance.FileSettings.Shoot.CHANCE_TO_CHANGE_WEAPON = 80;
             s_instance.FileSettings.Shoot.CHANCE_TO_CHANGE_WEAPON_WITH_HELMET = 40;
         }
@@ -125,9 +126,7 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix()
         {
-            LootingBots.LootLog.LogDebug(
-                $"Resetting Loot Cache"
-            );
+            LootingBots.LootLog.LogDebug($"Resetting Loot Cache");
             LootCache.Reset();
         }
     }

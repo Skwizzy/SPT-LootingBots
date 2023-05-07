@@ -104,7 +104,7 @@ namespace LootingBots.Patch.Components
         public async Task<bool> TryPickupItem(Item item)
         {
             string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
-            var ableToPickUp = _inventoryController.FindGridToPickUp(item, _inventoryController);
+            var ableToPickUp = _inventoryController.FindGridToPickUp(item);
 
             if (
                 ableToPickUp != null
