@@ -28,7 +28,7 @@ namespace LootingBots.Patch.Util
         public Vector3 Destination;
 
         // Container ids that the bot has looted
-        public string[] VisitedContainerIds = new string[] { };
+        public string[] IgnoredLootIds = new string[] { };
 
         // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public string[] NonNavigableContainerIds = new string[] { };
@@ -122,7 +122,7 @@ namespace LootingBots.Patch.Util
         public static void AddVisitedLoot(int botId, string containerId)
         {
             BotLootData containerData = GetLootData(botId);
-            containerData.VisitedContainerIds = containerData.VisitedContainerIds
+            containerData.IgnoredLootIds = containerData.IgnoredLootIds
                 .Append(containerId)
                 .ToArray();
             SetLootData(botId, containerData);
@@ -143,7 +143,7 @@ namespace LootingBots.Patch.Util
             BotLootData botData = GetLootData(botId);
             bool alreadyTried =
                 botData.NonNavigableContainerIds.Contains(lootId)
-                || botData.VisitedContainerIds.Contains(lootId);
+                || botData.IgnoredLootIds.Contains(lootId);
 
             return alreadyTried || IsLootInUse(lootId);
         }
