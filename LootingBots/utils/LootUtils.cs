@@ -146,7 +146,6 @@ namespace LootingBots.Patch.Util
             Item item
         )
         {
-            LootingBots.LootLog.LogWarning("Im here!!!!");
             SearchableItemClass tacVest = (SearchableItemClass)
                 equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
             SearchableItemClass backpack = (SearchableItemClass)

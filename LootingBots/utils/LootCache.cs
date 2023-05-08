@@ -186,7 +186,6 @@ namespace LootingBots.Patch.Util
             BotDataCache.TryGetValue(botId, out BotLootData botLootData);
             if (botLootData != null)
             {
-                botLootData.LootFinder?.Destroy();
                 BotDataCache.Remove(botId);
             }
         }
