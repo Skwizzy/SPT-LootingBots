@@ -177,7 +177,12 @@ namespace LootingBots.Patch.Components
                     }
 
                     // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
-                    await LootNestedItems(item);
+                    bool success = await LootNestedItems(item);
+
+                    if (!success)
+                    {
+                        return success;
+                    }
 
                     // Check to see if we can pick up the item
                     bool ableToPickUp = await _transactionController.TryPickupItem(item);
@@ -195,7 +200,6 @@ namespace LootingBots.Patch.Components
                 }
             }
 
-            // _botOwner.WeaponManager.Selector.TakeMainWeapon();
             return true;
         }
 

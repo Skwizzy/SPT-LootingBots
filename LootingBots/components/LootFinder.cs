@@ -29,6 +29,10 @@ namespace LootingBots.Patch.Components
 
         public async Task Update()
         {
+            if (BotOwner == null) {
+                _log.LogError("No BotOwner!");
+            }
+
             try
             {
                 bool isLootFinderEnabled =
@@ -206,7 +210,7 @@ namespace LootingBots.Patch.Components
                 .GetField("MovementContext", BindingFlags.NonPublic | BindingFlags.Instance);
             var movementContext = (GClass1604)
                 movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
-            movementContext.ReleaseDoorIfInteractingWithOne();
+            movementContext.StopAnyInteractions();
 
             UpdateActiveWeapon();
 

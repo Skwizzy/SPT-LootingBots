@@ -78,24 +78,81 @@ namespace LootingBots.Patch.Components
 
         public delegate Task ActionCallback();
 
+        public bool AddExtraAmmo(Weapon weapon)
+        {
+            try
+            {
+                _log.LogDebug($"Trying to add ammo");
+                SearchableItemClass secureContainer = (SearchableItemClass)
+                    _inventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.SecuredContainer)
+                        .ContainedItem;
+                Item ammoReal =
+                    weapon.GetCurrentMagazine()?.FirstRealAmmo()
+                    ?? Singleton<ItemFactory>.Instance.CreateItem(
+                        new MongoID(false),
+                        weapon.CurrentAmmoTemplate._id,
+                        null
+                    );
+
+                for (int i = 0; i < 10; i++)
+                {
+                    Item ammo = ammoReal.CloneItem();
+                    ammo.StackObjectsCount = ammo.StackMaxSize;
+
+                    string[] visitorIds = new string[] { _inventoryController.ID };
+
+                    var location = _inventoryController.FindGridToPickUp(
+                        ammo,
+                        secureContainer.Grids
+                    );
+
+                    if (location != null)
+                    {
+                        var result = location.AddWithoutRestrictions(ammo, visitorIds);
+                        if (result.Failed)
+                        {
+                            _log.LogError("Cannot find location in secure container");
+                        }
+                    }
+                    else
+                    {
+                        _log.LogError("Cannot find location in secure container");
+                    }
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                _log.LogError(e);
+            }
+
+            return false;
+        }
+
         /** Tries to find an open Slot to equip the current item to. If a slot is found, issue a move action to equip the item */
         public async Task<bool> TryEquipItem(Item item)
         {
-            string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
-
-            // Check to see if we can equip the item
-            var ableToEquip = _inventoryController.FindSlotToPickUp(item);
-            if (ableToEquip != null)
+            try
             {
-                _log.LogWarning(
-                    $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
-                );
-                await MoveItem(new MoveAction(item, ableToEquip));
+                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
 
-                return true;
+                // Check to see if we can equip the item
+                var ableToEquip = _inventoryController.FindSlotToPickUp(item);
+                if (ableToEquip != null)
+                {
+                    _log.LogWarning(
+                        $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
+                    );
+                    return await MoveItem(new MoveAction(item, ableToEquip));
+                }
+
+                _log.LogDebug($"Cannot equip: {item.Name.Localized()}");
             }
-
-            _log.LogDebug($"Cannot equip: {item.Name.Localized()}");
+            catch (Exception e)
+            {
+                _log.LogError(e);
+            }
 
             return false;
         }
@@ -103,46 +160,64 @@ namespace LootingBots.Patch.Components
         /** Tries to find a valid grid for the item being looted. Checks all containers currently equipped to the bot. If there is a valid grid to place the item inside of, issue a move action to pick up the item */
         public async Task<bool> TryPickupItem(Item item)
         {
-            string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
-            var ableToPickUp = _inventoryController.FindGridToPickUp(item);
-
-            if (
-                ableToPickUp != null
-                && !ableToPickUp
-                    .GetRootItem()
-                    .Parent.Container.ID.ToLower()
-                    .Equals("securedcontainer")
-            )
+            try
             {
-                _log.LogWarning(
-                    $"{botName} is picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
-                );
-                await MoveItem(new MoveAction(item, ableToPickUp));
-                return true;
+                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
+                var ableToPickUp = _inventoryController.FindGridToPickUp(item);
+
+                if (
+                    ableToPickUp != null
+                    && !ableToPickUp
+                        .GetRootItem()
+                        .Parent.Container.ID.ToLower()
+                        .Equals("securedcontainer")
+                )
+                {
+                    _log.LogWarning(
+                        $"{botName} is picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
+                    );
+                    return await MoveItem(new MoveAction(item, ableToPickUp));
+                }
+
+                _log.LogDebug($"No valid slot found for: {item.Name.Localized()}");
             }
-
-            _log.LogDebug($"No valid slot found for: {item.Name.Localized()}");
-
+            catch (Exception e)
+            {
+                _log.LogError(e);
+            }
             return false;
         }
 
         /** Moves an item to a specified item address. Supports executing a callback */
-        public async Task MoveItem(MoveAction moveAction)
+        public async Task<bool> MoveItem(MoveAction moveAction)
         {
-            if (IsLootingInterrupted(_botOwner))
-            {
-                return;
-            }
-
             try
             {
-                _log.LogDebug($"Moving item to: {moveAction.Place.Container.ID.Localized()}");
+                if (IsLootingInterrupted(_botOwner))
+                {
+                    return false;
+                }
+
+                if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is BulletClass))
+                {
+                    AddExtraAmmo(weapon);
+                }
+
+                _log.LogDebug($"Moving item to: {moveAction?.Place?.Container?.ID?.Localized()}");
                 var value = GClass2429.Move(
                     moveAction.ToMove,
                     moveAction.Place,
                     _inventoryController,
                     true
                 );
+
+                if (value.Failed)
+                {
+                    _log.LogError(
+                        $"Failed to move {moveAction.ToMove.Name.Localized()} to {moveAction.Place.Container.ID.Localized()}"
+                    );
+                    return false;
+                }
 
                 if (moveAction.Callback == null)
                 {
@@ -181,6 +256,8 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogError(e);
             }
+
+            return true;
         }
 
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
@@ -231,7 +308,11 @@ namespace LootingBots.Patch.Components
             }
         }
 
-        public Task<IResult> TryRunNetworkTransaction(GStruct324 operationResult, Callback callback = null) {
+        public Task<IResult> TryRunNetworkTransaction(
+            GStruct324 operationResult,
+            Callback callback = null
+        )
+        {
             return _inventoryController.TryRunNetworkTransaction(operationResult, callback);
         }
 

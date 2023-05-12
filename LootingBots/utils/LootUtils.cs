@@ -123,10 +123,11 @@ namespace LootingBots.Patch.Util
         // Custom extension for EFT InventoryControllerClass.FindGridToPickUp
         public static GClass2424 FindGridToPickUp(
             this InventoryControllerClass controller,
-            Item item
+            Item item,
+            IEnumerable<GClass2166> grids = null
         )
         {
-            var prioritzedGrids = controller.Inventory.Equipment.GetPrioritizedGridsForLoot(item);
+            var prioritzedGrids = grids ?? controller.Inventory.Equipment.GetPrioritizedGridsForLoot(item);
 
             foreach (var grid in prioritzedGrids)
             {
