@@ -78,16 +78,18 @@ namespace LootingBots.Patch.Components
 
         public delegate Task ActionCallback();
 
+        /** Tries to add extra spare ammo for the weapon being looted into the bot's secure container so that the bots are able to refill their mags properly in their reload logic */
         public bool AddExtraAmmo(Weapon weapon)
         {
             try
             {
-                _log.LogDebug($"Trying to add ammo");
                 SearchableItemClass secureContainer = (SearchableItemClass)
                     _inventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.SecuredContainer)
                         .ContainedItem;
-                Item ammoReal =
+
+                // Try to get the current ammo used by the weapon by checking the contents of the magazine. If its empty, try to create an instance of the ammo using the Weapon's CurrentAmmoTemplate
+                Item ammoToAdd =
                     weapon.GetCurrentMagazine()?.FirstRealAmmo()
                     ?? Singleton<ItemFactory>.Instance.CreateItem(
                         new MongoID(false),
@@ -95,31 +97,56 @@ namespace LootingBots.Patch.Components
                         null
                     );
 
-                for (int i = 0; i < 10; i++)
+                // Check to see if there already is ammo that meets the weapon's caliber in the secure container
+                bool alreadyHasAmmo =
+                    secureContainer
+                        .GetAllItems()
+                        .Where(
+                            item =>
+                                item is BulletClass bullet
+                                && bullet.Caliber.Equals(((BulletClass)ammoToAdd).Caliber)
+                        )
+                        .ToArray()
+                        .Length > 0;
+
+                // If we dont have any ammo, attempt to add 10 max ammo stacks into the bot's secure container for use in the bot's internal reloading code
+                if (!alreadyHasAmmo)
                 {
-                    Item ammo = ammoReal.CloneItem();
-                    ammo.StackObjectsCount = ammo.StackMaxSize;
+                    _log.LogDebug($"Trying to add ammo");
 
-                    string[] visitorIds = new string[] { _inventoryController.ID };
-
-                    var location = _inventoryController.FindGridToPickUp(
-                        ammo,
-                        secureContainer.Grids
-                    );
-
-                    if (location != null)
+                    for (int i = 0; i < 10; i++)
                     {
-                        var result = location.AddWithoutRestrictions(ammo, visitorIds);
-                        if (result.Failed)
+                        Item ammo = ammoToAdd.CloneItem();
+                        ammo.StackObjectsCount = ammo.StackMaxSize;
+
+                        string[] visitorIds = new string[] { _inventoryController.ID };
+
+                        var location = _inventoryController.FindGridToPickUp(
+                            ammo,
+                            secureContainer.Grids
+                        );
+
+                        if (location != null)
                         {
-                            _log.LogError("Cannot find location in secure container");
+                            var result = location.AddWithoutRestrictions(ammo, visitorIds);
+                            if (result.Failed)
+                            {
+                                _log.LogError(
+                                    $"Failed to add {ammo.Name.Localized()} to secure container"
+                                );
+                            }
+                        }
+                        else
+                        {
+                            _log.LogError(
+                                $"Cannot find location in secure container for {ammo.Name.Localized()}"
+                            );
                         }
                     }
-                    else
-                    {
-                        _log.LogError("Cannot find location in secure container");
-                    }
                 }
+
+                _log.LogDebug($"Already has ammo for {weapon.Name.Localized()}");
+
                 return true;
             }
             catch (Exception e)
@@ -282,7 +309,7 @@ namespace LootingBots.Patch.Components
                     new Callback(
                         async (IResult result) =>
                         {
-                            if (result.Succeed)
+                            if (result.Succeed && swapAction.Callback != null)
                             {
                                 await SimulatePlayerDelay();
                                 await swapAction.Callback();
