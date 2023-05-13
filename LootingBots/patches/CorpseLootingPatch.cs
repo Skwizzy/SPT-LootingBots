@@ -57,29 +57,16 @@ namespace LootingBots.Patch
                 InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
                     corpseInventory.GetValue(corpsePlayer);
 
+                EquipmentSlot[] prioritySlots = GetPrioritySlots(___botOwner_0.Id);
+
                 Item[] priorityItems = corpseInventoryController.Inventory.Equipment
-                    .GetSlotsByName(
-                        new EquipmentSlot[]
-                        {
-                            EquipmentSlot.Backpack,
-                            EquipmentSlot.ArmorVest,
-                            EquipmentSlot.TacticalVest,
-                            EquipmentSlot.Holster,
-                            EquipmentSlot.FirstPrimaryWeapon,
-                            EquipmentSlot.SecondPrimaryWeapon,
-                            EquipmentSlot.Headwear,
-                            EquipmentSlot.Earpiece,
-                            EquipmentSlot.Dogtag,
-                            EquipmentSlot.Pockets,
-                            EquipmentSlot.Scabbard,
-                            EquipmentSlot.FaceCover
-                        }
-                    )
+                    .GetSlotsByName(prioritySlots)
                     .Select(slot => slot.ContainedItem)
+                    .Where(item => item != null)
                     .ToArray();
 
                 Log.LogWarning(
-                    $"({___botOwner_0.Profile.Info.Settings.Role}) {___botOwner_0.Profile?.Info.Nickname.TrimEnd()} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
+                    $"({___botOwner_0.Profile.Info.Settings.Role}) Bot {___botOwner_0.Id} is looting corpse: ({corpsePlayer.Profile?.Info?.Settings?.Role}) {corpsePlayer.Profile?.Info.Nickname}"
                 );
                 lootData.LootFinder.LootItems(priorityItems);
                 return false;
@@ -89,6 +76,60 @@ namespace LootingBots.Patch
                 Logger.LogError(e);
             }
             return true;
+        }
+
+        static EquipmentSlot[] GetPrioritySlots(int botId)
+        {
+            BotLootData lootData = LootCache.GetLootData(botId);
+
+            InventoryControllerClass botInventoryController =
+                lootData.LootFinder.ItemAdder.GetInventoryController();
+            bool hasBackpack =
+                botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem != null;
+            bool hasTacVest =
+                botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem != null;
+
+            EquipmentSlot[] prioritySlots = new EquipmentSlot[0];
+            EquipmentSlot[] weaponSlots = new EquipmentSlot[]
+            {
+                EquipmentSlot.Holster,
+                EquipmentSlot.FirstPrimaryWeapon,
+                EquipmentSlot.SecondPrimaryWeapon
+            };
+            EquipmentSlot[] storageSlots = new EquipmentSlot[]
+            {
+                EquipmentSlot.Backpack,
+                EquipmentSlot.ArmorVest,
+                EquipmentSlot.TacticalVest,
+                EquipmentSlot.Pockets
+            };
+
+            if (hasBackpack || hasTacVest)
+            {
+                Log.LogWarning($"Bot {botId} has backpack/rig and is looting weapons first!");
+                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
+            }
+            else
+            {
+                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+            }
+
+            return prioritySlots
+                .Concat(
+                    new EquipmentSlot[]
+                    {
+                        EquipmentSlot.Headwear,
+                        EquipmentSlot.Earpiece,
+                        EquipmentSlot.Dogtag,
+                        EquipmentSlot.Scabbard,
+                        EquipmentSlot.FaceCover
+                    }
+                )
+                .ToArray();
         }
     }
 }
