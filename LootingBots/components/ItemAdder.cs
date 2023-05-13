@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -40,6 +41,9 @@ namespace LootingBots.Patch.Components
 
         private static readonly GearValue GearValue = new GearValue();
 
+        private Dictionary<string, List<MagazineClass>> usableMags =
+            new Dictionary<string, List<MagazineClass>>();
+
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int CurrentBodyArmorClass = 0;
 
@@ -72,20 +76,89 @@ namespace LootingBots.Patch.Components
                 Item chest = _botInventoryController.Inventory.Equipment
                     .GetSlot(EquipmentSlot.ArmorVest)
                     .ContainedItem;
-                Item tacVest = _botInventoryController.Inventory.Equipment
-                    .GetSlot(EquipmentSlot.TacticalVest)
-                    .ContainedItem;
+                SearchableItemClass tacVest = (SearchableItemClass)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.TacticalVest)
+                        .ContainedItem;
                 ArmorComponent currentArmor = chest?.GetItemComponent<ArmorComponent>();
                 ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
-
                 CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
+                Weapon primary = (Weapon)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
+                        .ContainedItem;
+                Weapon secondary = (Weapon)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.SecondPrimaryWeapon)
+                        .ContainedItem;
+                Weapon holster = (Weapon)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.Holster)
+                        .ContainedItem;
+                // List<MagazineClass> mags = new List<MagazineClass>();
+                // _botInventoryController.GetReachableItemsOfTypeNonAlloc(mags);
+
+                // List<MagazineClass> primaryMags = new List<MagazineClass>();
+                // List<MagazineClass> secondaryMags = new List<MagazineClass>();
+                // List<MagazineClass> holsterMags = new List<MagazineClass>();
+
+                // foreach (MagazineClass mag in mags)
+                // {
+                //     if (
+                //         primary != null
+                //         && primary.GetMagazineSlot() != null
+                //         && primary.GetMagazineSlot().CanAccept(mag)
+                //     )
+                //     {
+                //         _log.LogError($"Found usable primary mag {mag.Name.Localized()}");
+                //         primaryMags.Add(mag);
+                //     }
+
+                //     if (
+                //         secondary != null
+                //         && secondary.GetMagazineSlot() != null
+                //             & secondary.GetMagazineSlot().CanAccept(mag)
+                //     )
+                //     {
+                //         _log.LogError($"Found usable secondary mag {mag.Name.Localized()}");
+                //         secondaryMags.Add(mag);
+                //     }
+
+                //     if (
+                //         holster != null
+                //         && holster.GetMagazineSlot() != null
+                //             & holster.GetMagazineSlot().CanAccept(mag)
+                //     )
+                //     {
+                //         _log.LogError($"Found usable holster mag {mag.Name.Localized()}");
+                //         holsterMags.Add(mag);
+                //     }
+                // }
+
+                // if (primary != null)
+                // {
+                //     usableMags.Add(primary.Id, primaryMags);
+                // }
+                // if (secondary != null)
+                // {
+                //     usableMags.Add(secondary.Id, secondaryMags);
+                // }
+                // if (holster != null)
+                // {
+                //     usableMags.Add(holster.Id, holsterMags);
+                // }
                 CalculateGearValue();
             }
             catch (Exception e)
             {
                 _log.LogError(e);
             }
+        }
+
+        public InventoryControllerClass GetInventoryController()
+        {
+            return _botInventoryController;
         }
 
         public void CalculateGearValue()
@@ -191,8 +264,6 @@ namespace LootingBots.Patch.Components
                     {
                         continue;
                     }
-
-                    
                 }
                 else
                 {
@@ -269,17 +340,106 @@ namespace LootingBots.Patch.Components
             return action;
         }
 
+        public async Task ThrowUselessMags(Weapon thrownWeapon)
+        {
+            Weapon primary = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
+                    .ContainedItem;
+            Weapon secondary = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.SecondPrimaryWeapon)
+                    .ContainedItem;
+            Weapon holster = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Holster)
+                    .ContainedItem;
+            List<MagazineClass> mags = new List<MagazineClass>();
+            _botInventoryController.GetReachableItemsOfTypeNonAlloc(mags);
+
+            _log.LogDebug($"Bot {_botOwner.Id} cleaning up old mags...");
+            int reservedCount = 0;
+            foreach (MagazineClass mag in mags)
+            {
+                bool fitsInThrown =
+                    thrownWeapon.GetMagazineSlot() != null
+                    && thrownWeapon.GetMagazineSlot().CanAccept(mag);
+                bool fitsInPrimary =
+                    primary != null
+                    && primary.GetMagazineSlot() != null
+                    && primary.GetMagazineSlot().CanAccept(mag);
+                bool fitsInSecondary =
+                    secondary != null
+                    && secondary.GetMagazineSlot() != null
+                    && secondary.GetMagazineSlot().CanAccept(mag);
+                bool fitsInHolster =
+                    holster != null
+                    && holster.GetMagazineSlot() != null
+                    && holster.GetMagazineSlot().CanAccept(mag);
+
+                bool fitsInEquipped = fitsInPrimary || fitsInSecondary || fitsInHolster;
+                bool isSharedMag = fitsInThrown && fitsInEquipped;
+                if (reservedCount < 2 && fitsInThrown && fitsInEquipped)
+                {
+                    _log.LogDebug(
+                        $"Bot {_botOwner.Id} reserving shared mag mag {mag.Name.LocalizedName()}"
+                    );
+                    reservedCount++;
+                }
+                else if ((reservedCount >= 2 && fitsInEquipped) || !fitsInEquipped)
+                {
+                    _log.LogDebug(
+                        $"Bot {_botOwner.Id} removing useless mag {mag.Name.LocalizedName()}"
+                    );
+                    await _transactionController.ThrowAndEquip(
+                        new TransactionController.SwapAction(mag)
+                    );
+                }
+                // if (
+                //     reservedCount < 2
+                //     && usableMags
+                //         .ToArray()
+                //         .Where(entry => entry.Key != thrownWeapon.Id && entry.Value.Contains(mag))
+                //         .ToArray()
+                //         .Length > 0
+                // )
+                // {
+                //     reservedCount++;
+                // }
+                // else
+                // {
+                //     await _transactionController.ThrowAndEquip(
+                //         new TransactionController.SwapAction(mag)
+                //     );
+                // }
+            }
+
+            usableMags.Remove(thrownWeapon.Id);
+        }
+
+        private void UpdateActiveWeapon()
+        {
+            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
+            {
+                _botOwner.WeaponManager.UpdateWeaponsList();
+                _botOwner.WeaponManager.Selector.TakeMainWeapon();
+            }
+        }
+
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
         {
-            Item primary = _botInventoryController.Inventory.Equipment
-                .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
-                .ContainedItem;
-            Item secondary = _botInventoryController.Inventory.Equipment
-                .GetSlot(EquipmentSlot.SecondPrimaryWeapon)
-                .ContainedItem;
-            Item holster = _botInventoryController.Inventory.Equipment
-                .GetSlot(EquipmentSlot.Holster)
-                .ContainedItem;
+            Weapon primary = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
+                    .ContainedItem;
+            Weapon secondary = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.SecondPrimaryWeapon)
+                    .ContainedItem;
+            Weapon holster = (Weapon)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Holster)
+                    .ContainedItem;
 
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             bool isPistol = lootWeapon.WeapClass.Equals("pistol");
@@ -336,6 +496,7 @@ namespace LootingBots.Patch.Components
                                 // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
                                 await Task.Delay(1000);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                UpdateActiveWeapon();
                             }
                         );
 
@@ -356,7 +517,9 @@ namespace LootingBots.Patch.Components
                             async () =>
                             {
                                 await Task.Delay(1000);
+                                await ThrowUselessMags(secondary);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                UpdateActiveWeapon();
                             }
                         );
                         GearValue.Secondary = GearValue.Primary;
@@ -540,6 +703,11 @@ namespace LootingBots.Patch.Components
                         {
                             LootCache.AddVisitedLoot(_botOwner.Id, toThrow.Id);
                             await TransactionController.SimulatePlayerDelay(1000);
+
+                            if (toThrow is Weapon weapon)
+                            {
+                                await ThrowUselessMags(weapon);
+                            }
                             // Try to equip the item after throwing
                             await _transactionController.TryEquipItem(toEquip);
                         }
