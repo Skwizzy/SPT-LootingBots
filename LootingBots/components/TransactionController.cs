@@ -113,6 +113,7 @@ namespace LootingBots.Patch.Components
                 if (!alreadyHasAmmo)
                 {
                     _log.LogDebug($"Trying to add ammo");
+                    int ammoAdded = 0;
 
                     for (int i = 0; i < 10; i++)
                     {
@@ -135,6 +136,10 @@ namespace LootingBots.Patch.Components
                                     $"Failed to add {ammo.Name.Localized()} to secure container"
                                 );
                             }
+                            else
+                            {
+                                ammoAdded += ammo.StackObjectsCount;
+                            }
                         }
                         else
                         {
@@ -143,9 +148,18 @@ namespace LootingBots.Patch.Components
                             );
                         }
                     }
-                }
 
-                _log.LogDebug($"Already has ammo for {weapon.Name.Localized()}");
+                    if (ammoAdded > 0)
+                    {
+                        _log.LogDebug(
+                            $"Successfully added {ammoAdded} round of {ammoToAdd.Name.Localized()}"
+                        );
+                    }
+                }
+                else
+                {
+                    _log.LogDebug($"Already has ammo for {weapon.Name.Localized()}");
+                }
 
                 return true;
             }
