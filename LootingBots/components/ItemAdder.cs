@@ -228,6 +228,12 @@ namespace LootingBots.Patch.Components
                 if (item != null && item.Name != null)
                 {
                     _log.LogDebug($"Loot found: {item.Name.Localized()}");
+                    if (item is MagazineClass mag && !CanUseMag(mag))
+                    {
+                        _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
+                        continue;
+                    }
+
                     // Check to see if we need to swap gear
                     TransactionController.EquipAction action = GetEquipAction(item);
                     if (action.Swap != null)
@@ -340,6 +346,27 @@ namespace LootingBots.Patch.Components
             return action;
         }
 
+        public bool CanUseMag(MagazineClass mag)
+        {
+            return _botInventoryController.Inventory.Equipment
+                    .GetSlotsByName(
+                        new EquipmentSlot[]
+                        {
+                            EquipmentSlot.FirstPrimaryWeapon,
+                            EquipmentSlot.SecondPrimaryWeapon,
+                            EquipmentSlot.Holster
+                        }
+                    )
+                    .Where(
+                        slot =>
+                            slot.ContainedItem != null
+                            && ((Weapon)slot.ContainedItem).GetMagazineSlot() != null
+                            && ((Weapon)slot.ContainedItem).GetMagazineSlot().CanAccept(mag)
+                    )
+                    .ToArray()
+                    .Length > 0;
+        }
+
         public async Task ThrowUselessMags(Weapon thrownWeapon)
         {
             Weapon primary = (Weapon)
@@ -382,14 +409,14 @@ namespace LootingBots.Patch.Components
                 if (reservedCount < 2 && fitsInThrown && fitsInEquipped)
                 {
                     _log.LogDebug(
-                        $"Bot {_botOwner.Id} reserving shared mag mag {mag.Name.LocalizedName()}"
+                        $"Bot {_botOwner.Id} reserving shared mag mag {mag.Name.Localized()}"
                     );
                     reservedCount++;
                 }
                 else if ((reservedCount >= 2 && fitsInEquipped) || !fitsInEquipped)
                 {
                     _log.LogDebug(
-                        $"Bot {_botOwner.Id} removing useless mag {mag.Name.LocalizedName()}"
+                        $"Bot {_botOwner.Id} removing useless mag {mag.Name.Localized()}"
                     );
                     await _transactionController.ThrowAndEquip(
                         new TransactionController.SwapAction(mag)
@@ -415,15 +442,6 @@ namespace LootingBots.Patch.Components
             }
 
             usableMags.Remove(thrownWeapon.Id);
-        }
-
-        private void UpdateActiveWeapon()
-        {
-            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
-            {
-                _botOwner.WeaponManager.UpdateWeaponsList();
-                _botOwner.WeaponManager.Selector.TakeMainWeapon();
-            }
         }
 
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
@@ -496,7 +514,6 @@ namespace LootingBots.Patch.Components
                                 // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
                                 await Task.Delay(1000);
                                 await _transactionController.TryEquipItem(lootWeapon);
-                                UpdateActiveWeapon();
                             }
                         );
 
@@ -519,7 +536,6 @@ namespace LootingBots.Patch.Components
                                 await Task.Delay(1000);
                                 await ThrowUselessMags(secondary);
                                 await _transactionController.TryEquipItem(lootWeapon);
-                                UpdateActiveWeapon();
                             }
                         );
                         GearValue.Secondary = GearValue.Primary;
