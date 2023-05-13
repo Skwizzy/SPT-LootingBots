@@ -29,7 +29,8 @@ namespace LootingBots.Patch.Components
 
         public async Task Update()
         {
-            if (BotOwner == null) {
+            if (BotOwner == null)
+            {
                 _log.LogError("No BotOwner!");
             }
 
@@ -296,7 +297,9 @@ namespace LootingBots.Patch.Components
                             : botLootData.ActiveItem.Name.Localized();
 
                     // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the lootable otherwise ignore the container forever
-                    if (botLootData.StuckCount < 1 && botLootData.NavigationAttempts <= 30)
+                    bool isBotStuck = botLootData.StuckCount > 1;
+                    bool isNavigationLimit = botLootData.NavigationAttempts > 30;
+                    if (!isBotStuck && !isNavigationLimit)
                     {
                         tryMoveTimer = Time.time + 4f;
                         Vector3 center = botLootData.LootObjectCenter;
@@ -378,9 +381,18 @@ namespace LootingBots.Patch.Components
                     }
                     else
                     {
-                        _log.LogError(
-                            $"Bot {BotOwner.Id} Has been stuck trying to reach for too long: {lootableName}. Ignoring"
-                        );
+                        if (isBotStuck)
+                        {
+                            _log.LogError(
+                                $"Bot {BotOwner.Id} Has been stuck trying to reach: {lootableName}. Ignoring"
+                            );
+                        }
+                        else
+                        {
+                            _log.LogError(
+                                $"Bot {BotOwner.Id} Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
+                            );
+                        }
                         canMove = false;
                     }
                 }
