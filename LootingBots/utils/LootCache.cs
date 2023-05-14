@@ -87,7 +87,6 @@ namespace LootingBots.Patch.Util
         {
             if (!BotDataCache.TryGetValue(botId, out BotLootData lootData))
             {
-                // containerData = new BotContainerData();
                 BotDataCache.Add(botId, lootData);
             }
 

@@ -9,8 +9,8 @@ namespace LootingBots.Patch.Util
 
         public Log(BepInEx.Logging.ManualLogSource logger, BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels)
         {
-            this.Logger = logger;
-            this.LogLevels = logLevels;
+            Logger = logger;
+            LogLevels = logLevels;
         }
 
         public bool IsDebug()
