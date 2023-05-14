@@ -415,8 +415,11 @@ namespace LootingBots.Patch.Components
         {
             if (BotOwner != null && BotOwner.WeaponManager?.Selector != null)
             {
+                _log.LogWarning($"Bot {BotOwner.Id} updating weapons");
                 BotOwner.WeaponManager.UpdateWeaponsList();
                 BotOwner.WeaponManager.Selector.TakeMainWeapon();
+                BotOwner.WeaponManager.Reload.TryFillMagazines();
+                BotOwner.WeaponManager.Reload.TryReload();
             }
         }
 
