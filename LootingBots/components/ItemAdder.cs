@@ -84,70 +84,6 @@ namespace LootingBots.Patch.Components
                 ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
                 CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
-                Weapon primary = (Weapon)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.FirstPrimaryWeapon)
-                        .ContainedItem;
-                Weapon secondary = (Weapon)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.SecondPrimaryWeapon)
-                        .ContainedItem;
-                Weapon holster = (Weapon)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.Holster)
-                        .ContainedItem;
-                // List<MagazineClass> mags = new List<MagazineClass>();
-                // _botInventoryController.GetReachableItemsOfTypeNonAlloc(mags);
-
-                // List<MagazineClass> primaryMags = new List<MagazineClass>();
-                // List<MagazineClass> secondaryMags = new List<MagazineClass>();
-                // List<MagazineClass> holsterMags = new List<MagazineClass>();
-
-                // foreach (MagazineClass mag in mags)
-                // {
-                //     if (
-                //         primary != null
-                //         && primary.GetMagazineSlot() != null
-                //         && primary.GetMagazineSlot().CanAccept(mag)
-                //     )
-                //     {
-                //         _log.LogError($"Found usable primary mag {mag.Name.Localized()}");
-                //         primaryMags.Add(mag);
-                //     }
-
-                //     if (
-                //         secondary != null
-                //         && secondary.GetMagazineSlot() != null
-                //             & secondary.GetMagazineSlot().CanAccept(mag)
-                //     )
-                //     {
-                //         _log.LogError($"Found usable secondary mag {mag.Name.Localized()}");
-                //         secondaryMags.Add(mag);
-                //     }
-
-                //     if (
-                //         holster != null
-                //         && holster.GetMagazineSlot() != null
-                //             & holster.GetMagazineSlot().CanAccept(mag)
-                //     )
-                //     {
-                //         _log.LogError($"Found usable holster mag {mag.Name.Localized()}");
-                //         holsterMags.Add(mag);
-                //     }
-                // }
-
-                // if (primary != null)
-                // {
-                //     usableMags.Add(primary.Id, primaryMags);
-                // }
-                // if (secondary != null)
-                // {
-                //     usableMags.Add(secondary.Id, secondaryMags);
-                // }
-                // if (holster != null)
-                // {
-                //     usableMags.Add(holster.Id, holsterMags);
-                // }
                 CalculateGearValue();
             }
             catch (Exception e)
@@ -207,7 +143,6 @@ namespace LootingBots.Patch.Components
                     return await _transactionController.TryRunNetworkTransaction(result);
                 }
             }
-            _log.LogError("No rig!");
             return null;
         }
 
@@ -409,7 +344,7 @@ namespace LootingBots.Patch.Components
                 if (reservedCount < 2 && fitsInThrown && fitsInEquipped)
                 {
                     _log.LogDebug(
-                        $"Bot {_botOwner.Id} reserving shared mag mag {mag.Name.Localized()}"
+                        $"Bot {_botOwner.Id} reserving shared mag {mag.Name.Localized()}"
                     );
                     reservedCount++;
                 }
@@ -422,23 +357,6 @@ namespace LootingBots.Patch.Components
                         new TransactionController.SwapAction(mag)
                     );
                 }
-                // if (
-                //     reservedCount < 2
-                //     && usableMags
-                //         .ToArray()
-                //         .Where(entry => entry.Key != thrownWeapon.Id && entry.Value.Contains(mag))
-                //         .ToArray()
-                //         .Length > 0
-                // )
-                // {
-                //     reservedCount++;
-                // }
-                // else
-                // {
-                //     await _transactionController.ThrowAndEquip(
-                //         new TransactionController.SwapAction(mag)
-                //     );
-                // }
             }
 
             usableMags.Remove(thrownWeapon.Id);
@@ -707,7 +625,11 @@ namespace LootingBots.Patch.Components
             // on the item that was just thrown
             if (tranferItems)
             {
-                onSwapComplete = async () => await LootNestedItems(toThrow);
+                onSwapComplete = async () =>
+                {
+                    await TransactionController.SimulatePlayerDelay();
+                    await LootNestedItems(toThrow);
+                };
             }
 
             return new TransactionController.SwapAction(
