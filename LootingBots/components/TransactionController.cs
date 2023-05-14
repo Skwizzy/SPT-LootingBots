@@ -185,7 +185,21 @@ namespace LootingBots.Patch.Components
                     _log.LogWarning(
                         $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
                     );
-                    return await MoveItem(new MoveAction(item, ableToEquip));
+                    bool success = await MoveItem(new MoveAction(item, ableToEquip));
+
+                    if (success)
+                    {
+                        _botOwner.GetPlayer.OnItemAdded(
+                            new GEventArgs2(
+                                item,
+                                ableToEquip,
+                                CommandStatus.Succeed,
+                                true,
+                                _botOwner.ProfileId
+                            )
+                        );
+                    }
+                    return success;
                 }
 
                 _log.LogDebug($"Cannot equip: {item.Name.Localized()}");
@@ -302,11 +316,11 @@ namespace LootingBots.Patch.Components
         }
 
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
-        public async Task ThrowAndEquip(SwapAction swapAction)
+        public async Task<bool> ThrowAndEquip(SwapAction swapAction)
         {
             if (IsLootingInterrupted(_botOwner))
             {
-                return;
+                return false;
             }
 
             try
@@ -323,10 +337,21 @@ namespace LootingBots.Patch.Components
                     new Callback(
                         async (IResult result) =>
                         {
-                            if (result.Succeed && swapAction.Callback != null)
+                            if (result.Succeed)
                             {
-                                await SimulatePlayerDelay();
-                                await swapAction.Callback();
+                                _botOwner.GetPlayer.OnItemRemoved(
+                                    new GEventArgs3(
+                                        toThrow,
+                                        toThrow.CurrentAddress,
+                                        CommandStatus.Succeed
+                                    )
+                                );
+
+                                if (swapAction.Callback != null)
+                                {
+                                    await SimulatePlayerDelay();
+                                    await swapAction.Callback();
+                                }
                             }
 
                             promise.TrySetResult(result);
@@ -335,18 +360,25 @@ namespace LootingBots.Patch.Components
                     false
                 );
                 await SimulatePlayerDelay();
-
-                await promise.Task;
+                IResult taskResult = await promise.Task;
+                if (taskResult.Failed)
+                {
+                    return false;
+                }
 
                 if (swapAction.OnComplete != null)
                 {
                     await swapAction.OnComplete();
                 }
+
+                return true;
             }
             catch (Exception e)
             {
                 _log.LogError(e);
             }
+
+            return false;
         }
 
         public Task<IResult> TryRunNetworkTransaction(
