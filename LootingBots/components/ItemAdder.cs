@@ -212,7 +212,33 @@ namespace LootingBots.Patch.Components
                 }
             }
 
+            // Refresh bot's known items dictionary
+            UpdateKnownItems();
+
             return true;
+        }
+
+        /** Marks all items placed in rig/pockets/backpack as known items that they are able to use */
+        public void UpdateKnownItems()
+        {
+            SearchableItemClass tacVest = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem;
+
+            SearchableItemClass backpack = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem;
+
+            SearchableItemClass pockets = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Pockets)
+                    .ContainedItem;
+
+            tacVest?.UncoverAll(_botOwner.ProfileId);
+            backpack?.UncoverAll(_botOwner.ProfileId);
+            pockets?.UncoverAll(_botOwner.ProfileId);
         }
 
         /**

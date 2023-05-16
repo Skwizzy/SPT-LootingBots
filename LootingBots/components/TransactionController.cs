@@ -186,19 +186,6 @@ namespace LootingBots.Patch.Components
                         $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
                     );
                     bool success = await MoveItem(new MoveAction(item, ableToEquip));
-
-                    if (success)
-                    {
-                        _botOwner.GetPlayer.OnItemAdded(
-                            new GEventArgs2(
-                                item,
-                                ableToEquip,
-                                CommandStatus.Succeed,
-                                true,
-                                _botOwner.ProfileId
-                            )
-                        );
-                    }
                     return success;
                 }
 
@@ -276,8 +263,8 @@ namespace LootingBots.Patch.Components
 
                 if (moveAction.Callback == null)
                 {
-                    await _inventoryController.TryRunNetworkTransaction(value, null);
                     await SimulatePlayerDelay();
+                    await _inventoryController.TryRunNetworkTransaction(value, null);
                 }
                 else
                 {
@@ -301,7 +288,6 @@ namespace LootingBots.Patch.Components
                     await SimulatePlayerDelay();
                     await promise.Task;
                 }
-
                 if (moveAction.OnComplete != null)
                 {
                     await moveAction.OnComplete();
@@ -339,14 +325,6 @@ namespace LootingBots.Patch.Components
                         {
                             if (result.Succeed)
                             {
-                                _botOwner.GetPlayer.OnItemRemoved(
-                                    new GEventArgs3(
-                                        toThrow,
-                                        toThrow.CurrentAddress,
-                                        CommandStatus.Succeed
-                                    )
-                                );
-
                                 if (swapAction.Callback != null)
                                 {
                                     await SimulatePlayerDelay();
