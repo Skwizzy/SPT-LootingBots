@@ -134,7 +134,7 @@ namespace LootingBots.Patch.Util
 
         public static bool IsLootInUse(string containerId)
         {
-            return ActiveLootCache.TryGetValue(containerId, out int botId);
+            return ActiveLootCache.TryGetValue(containerId, out int _);
         }
 
         public static bool IsLootIgnored(int botId, string lootId)

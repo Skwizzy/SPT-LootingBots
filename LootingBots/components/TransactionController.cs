@@ -285,11 +285,11 @@ namespace LootingBots.Patch.Components
                         )
                     );
 
-                    await SimulatePlayerDelay();
                     await promise.Task;
                 }
                 if (moveAction.OnComplete != null)
                 {
+                    await SimulatePlayerDelay();
                     await moveAction.OnComplete();
                 }
             }

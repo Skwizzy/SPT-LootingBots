@@ -177,7 +177,7 @@ namespace LootingBots.Patch.Components
                 watch.Start();
 
                 await ItemAdder.TryAddItemsToBot(items);
-                UpdateActiveWeapon();
+                ItemAdder.UpdateActiveWeapon();
 
                 watch.Stop();
                 _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -213,7 +213,7 @@ namespace LootingBots.Patch.Components
                 movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
             movementContext.StopAnyInteractions();
 
-            UpdateActiveWeapon();
+            ItemAdder.UpdateActiveWeapon();
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -237,7 +237,7 @@ namespace LootingBots.Patch.Components
             }
 
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
-            UpdateActiveWeapon();
+            ItemAdder.UpdateActiveWeapon();
         }
 
         public void CheckIfStuck(float dist)
@@ -409,18 +409,6 @@ namespace LootingBots.Patch.Components
             }
 
             return canMove;
-        }
-
-        private void UpdateActiveWeapon()
-        {
-            if (BotOwner != null && BotOwner.WeaponManager?.Selector != null)
-            {
-                _log.LogWarning($"Bot {BotOwner.Id} updating weapons");
-                BotOwner.WeaponManager.UpdateWeaponsList();
-                BotOwner.WeaponManager.Selector.TakeMainWeapon();
-                BotOwner.WeaponManager.Reload.TryFillMagazines();
-                BotOwner.WeaponManager.Reload.TryReload();
-            }
         }
 
         private void HandleNonNavigableLoot()

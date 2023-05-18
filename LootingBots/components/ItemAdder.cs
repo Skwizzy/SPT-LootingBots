@@ -41,9 +41,6 @@ namespace LootingBots.Patch.Components
 
         private static readonly GearValue GearValue = new GearValue();
 
-        private Dictionary<string, List<MagazineClass>> usableMags =
-            new Dictionary<string, List<MagazineClass>>();
-
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int CurrentBodyArmorClass = 0;
 
@@ -220,6 +217,48 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
+        public void ChangeToSecondary()
+        {
+            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
+            {
+                _log.LogWarning($"Bot {_botOwner.Id} changing to secondary");
+                _botOwner.WeaponManager.UpdateWeaponsList();
+                _botOwner.WeaponManager.Selector.ChangeToSecond();
+                RefillAndReload();
+            }
+        }
+
+        public void ChangeToPrimary()
+        {
+            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
+            {
+                _log.LogWarning($"Bot {_botOwner.Id} changing to primary");
+                _botOwner.WeaponManager.UpdateWeaponsList();
+                _botOwner.WeaponManager.Selector.ChangeToMain();
+                RefillAndReload();
+            }
+        }
+
+        public void UpdateActiveWeapon()
+        {
+            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
+            {
+                _log.LogWarning($"Bot {_botOwner.Id} updating weapons");
+                _botOwner.WeaponManager.UpdateWeaponsList();
+                _botOwner.WeaponManager.Selector.TakeMainWeapon();
+                RefillAndReload();
+            }
+        }
+
+        private void RefillAndReload()
+        {
+            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
+            {
+                _botOwner.WeaponManager.Reload.TryFillMagazines();
+                _botOwner.WeaponManager.Reload.TryReload();
+            }
+        }
+
         /** Marks all items placed in rig/pockets/backpack as known items that they are able to use */
         public void UpdateKnownItems()
         {
@@ -230,20 +269,23 @@ namespace LootingBots.Patch.Components
                     _botInventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.TacticalVest)
                         .ContainedItem;
-
                 SearchableItemClass backpack = (SearchableItemClass)
                     _botInventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.Backpack)
                         .ContainedItem;
-
                 SearchableItemClass pockets = (SearchableItemClass)
                     _botInventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.Pockets)
+                        .ContainedItem;
+                SearchableItemClass secureContainer = (SearchableItemClass)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.SecuredContainer)
                         .ContainedItem;
 
                 tacVest?.UncoverAll(_botOwner.ProfileId);
                 backpack?.UncoverAll(_botOwner.ProfileId);
                 pockets?.UncoverAll(_botOwner.ProfileId);
+                secureContainer?.UncoverAll(_botOwner.ProfileId);
             }
         }
 
@@ -390,8 +432,6 @@ namespace LootingBots.Patch.Components
                     );
                 }
             }
-
-            usableMags.Remove(thrownWeapon.Id);
         }
 
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
@@ -440,7 +480,13 @@ namespace LootingBots.Patch.Components
                 {
                     action.Move = new TransactionController.MoveAction(
                         lootWeapon,
-                        _botInventoryController.FindSlotToPickUp(lootWeapon)
+                        _botInventoryController.FindSlotToPickUp(lootWeapon),
+                        null,
+                        async () =>
+                        {
+                            ChangeToPrimary();
+                            await TransactionController.SimulatePlayerDelay(1000);
+                        }
                     );
                     GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
                 }
@@ -461,9 +507,9 @@ namespace LootingBots.Patch.Components
                             null,
                             async () =>
                             {
-                                // Delay to wait for animation to complete. Bot animation is playing for putting the primary weapon away
-                                await Task.Delay(1000);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                await TransactionController.SimulatePlayerDelay(1500);
+                                ChangeToPrimary();
                             }
                         );
 
@@ -483,9 +529,10 @@ namespace LootingBots.Patch.Components
                             false,
                             async () =>
                             {
-                                await Task.Delay(1000);
                                 await ThrowUselessMags(secondary);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                await TransactionController.SimulatePlayerDelay(1500);
+                                ChangeToPrimary();
                             }
                         );
                         GearValue.Secondary = GearValue.Primary;
