@@ -197,7 +197,13 @@ namespace LootingBots.Patch.Components
             _log.LogDebug($"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}");
 
             // Trigger open interaction on container
-            BotOwner.LootOpener.Interact(container, EInteractionType.Open);
+            bool didOpen = false;
+            if (container.DoorState == EDoorState.Shut)
+            {
+                InteractContainer(container, EInteractionType.Open);
+                didOpen = true;
+            }
+
             await TransactionController.SimulatePlayerDelay(1000);
 
             if (await ItemAdder.LootNestedItems(item))
@@ -213,10 +219,21 @@ namespace LootingBots.Patch.Components
                 movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
             movementContext.StopAnyInteractions();
 
+            if (container.DoorState == EDoorState.Open && !didOpen)
+            {
+                InteractContainer(container, EInteractionType.Close);
+            }
+
             ItemAdder.UpdateActiveWeapon();
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
+        }
+
+        public void InteractContainer(LootableContainer container, EInteractionType action)
+        {
+            GClass2599 result = new GClass2599(action);
+            container.Interact(result);
         }
 
         public async void LootItem()
