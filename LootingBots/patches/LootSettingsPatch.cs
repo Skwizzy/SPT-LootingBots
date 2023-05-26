@@ -109,7 +109,7 @@ namespace LootingBots.Patch
             LootingBots.LootLog.LogDebug(
                 $"Bot {__instance.Id} is dead. Removing bot data from container cache."
             );
-            LootCache.Destroy(__instance.Id);
+            LootCache.Remove(__instance.Id);
         }
     }
 

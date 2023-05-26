@@ -69,11 +69,6 @@ namespace LootingBots.Patch.Util
 
         public static void Reset()
         {
-            foreach (KeyValuePair<int, BotLootData> data in BotDataCache)
-            {
-                data.Value.LootFinder?.Destroy();
-            }
-
             BotDataCache = new Dictionary<int, BotLootData>();
             ActiveLootCache = new Dictionary<string, int>();
         }
@@ -180,7 +175,7 @@ namespace LootingBots.Patch.Util
             }
         }
 
-        public static void Destroy(int botId)
+        public static void Remove(int botId)
         {
             BotDataCache.TryGetValue(botId, out BotLootData botLootData);
             if (botLootData != null)
