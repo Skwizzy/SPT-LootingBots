@@ -62,7 +62,7 @@ namespace LootingBots.Patch
                 Item[] priorityItems = corpseInventoryController.Inventory.Equipment
                     .GetSlotsByName(prioritySlots)
                     .Select(slot => slot.ContainedItem)
-                    .Where(item => item != null)
+                    .Where(item => item != null && !item.IsUnremovable)
                     .ToArray();
 
                 Log.LogWarning(
