@@ -176,6 +176,7 @@ namespace LootingBots.Patch.Components
                     }
                     else if (action.Move != null)
                     {
+                        _log.LogDebug("Moving due to GetEquipAction");
                         await _transactionController.MoveItem(action.Move);
                         continue;
                     }
@@ -313,7 +314,7 @@ namespace LootingBots.Patch.Components
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             TransactionController.SwapAction swapAction = null;
 
-            if ((lootItem.Template is WeaponTemplate) && !((Weapon)lootItem).IsFlareGun)
+            if (lootItem.Template is WeaponTemplate)
             {
                 return GetWeaponEquipAction(lootItem as Weapon);
             }
@@ -451,18 +452,18 @@ namespace LootingBots.Patch.Components
 
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             bool isPistol = lootWeapon.WeapClass.Equals("pistol");
-
             float lootValue = LootingBots.ItemAppraiser.GetItemPrice(lootWeapon);
 
             if (isPistol)
             {
                 if (holster == null)
                 {
-                    action.Move = new TransactionController.MoveAction(
-                        lootWeapon,
-                        _botInventoryController.FindSlotToPickUp(lootWeapon)
-                    );
-                    GearValue.Holster = new ValuePair(lootWeapon.Id, lootValue);
+                    var place = _botInventoryController.FindSlotToPickUp(lootWeapon);
+                    if (place != null)
+                    {
+                        action.Move = new TransactionController.MoveAction(lootWeapon, place);
+                        GearValue.Holster = new ValuePair(lootWeapon.Id, lootValue);
+                    }
                 }
                 else if (holster != null && GearValue.Holster.Value < lootValue)
                 {
@@ -478,43 +479,48 @@ namespace LootingBots.Patch.Components
                 // If we have no primary, just equip the weapon to primary
                 if (primary == null)
                 {
-                    action.Move = new TransactionController.MoveAction(
-                        lootWeapon,
-                        _botInventoryController.FindSlotToPickUp(lootWeapon),
-                        null,
-                        async () =>
-                        {
-                            ChangeToPrimary();
-                            await TransactionController.SimulatePlayerDelay(1000);
-                        }
-                    );
-                    GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                    var place = _botInventoryController.FindSlotToPickUp(lootWeapon);
+                    if (place != null)
+                    {
+                        action.Move = new TransactionController.MoveAction(
+                            lootWeapon,
+                            place,
+                            null,
+                            async () =>
+                            {
+                                ChangeToPrimary();
+                                await TransactionController.SimulatePlayerDelay(1000);
+                            }
+                        );
+                        GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                    }
                 }
                 else if (GearValue.Primary.Value < lootValue)
                 {
                     // If the loot weapon is worth more than the primary, by nature its also worth more than the secondary. Try to move the primary weapon to the secondary slot and equip the new weapon as the primary
                     if (secondary == null)
                     {
-                        ItemAddress canEquipToSecondary = _botInventoryController.FindSlotToPickUp(
-                            primary
-                        );
-                        _log.LogDebug(
-                            $"Moving {primary.Name.Localized()} (₽{GearValue.Primary.Value}) to secondary and equipping {lootWeapon.Name.Localized()} (₽{lootValue})"
-                        );
-                        action.Move = new TransactionController.MoveAction(
-                            primary,
-                            canEquipToSecondary,
-                            null,
-                            async () =>
-                            {
-                                await _transactionController.TryEquipItem(lootWeapon);
-                                await TransactionController.SimulatePlayerDelay(1500);
-                                ChangeToPrimary();
-                            }
-                        );
+                        ItemAddress place = _botInventoryController.FindSlotToPickUp(primary);
+                        if (place != null)
+                        {
+                            _log.LogDebug(
+                                $"Moving {primary.Name.Localized()} (₽{GearValue.Primary.Value}) to secondary and equipping {lootWeapon.Name.Localized()} (₽{lootValue})"
+                            );
+                            action.Move = new TransactionController.MoveAction(
+                                primary,
+                                place,
+                                null,
+                                async () =>
+                                {
+                                    await _transactionController.TryEquipItem(lootWeapon);
+                                    await TransactionController.SimulatePlayerDelay(1500);
+                                    ChangeToPrimary();
+                                }
+                            );
 
-                        GearValue.Secondary = GearValue.Primary;
-                        GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                            GearValue.Secondary = GearValue.Primary;
+                            GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                        }
                     }
                     // In the case where we have a secondary, throw it, move the primary to secondary, and equip the loot weapon as primary
                     else
@@ -542,11 +548,15 @@ namespace LootingBots.Patch.Components
                 // If there is no secondary weapon, equip to secondary
                 else if (secondary == null)
                 {
-                    action.Move = new TransactionController.MoveAction(
-                        lootWeapon,
-                        _botInventoryController.FindSlotToPickUp(lootWeapon)
-                    );
-                    GearValue.Secondary = new ValuePair(lootWeapon.Id, lootValue);
+                    var place = _botInventoryController.FindSlotToPickUp(lootWeapon);
+                    if (place != null)
+                    {
+                        action.Move = new TransactionController.MoveAction(
+                            lootWeapon,
+                            _botInventoryController.FindSlotToPickUp(lootWeapon)
+                        );
+                        GearValue.Secondary = new ValuePair(lootWeapon.Id, lootValue);
+                    }
                 }
                 // If the loot weapon is worth more than the secondary, swap it
                 else if (GearValue.Secondary.Value < lootValue)
