@@ -1,10 +1,13 @@
 using BepInEx;
 using BepInEx.Configuration;
-using System;
-using LootingBots.Patch;
-using LootingBots.Patch.Util;
+
 using Comfort.Common;
+
 using EFT;
+
+using LootingBots.Patch;
+using LootingBots.Patch.Components;
+using LootingBots.Patch.Util;
 
 namespace LootingBots
 {
@@ -12,75 +15,75 @@ namespace LootingBots
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
-        private const String MOD_GUID = "me.skwizzy.lootingbots";
-        private const String MOD_NAME = "LootingBots";
-        private const String MOD_VERSION = "1.0.2";
+        private const string MOD_GUID = "me.skwizzy.lootingbots";
+        private const string MOD_NAME = "LootingBots";
+        private const string MOD_VERSION = "1.1.0";
 
-        // Container Looting
-        public static ConfigEntry<bool> containerLootingEnabled;
-        public static ConfigEntry<BotType> dynamicContainerLootingEnabled;
-        public static ConfigEntry<float> timeToWaitBetweenContainers;
-        public static ConfigEntry<float> detectContainerDistance;
-        public static ConfigEntry<bool> debugContainerNav;
-        public static ConfigEntry<LogUtils.LogLevel> containerLogLevels;
+        // Loot Finder
+        public static ConfigEntry<BotType> ContainerLootingEnabled;
+        public static ConfigEntry<BotType> LooseItemLootingEnabled;
 
-        public static Log containerLog;
+        public static ConfigEntry<float> TimeToWaitBetweenLoot;
+        public static ConfigEntry<float> DetectLootDistance;
+        public static ConfigEntry<bool> DebugLootNavigation;
+        public static ConfigEntry<LogUtils.LogLevel> LootingLogLevels;
+        public static ConfigEntry<bool> UseMarketPrices;
+        public static ConfigEntry<bool> ValueFromMods;
+        public static ConfigEntry<LogUtils.LogLevel> ItemAppraiserLogLevels;
+        public static Log LootLog;
+        public static Log ItemAppraiserLog;
 
         // Corpse Looting
-        public static ConfigEntry<LogUtils.LogLevel> corpseLogLevels;
-        public static ConfigEntry<float> bodySeeDist;
-        public static ConfigEntry<float> bodyLeaveDist;
-        public static ConfigEntry<float> bodyLookPeriod;
-        public static ConfigEntry<bool> useMarketPrices;
-        public static ConfigEntry<bool> valueFromMods;
-        public static ConfigEntry<BotType> lootingEnabledBots;
-        public static Log lootLog;
-        public static ItemAppraiser itemAppraiser = new ItemAppraiser();
+        public static ConfigEntry<float> BodySeeDist;
+        public static ConfigEntry<float> BodyLeaveDist;
+        public static ConfigEntry<float> BodyLookPeriod;
+        public static ConfigEntry<BotType> CorpseLootingEnabled;
+        public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
 
-        public void ContainerLootSettings()
+        public void LootFinderSettings()
         {
-            containerLootingEnabled = Config.Bind(
-                "Container Looting",
-                "Enable reserve patrols",
-                false,
+            ContainerLootingEnabled = Config.Bind(
+                "Loot Finder",
+                "Enable container looting",
+                BotType.All,
                 new ConfigDescription(
-                    "Enable looting of containers for bots on patrols that stop in front of lootable containers",
+                    "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse",
                     null,
                     new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
-            dynamicContainerLootingEnabled = Config.Bind(
-                "Container Looting",
-                "Enable dynamic looting",
+            LooseItemLootingEnabled = Config.Bind(
+                "Loot Finder",
+                "Enable loose item looting",
                 BotType.All,
                 new ConfigDescription(
-                    "Enable dynamic looting of containers, will detect containers within the set distance and navigate to them similar to how they would loot a corpse. More resource demanding than reserve patrol looting",
+                    "Enable dynamic looting of loose items, will detect items within the set distance and navigate to them similar to how they would loot a corpse",
                     null,
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
-            timeToWaitBetweenContainers = Config.Bind(
-                "Container Looting",
-                "Dynamic looting: Delay between containers",
+            TimeToWaitBetweenLoot = Config.Bind(
+                "Loot Finder",
+                "Delay between looting",
                 45f,
                 new ConfigDescription(
-                    "The amount of time the bot will wait after looting a container before trying to find the next nearest contianer",
+                    "The amount of time the bot will wait after looting an item/container before trying to find the next nearest item/container",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
-            detectContainerDistance = Config.Bind(
-                "Container Looting",
-                "Dynamic looting: Detect container distance",
+            DetectLootDistance = Config.Bind(
+                "Loot Finder",
+                "Detect loot distance",
                 25f,
                 new ConfigDescription(
-                    "Distance (in meters) a bot is able to detect a container",
+                    "Distance (in meters) a bot is able to detect a container/item",
                     null,
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            containerLogLevels = Config.Bind<LogUtils.LogLevel>(
-                "Container Looting",
+            LootingLogLevels = Config.Bind(
+                "Loot Finder",
                 "Log Levels",
                 LogUtils.LogLevel.Error,
                 new ConfigDescription(
@@ -89,8 +92,8 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
-            debugContainerNav = Config.Bind(
-                "Container Looting",
+            DebugLootNavigation = Config.Bind(
+                "Loot Finder",
                 "Debug: Show navigation points",
                 false,
                 new ConfigDescription(
@@ -103,9 +106,9 @@ namespace LootingBots
 
         public void CorpseLootSettings()
         {
-            lootingEnabledBots = Config.Bind(
+            CorpseLootingEnabled = Config.Bind(
                 "Corpse Looting",
-                "Enable looting",
+                "Enable corpse looting",
                 BotType.All,
                 new ConfigDescription(
                     "Enables corpse looting for the selected bot types. Takes affect during the generation of the next raid.",
@@ -113,7 +116,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
-            bodySeeDist = Config.Bind(
+            BodySeeDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to see body",
                 25f,
@@ -123,7 +126,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
-            bodyLeaveDist = Config.Bind(
+            BodyLeaveDist = Config.Bind(
                 "Corpse Looting",
                 "Distance to forget body",
                 50f,
@@ -133,7 +136,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
-            bodyLookPeriod = Config.Bind(
+            BodyLookPeriod = Config.Bind(
                 "Corpse Looting",
                 "Looting time (*)",
                 8.0f,
@@ -143,36 +146,36 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            corpseLogLevels = Config.Bind<LogUtils.LogLevel>(
-                "Corpse Looting",
-                "Log Levels",
-                LogUtils.LogLevel.Error,
-                new ConfigDescription(
-                    "Enable different levels of log messages to show in the logs",
-                    null,
-                    new ConfigurationManagerAttributes { Order = 1 }
-                )
-            );
         }
 
         public void WeaponLootSettings()
         {
-            useMarketPrices = Config.Bind(
+            UseMarketPrices = Config.Bind(
                 "Weapon Looting",
                 "Use flea market prices",
                 false,
                 new ConfigDescription(
                     "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.",
                     null,
-                    new ConfigurationManagerAttributes { Order = 1 }
+                    new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            valueFromMods = Config.Bind(
+            ValueFromMods = Config.Bind(
                 "Weapon Looting",
                 "Calculate value from attachments",
                 true,
                 new ConfigDescription(
                     "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            ItemAppraiserLogLevels = Config.Bind(
+                "Weapon Looting",
+                "Log Levels",
+                LogUtils.LogLevel.Error,
+                new ConfigDescription(
+                    "Enables logs for the item apprasier that calcualtes the weapon values",
                     null,
                     new ConfigurationManagerAttributes { Order = 0 }
                 )
@@ -181,23 +184,25 @@ namespace LootingBots
 
         public void Awake()
         {
-            ContainerLootSettings();
+            // ContainerLootSettings();
+            LootFinderSettings();
             CorpseLootSettings();
             WeaponLootSettings();
 
-            lootLog = new Log(Logger, corpseLogLevels);
-            containerLog = new Log(Logger, containerLogLevels);
+            LootLog = new Log(Logger, LootingLogLevels);
+            ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
+            new LootSettingsPatch().Enable();
             new ContainerLooting().Enable();
-            new CorpseLootSettingsPatch().Enable();
             new CorpseLootingPatch().Enable();
+            new LooseLootPatch().Enable();
         }
 
         public void Update()
         {
             bool shoultInitAppraiser =
-                (!useMarketPrices.Value && itemAppraiser.handbookData == null)
-                || (useMarketPrices.Value && !itemAppraiser.marketInitialized);
+                (!UseMarketPrices.Value && ItemAppraiser.HandbookData == null)
+                || (UseMarketPrices.Value && !ItemAppraiser.MarketInitialized);
 
             // Initialize the itemAppraiser when the BE instance comes online
             if (
@@ -206,8 +211,8 @@ namespace LootingBots
                 && shoultInitAppraiser
             )
             {
-                lootLog.logWarning($"Initializing item appraiser");
-                itemAppraiser.init();
+                LootLog.LogInfo($"Initializing item appraiser");
+                ItemAppraiser.Init();
             }
         }
     }

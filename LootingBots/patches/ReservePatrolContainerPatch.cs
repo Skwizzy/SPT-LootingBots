@@ -1,18 +1,15 @@
 using Aki.Reflection.Patching;
-using System;
 using System.Linq;
 using System.Reflection;
+using EFT;
+using EFT.Interactive;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
-using EFT.Interactive;
-using EFT;
 
-namespace LootingBots.Patch {
-   public class ReservePatrolContainerPatch : ModulePatch
+namespace LootingBots.Patch
+{
+    public class ReservePatrolContainerPatch : ModulePatch
     {
-        private static ItemAdder itemAdder;
-        private static BotOwner botOwner;
-
         protected override MethodBase GetTargetMethod()
         {
             return typeof(SitReservWay).GetMethod(
@@ -29,24 +26,23 @@ namespace LootingBots.Patch {
             ref bool ___bool_2
         )
         {
-            if (___ShallLoot && ___bool_2 && LootingBots.containerLootingEnabled.Value)
-            {
-                botOwner = bot;
-                itemAdder = new ItemAdder(bot);
-                LootingBots.lootLog.logWarning($"Reserve patrol looting: {___lootableContainer_0.name}");
-                lootContainer(___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
-            }
+            // if (___ShallLoot && ___bool_2 && LootingBots.ContainerLootingEnabled.Value)
+            // {
+            //     LootingBots.LootLog.LogWarning($"Reserve patrol looting: {___lootableContainer_0.name}");
+            //     LootContainer(bot, ___lootableContainer_0?.ItemOwner?.Items?.ToArray()[0]);
+            // }
         }
 
-        public static async void lootContainer(Item container)
+        public static async void LootContainer(BotOwner botOwner, Item container)
         {
             if (container != null)
             {
-                LootingBots.lootLog.logDebug(
+                LootingBots.LootLog.LogDebug(
                     $"{botOwner.Profile.Info.Settings.Role}) {botOwner.Profile?.Info.Nickname.TrimEnd()} found container: {container.Name.Localized()}"
                 );
-
-                await itemAdder.lootNestedItems(container);
+                
+                BotLootData lootData = LootCache.GetLootData(botOwner.Id);
+                await lootData.LootFinder.ItemAdder.LootNestedItems(container);
             }
         }
     }

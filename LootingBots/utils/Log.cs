@@ -5,38 +5,46 @@ namespace LootingBots.Patch.Util
     public class Log
     {
         public BepInEx.Logging.ManualLogSource Logger;
-        public BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels;
+        public BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> LogLevels;
 
-        public Log(BepInEx.Logging.ManualLogSource Logger, BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels)
+        public Log(BepInEx.Logging.ManualLogSource logger, BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels)
         {
-            this.Logger = Logger;
-            this.logLevels = logLevels;
+            Logger = logger;
+            LogLevels = logLevels;
         }
 
-        public bool isDebug()
+        public bool IsDebug()
         {
-            return logLevels.Value.hasDebug();
+            return LogLevels.Value.HasDebug();
         }
 
-        public void logDebug(object data)
+        public void LogDebug(object data)
         {
-            if (logLevels.Value.hasDebug())
+            if (LogLevels.Value.HasDebug())
             {
                 Logger.LogDebug(data);
             }
         }
 
-        public void logWarning(object data)
+        public void LogInfo(object data)
         {
-            if (logLevels.Value.hasWarning())
+            if (LogLevels.Value.HasInfo())
+            {
+                Logger.LogInfo(data);
+            }
+        }
+
+        public void LogWarning(object data)
+        {
+            if (LogLevels.Value.HasWarning())
             {
                 Logger.LogWarning(data);
             }
         }
 
-        public void logError(object data)
+        public void LogError(object data)
         {
-            if (logLevels.Value.hasError())
+            if (LogLevels.Value.HasError())
             {
                 Logger.LogError(data);
             }
@@ -66,7 +74,7 @@ namespace LootingBots.Patch.Util
             /// <summary>
             ///     A message of low importance.
             /// </summary>
-            // Info = 16,
+            Info = 16,
 
             /// <summary>
             ///     A message that would likely only interest a developer.
@@ -79,22 +87,22 @@ namespace LootingBots.Patch.Util
             All = Error | Warning | Debug
         }
 
-        public static bool hasError(this LogLevel logLevel)
+        public static bool HasError(this LogLevel logLevel)
         {
             return logLevel.HasFlag(LogLevel.Error);
         }
 
-        public static bool hasWarning(this LogLevel logLevel)
+        public static bool HasWarning(this LogLevel logLevel)
         {
             return logLevel.HasFlag(LogLevel.Warning);
         }
 
-        // public static bool hasInfo(this LogLevel logLevel)
-        // {
-        //     return logLevel.HasFlag(LogLevel.Info);
-        // }
+        public static bool HasInfo(this LogLevel logLevel)
+        {
+            return logLevel.HasFlag(LogLevel.Info);
+        }
 
-        public static bool hasDebug(this LogLevel logLevel)
+        public static bool HasDebug(this LogLevel logLevel)
         {
             return logLevel.HasFlag(LogLevel.Debug);
         }
