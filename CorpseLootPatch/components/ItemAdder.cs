@@ -382,10 +382,10 @@ namespace LootingBots.Patch.Util
         /** Calculate the size of a container */
         public int getContainerSize(SearchableItemClass container)
         {
-            GClass2166[] grids = container.Grids;
+            GClass2165[] grids = container.Grids;
             int gridSize = 0;
 
-            foreach (GClass2166 grid in grids)
+            foreach (GClass2165 grid in grids)
             {
                 gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
             }
