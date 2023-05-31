@@ -253,7 +253,7 @@ namespace LootingBots.Patch
                     if (door?.DoorState == EDoorState.Shut)
                     {
                         LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Opening door");
-                        GClass2599 interactionResult = new GClass2599(EInteractionType.Open);
+                        GClass2600 interactionResult = new GClass2600(EInteractionType.Open);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
                             door,
@@ -265,7 +265,7 @@ namespace LootingBots.Patch
                     else if (door?.DoorState == EDoorState.Open)
                     {
                         LootingBots.containerLog.logDebug($"Bot {botOwner.Id} Closing door");
-                        GClass2599 interactionResult = new GClass2599(EInteractionType.Close);
+                        GClass2600 interactionResult = new GClass2600(EInteractionType.Close);
                         botOwner.SetTargetMoveSpeed(0f);
                         botOwner.GetPlayer.CurrentState.StartDoorInteraction(
                             door,
