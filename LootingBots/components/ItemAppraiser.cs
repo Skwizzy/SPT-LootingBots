@@ -36,7 +36,7 @@ namespace LootingBots.Patch.Components
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                HandbookData = Singleton<GClass2532>.Instance.Items.ToDictionary((item) => item.Id);
+                HandbookData = Singleton<GClass2531>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 

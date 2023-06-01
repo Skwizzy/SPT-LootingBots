@@ -246,7 +246,7 @@ namespace LootingBots.Patch.Components
                 }
 
                 _log.LogDebug($"Moving item to: {moveAction?.Place?.Container?.ID?.Localized()}");
-                var value = GClass2429.Move(
+                var value = GClass2428.Move(
                     moveAction.ToMove,
                     moveAction.Place,
                     _inventoryController,
@@ -360,7 +360,7 @@ namespace LootingBots.Patch.Components
         }
 
         public Task<IResult> TryRunNetworkTransaction(
-            GStruct324 operationResult,
+            GStruct321 operationResult,
             Callback callback = null
         )
         {

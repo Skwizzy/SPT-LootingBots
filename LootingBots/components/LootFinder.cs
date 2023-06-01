@@ -196,8 +196,8 @@ namespace LootingBots.Patch.Components
             Item item = container.ItemOwner.Items.ToArray()[0];
             _log.LogDebug($"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}");
 
-            // Trigger open interaction on container
             bool didOpen = false;
+            // If a container was closed, open it before looting
             if (container.DoorState == EDoorState.Shut)
             {
                 InteractContainer(container, EInteractionType.Open);
@@ -211,14 +211,7 @@ namespace LootingBots.Patch.Components
                 LootCache.IncrementLootTimer(BotOwner.Id);
             }
 
-            // Close container and switch to main weapon
-            FieldInfo movementContextInfo = BotOwner.GetPlayer.CurrentState
-                .GetType()
-                .GetField("MovementContext", BindingFlags.NonPublic | BindingFlags.Instance);
-            var movementContext = (GClass1604)
-                movementContextInfo.GetValue(BotOwner.GetPlayer.CurrentState);
-            movementContext.StopAnyInteractions();
-
+            // Close the container after looting if a container was open, and the bot didnt open it
             if (container.DoorState == EDoorState.Open && !didOpen)
             {
                 InteractContainer(container, EInteractionType.Close);
@@ -232,7 +225,7 @@ namespace LootingBots.Patch.Components
 
         public void InteractContainer(LootableContainer container, EInteractionType action)
         {
-            GClass2599 result = new GClass2599(action);
+            GClass2600 result = new GClass2600(action);
             container.Interact(result);
         }
 
