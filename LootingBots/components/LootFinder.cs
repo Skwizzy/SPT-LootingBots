@@ -10,21 +10,62 @@ using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace LootingBots.Patch.Components
 {
+    // Degug spheres from DrakiaXYZ Waypoints https://github.com/DrakiaXYZ/SPT-Waypoints/blob/master/Helpers/GameObjectHelper.cs
+    public class GameObjectHelper
+    {
+        public static GameObject DrawSphere(Vector3 position, float size, Color color)
+        {
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.GetComponent<Renderer>().material.color = color;
+            sphere.GetComponent<Collider>().enabled = false;
+            sphere.transform.position = new Vector3(position.x, position.y, position.z);
+            sphere.transform.localScale = new Vector3(size, size, size);
+
+            return sphere;
+        }
+    }
+
     public class LootFinder : MonoBehaviour
     {
         public BotOwner BotOwner;
         public ItemAdder ItemAdder;
-        public static float TimeToLoot = 8f;
-        private float _scanTimer;
-        private readonly Log _log;
 
-        public LootFinder()
+        // Current container that the bot will try to loot
+        public LootableContainer ActiveContainer;
+
+        // Current loose item that the bot will try to loot
+        public LootItem ActiveItem;
+
+        // Current corpse that the bot will try to loot
+        public BotOwner ActiveCorpse;
+
+        // Center of the container's collider used to help in navigation
+        public Vector3 LootObjectCenter;
+
+        // Container ids that the bot has looted
+        public string[] IgnoredLootIds = new string[] { };
+
+        // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
+        public string[] NonNavigableContainerIds = new string[] { };
+
+        // Amount of time in seconds to wait after looting a container before finding the next container
+        public float WaitAfterLooting = 0f;
+
+        // Amount of time to wait before clearning the nonNavigableContainerIds array
+        public float ClearNonNavigableIdTimer = 0f;
+        public static float TimeToLoot = 8f;
+        private bool _paused = false;
+        private float _scanTimer = 0f;
+        private Log _log;
+
+        public void Init(BotOwner botOwner)
         {
             _log = LootingBots.LootLog;
+            BotOwner = botOwner;
+            ItemAdder = new ItemAdder(BotOwner, this);
         }
 
         public async Task Update()
@@ -36,51 +77,47 @@ namespace LootingBots.Patch.Components
 
             try
             {
+                WildSpawnType botType = BotOwner.Profile.Info.Settings.Role;
                 bool isLootFinderEnabled =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                        BotOwner.Profile.Info.Settings.Role
-                    )
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                        BotOwner.Profile.Info.Settings.Role
-                    );
+                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(botType)
+                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(botType)
+                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(botType);
+
+                if (ItemAdder.ShouldSort)
+                {
+                    // Sort items in tacVest for better space management
+                    await ItemAdder.SortTacVest();
+                }
 
                 if (BotOwner.BotState == EBotState.Active)
                 {
-                    BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
-
-                    if (ItemAdder == null)
-                    {
-                        ItemAdder = new ItemAdder(BotOwner);
-                        // Sort items in tacVest for better space management
-                        await ItemAdder.SortTacVest();
-                    }
-
                     BotOwner.DoorOpener.Update();
 
                     if (
                         isLootFinderEnabled
-                        && botLootData.WaitAfterLooting < Time.time
+                        && WaitAfterLooting < Time.time
                         && _scanTimer < Time.time
-                        && !botLootData.HasActiveLootable()
+                        && !HasActiveLootable()
                     )
                     {
+                        _log.LogDebug($"Bot {BotOwner.Id} searching for nearby loot");
                         FindLootable();
                     }
                 }
             }
             catch (Exception e)
             {
-                _log.LogError(e);
+                _log.LogError($"Bot {BotOwner.Id} {e}");
             }
         }
 
         public void FindLootable()
         {
             _scanTimer = Time.time + 6f;
-            BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
 
             LootableContainer closestContainer = null;
             LootItem closestItem = null;
+            BotOwner closestCorpse = null;
             Vector3 closestLootableCenter = new Vector3();
             float shortestDist = -1f;
 
@@ -88,7 +125,7 @@ namespace LootingBots.Patch.Components
             Collider[] array = Physics.OverlapSphere(
                 BotOwner.Position,
                 LootingBots.DetectLootDistance.Value,
-                LayerMask.GetMask(new string[] { "Interactive", "Loot" }),
+                LayerMask.GetMask(new string[] { "Interactive", "Loot", "Deadbody" }),
                 QueryTriggerInteraction.Collide
             );
 
@@ -98,13 +135,14 @@ namespace LootingBots.Patch.Components
                 LootableContainer containerObj =
                     collider.gameObject.GetComponentInParent<LootableContainer>();
                 LootItem lootItem = collider.gameObject.GetComponentInParent<LootItem>();
+                BotOwner corpse = collider.gameObject.GetComponentInParent<BotOwner>();
 
                 bool canLootContainer =
                     LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && containerObj != null
-                    && !LootCache.IsLootIgnored(BotOwner.Id, containerObj.Id)
+                    && !IsLootIgnored(containerObj.Id)
                     && containerObj.isActiveAndEnabled
                     && containerObj.DoorState != EDoorState.Locked;
 
@@ -113,16 +151,28 @@ namespace LootingBots.Patch.Components
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && lootItem != null
+                    && !(lootItem is Corpse)
                     && lootItem?.ItemOwner?.RootItem != null
                     && !lootItem.ItemOwner.RootItem.QuestItem
-                    && !LootCache.IsLootIgnored(BotOwner.Id, lootItem.ItemOwner.RootItem.Id);
+                    && !IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
 
-                if (canLootContainer || canLootItem)
+                bool canLootCorpse =
+                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    && corpse != null
+                    && !IsLootIgnored(corpse.Id.ToString());
+
+                if (canLootContainer || canLootItem || canLootCorpse)
                 {
                     // If we havent already visted the container, calculate its distance and save the container with the smallest distance
                     Vector3 vector =
                         BotOwner.Position
-                        - (containerObj?.transform?.position ?? lootItem.transform.position);
+                        - (
+                            containerObj?.transform.position
+                            ?? lootItem?.transform.position
+                            ?? corpse.GetPlayer.Transform.position
+                        );
                     float dist = vector.sqrMagnitude;
 
                     // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
@@ -133,10 +183,18 @@ namespace LootingBots.Patch.Components
                         if (canLootContainer)
                         {
                             closestItem = null;
+                            closestCorpse = null;
                             closestContainer = containerObj;
+                        }
+                        else if (canLootCorpse)
+                        {
+                            closestItem = null;
+                            closestContainer = null;
+                            closestCorpse = corpse;
                         }
                         else
                         {
+                            closestCorpse = null;
                             closestContainer = null;
                             closestItem = lootItem;
                         }
@@ -151,32 +209,67 @@ namespace LootingBots.Patch.Components
 
             if (closestContainer != null)
             {
-                // Add closest container found to container map
-                botLootData.ActiveContainer = closestContainer;
-                botLootData.LootObjectCenter = closestLootableCenter;
+                _log.LogDebug($"Bot {BotOwner.Id} found container");
+                ActiveContainer = closestContainer;
+                LootObjectCenter = closestLootableCenter;
 
-                LootCache.SetLootData(BotOwner.Id, botLootData);
-                LootCache.CacheActiveLootId(closestContainer.Id, BotOwner.Id);
+                ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.Id);
             }
             else if (closestItem != null)
             {
-                // Add closest container found to container map
-                botLootData.ActiveItem = closestItem;
-                botLootData.LootObjectCenter = closestLootableCenter;
+                _log.LogDebug(
+                    $"Bot {BotOwner.Id} found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
+                );
 
-                LootCache.SetLootData(BotOwner.Id, botLootData);
-                LootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.Id);
+                ActiveItem = closestItem;
+                LootObjectCenter = closestLootableCenter;
+
+                ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.Id);
+            }
+            else if (closestCorpse != null)
+            {
+                _log.LogError($"Bot {BotOwner.Id} found corpse");
+                ActiveCorpse = closestCorpse;
+                LootObjectCenter = closestLootableCenter;
+
+                ActiveLootCache.CacheActiveLootId(closestCorpse.Id.ToString(), BotOwner.Id);
             }
         }
 
-        public async void LootItems(Item[] items)
+        // Logic to handle the looting of corpses
+        public async Task LootCorpse()
         {
             try
             {
                 var watch = new System.Diagnostics.Stopwatch();
                 watch.Start();
+                // Initialize corpse inventory controller
+                Player corpsePlayer = ActiveCorpse.GetPlayer;
+                Type corpseType = corpsePlayer.GetType();
+                FieldInfo corpseInventory = corpseType.BaseType.GetField(
+                    "_inventoryController",
+                    BindingFlags.NonPublic
+                        | BindingFlags.Static
+                        | BindingFlags.Public
+                        | BindingFlags.Instance
+                );
+                InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
+                    corpseInventory.GetValue(corpsePlayer);
 
-                await ItemAdder.TryAddItemsToBot(items);
+                EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
+                _log.LogWarning($"Trying to loot corpse");
+
+                Item[] priorityItems = corpseInventoryController.Inventory.Equipment
+                    .GetSlotsByName(prioritySlots)
+                    .Select(slot => slot.ContainedItem)
+                    .Where(item => item != null && !item.IsUnremovable)
+                    .ToArray();
+
+                if (await ItemAdder.TryAddItemsToBot(priorityItems))
+                {
+                    IncrementLootTimer();
+                }
+
                 ItemAdder.UpdateActiveWeapon();
 
                 watch.Stop();
@@ -184,11 +277,12 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                _log.LogError(e);
+                _log.LogError($"{BotOwner.Id} {e}");
             }
         }
 
-        public async void LootContainer(LootableContainer container)
+        // Logic to handle the looting of containers
+        public async Task LootContainer(LootableContainer container)
         {
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
@@ -200,7 +294,7 @@ namespace LootingBots.Patch.Components
             // If a container was closed, open it before looting
             if (container.DoorState == EDoorState.Shut)
             {
-                InteractContainer(container, EInteractionType.Open);
+                LootUtils.InteractContainer(container, EInteractionType.Open);
                 didOpen = true;
             }
 
@@ -208,13 +302,13 @@ namespace LootingBots.Patch.Components
 
             if (await ItemAdder.LootNestedItems(item))
             {
-                LootCache.IncrementLootTimer(BotOwner.Id);
+                IncrementLootTimer();
             }
 
             // Close the container after looting if a container was open, and the bot didnt open it
             if (container.DoorState == EDoorState.Open && !didOpen)
             {
-                InteractContainer(container, EInteractionType.Close);
+                LootUtils.InteractContainer(container, EInteractionType.Close);
             }
 
             ItemAdder.UpdateActiveWeapon();
@@ -223,16 +317,9 @@ namespace LootingBots.Patch.Components
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
-        public void InteractContainer(LootableContainer container, EInteractionType action)
+        public async Task LootItem()
         {
-            GClass2600 result = new GClass2600(action);
-            container.Interact(result);
-        }
-
-        public async void LootItem()
-        {
-            BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
-            Item item = botLootData.ActiveItem.ItemOwner.RootItem;
+            Item item = ActiveItem.ItemOwner.RootItem;
 
             _log.LogDebug(
                 $"Bot {BotOwner.Id} trying to pick up loose item: {item.Name.Localized()}"
@@ -241,197 +328,119 @@ namespace LootingBots.Patch.Components
 
             if (await ItemAdder.TryAddItemsToBot(new Item[] { item }))
             {
-                LootCache.IncrementLootTimer(BotOwner.Id);
-                LootCache.Cleanup(BotOwner, item.Id);
-                LootCache.AddVisitedLoot(BotOwner.Id, item.Id);
+                IncrementLootTimer();
             }
 
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
             ItemAdder.UpdateActiveWeapon();
         }
 
-        public void CheckIfStuck(float dist)
+        public bool IsLootIgnored(string lootId)
         {
-            BotLootData botContainerData = LootCache.GetLootData(BotOwner.Id);
+            bool alreadyTried =
+                NonNavigableContainerIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
-            // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
-            float changeInDist = Math.Abs(botContainerData.Dist - dist);
-
-            if (changeInDist < 0.25f)
-            {
-                _log.LogDebug(
-                    $"(Stuck: {botContainerData.StuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from loot: {dist}"
-                );
-
-                // Bot is stuck, update stuck count
-                LootCache.UpdateStuckCount(BotOwner.Id);
-            }
-            else
-            {
-                // Bot has moved, reset stuckCount and update cached distance to container
-                botContainerData.Dist = dist;
-                botContainerData.StuckCount = 0;
-            }
-
-            LootCache.SetLootData(BotOwner.Id, botContainerData);
+            return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
         }
 
-        public bool IsCloseEnough(out float dist)
+        public void HandleNonNavigableLoot()
         {
-            BotLootData lootData = LootCache.GetLootData(BotOwner.Id);
-            Vector3 vector = BotOwner.Position - lootData.Destination;
-            float y = vector.y;
-            vector.y = 0f;
-            dist = vector.sqrMagnitude;
-            return dist < 0.85f && Math.Abs(y) < 0.5f;
-        }
-
-        public bool TryMoveToLoot(ref float tryMoveTimer)
-        {
-            bool canMove = true;
-            try
-            {
-                // Stand and move to lootable
-                BotOwner.SetPose(1f);
-                BotOwner.SetTargetMoveSpeed(1f);
-                BotOwner.Steering.LookToMovingDirection();
-
-                if (tryMoveTimer < Time.time)
-                {
-                    BotLootData botLootData = LootCache.UpdateNavigationAttempts(BotOwner.Id);
-                    string lootableName =
-                        botLootData.ActiveContainer != null
-                            ? botLootData.ActiveContainer.ItemOwner.Items.ToArray()[
-                                0
-                            ].Name.Localized()
-                            : botLootData.ActiveItem.Name.Localized();
-
-                    // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the lootable otherwise ignore the container forever
-                    bool isBotStuck = botLootData.StuckCount > 1;
-                    bool isNavigationLimit = botLootData.NavigationAttempts > 30;
-                    if (!isBotStuck && !isNavigationLimit)
-                    {
-                        tryMoveTimer = Time.time + 4f;
-                        Vector3 center = botLootData.LootObjectCenter;
-
-                        // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
-                        Vector3 pointNearbyContainer = NavMesh.SamplePosition(
-                            center,
-                            out NavMeshHit navMeshAlignedPoint,
-                            1f,
-                            NavMesh.AllAreas
-                        )
-                            ? navMeshAlignedPoint.position
-                            : Vector3.zero;
-
-                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
-                        // Add a small amount of padding by pushing the point away from the nearbyPoint
-                        Vector3 padding = center - pointNearbyContainer;
-                        padding.y = 0;
-                        padding.Normalize();
-
-                        // Make sure the point is still snapped to the NavMesh after its been pushed
-                        botLootData.Destination = pointNearbyContainer = NavMesh.SamplePosition(
-                            center - padding,
-                            out navMeshAlignedPoint,
-                            1f,
-                            navMeshAlignedPoint.mask
-                        )
-                            ? navMeshAlignedPoint.position
-                            : pointNearbyContainer;
-
-                        // Debug for bot loot navigation
-                        if (LootingBots.DebugLootNavigation.Value)
-                        {
-                            GameObjectHelper.DrawSphere(center, 0.5f, Color.red);
-                            GameObjectHelper.DrawSphere(center - padding, 0.5f, Color.green);
-                            if (pointNearbyContainer != Vector3.zero)
-                            {
-                                GameObjectHelper.DrawSphere(pointNearbyContainer, 0.5f, Color.blue);
-                            }
-                        }
-
-                        // If we were able to snap the loot position to a NavMesh, attempt to navigate
-                        if (pointNearbyContainer != Vector3.zero)
-                        {
-                            NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
-                                pointNearbyContainer,
-                                true,
-                                1f,
-                                false,
-                                false,
-                                true
-                            );
-
-                            // Log every 5 movement attempts to reduce noise
-                            if (botLootData.NavigationAttempts % 5 == 1)
-                            {
-                                _log.LogDebug(
-                                    $"(Attempt: {botLootData.NavigationAttempts}) Bot {BotOwner.Id} moving to {lootableName} status: {pathStatus}"
-                                );
-                            }
-
-                            if (pathStatus != NavMeshPathStatus.PathComplete)
-                            {
-                                _log.LogWarning(
-                                    $"Bot {BotOwner.Id} has no valid path to: {lootableName}. Ignoring"
-                                );
-                                canMove = false;
-                            }
-
-                            LootCache.SetLootData(BotOwner.Id, botLootData);
-                        }
-                        else
-                        {
-                            _log.LogWarning(
-                                $"Bot {BotOwner.Id} unable to snap loot position to NavMesh. Ignoring {lootableName}"
-                            );
-                            canMove = false;
-                        }
-                    }
-                    else
-                    {
-                        if (isBotStuck)
-                        {
-                            _log.LogError(
-                                $"Bot {BotOwner.Id} Has been stuck trying to reach: {lootableName}. Ignoring"
-                            );
-                        }
-                        else
-                        {
-                            _log.LogError(
-                                $"Bot {BotOwner.Id} Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
-                            );
-                        }
-                        canMove = false;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                _log.LogError(e.Message);
-                _log.LogError(e.StackTrace);
-            }
-
-            if (!canMove)
-            {
-                HandleNonNavigableLoot();
-            }
-
-            return canMove;
-        }
-
-        private void HandleNonNavigableLoot()
-        {
-            BotLootData botLootData = LootCache.GetLootData(BotOwner.Id);
             string lootId =
-                botLootData.ActiveContainer != null
-                    ? botLootData.ActiveContainer.ItemOwner.Items.ToArray()[0].Id
-                    : botLootData.ActiveItem.ItemOwner.RootItem.Id;
-            LootCache.Cleanup(BotOwner, lootId);
-            LootCache.AddNonNavigableLoot(BotOwner.Id, lootId);
-            LootCache.IncrementLootTimer(BotOwner.Id, 30f);
-            BotOwner.PatrollingData.MoveUpdate();
+                ActiveContainer?.Id
+                ?? ActiveItem?.ItemOwner.RootItem.Id
+                ?? ActiveCorpse.Id.ToString();
+            NonNavigableContainerIds.Append(lootId);
+            Cleanup();
+            IncrementLootTimer(30f);
+            // BotOwner.PatrollingData.MoveUpdate();
+        }
+
+        public void IncrementLootTimer(float time = -1f)
+        {
+            // Increment loot wait timer
+            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
+            WaitAfterLooting = Time.time + timer;
+        }
+
+        public bool HasActiveLootable()
+        {
+            return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null;
+        }
+
+        public void IgnoreLoot(string id)
+        {
+            IgnoredLootIds.Append(id);
+        }
+
+        public bool IsPaused()
+        {
+            return _paused;
+        }
+
+        public void Resume()
+        {
+            ItemAdder.EnableTransactions();
+            _paused = false;
+        }
+
+        public void Pause()
+        {
+            ItemAdder.DisableTransactions();
+            _paused = true;
+        }
+
+        public void Cleanup()
+        {
+            if (ActiveContainer != null)
+            {
+                CleanupContainer();
+            }
+
+            if (ActiveItem != null)
+            {
+                CleanupItem();
+            }
+
+            if (ActiveCorpse != null)
+            {
+                CleanupCorpse();
+            }
+        }
+
+        public void CleanupContainer()
+        {
+            LootableContainer container = ActiveContainer;
+            ActiveContainer = null;
+            IgnoredLootIds.Append(container.Id);
+            ActiveLootCache.Cleanup(container.Id);
+            LootingBots.LootLog.LogWarning(
+                $"Removing container: {container.name.Localized()} ({container.Id})"
+            );
+        }
+
+        public void CleanupItem()
+        {
+            LootItem item = ActiveItem;
+            IgnoredLootIds.Append(item.ItemOwner.RootItem.Id);
+            ActiveLootCache.Cleanup(item.ItemOwner.RootItem.Id);
+            ActiveItem = null;
+
+            LootingBots.LootLog.LogWarning(
+                $"Removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
+            );
+        }
+
+        public void CleanupCorpse()
+        {
+            BotOwner corpse = ActiveCorpse;
+            string corpseId = corpse.Id.ToString();
+            IgnoredLootIds.Append(corpseId);
+            ActiveLootCache.Cleanup(corpseId);
+            ActiveCorpse = null;
+
+            LootingBots.LootLog.LogWarning(
+                $"Removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
+            );
         }
 
         public void Destroy()

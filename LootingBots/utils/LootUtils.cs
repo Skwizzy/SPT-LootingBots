@@ -1,12 +1,41 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using EFT;
+using EFT.Interactive;
 using EFT.InventoryLogic;
 
 namespace LootingBots.Patch.Util
 {
     public static class LootUtils
     {
+        /** Calculate the size of a container */
+        public static int GetContainerSize(SearchableItemClass container)
+        {
+            GClass2165[] grids = container.Grids;
+            int gridSize = 0;
+
+            foreach (GClass2165 grid in grids)
+            {
+                gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
+            }
+
+            return gridSize;
+        }
+
+        // Prevents bots from looting single use quest keys like "Unknown Key"
+        public static bool IsSingleUseKey(Item item)
+        {
+            KeyComponent key = item.GetItemComponent<KeyComponent>();
+            return key != null && key.Template.MaximumNumberOfUsage == 1;
+        }
+
+        public static void InteractContainer(LootableContainer container, EInteractionType action)
+        {
+            GClass2600 result = new GClass2600(action);
+            container.Interact(result);
+        }
+
         public static GStruct322<GClass2462> SortContainer(
             SearchableItemClass container,
             InventoryControllerClass controller
@@ -127,7 +156,8 @@ namespace LootingBots.Patch.Util
             IEnumerable<GClass2165> grids = null
         )
         {
-            var prioritzedGrids = grids ?? controller.Inventory.Equipment.GetPrioritizedGridsForLoot(item);
+            var prioritzedGrids =
+                grids ?? controller.Inventory.Equipment.GetPrioritizedGridsForLoot(item);
             foreach (var grid in prioritzedGrids)
             {
                 var address = grid.FindFreeSpace(item);

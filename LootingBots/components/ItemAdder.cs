@@ -38,17 +38,20 @@ namespace LootingBots.Patch.Components
         private readonly TransactionController _transactionController;
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
+        private readonly LootFinder _lootFinder;
 
         private static readonly GearValue GearValue = new GearValue();
 
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int CurrentBodyArmorClass = 0;
+        public bool ShouldSort = true;
 
-        public ItemAdder(BotOwner botOwner)
+        public ItemAdder(BotOwner botOwner, LootFinder lootFinder)
         {
             try
             {
                 _log = LootingBots.LootLog;
+                _lootFinder = lootFinder;
 
                 // Initialize bot inventory controller
                 Type botOwnerType = botOwner.GetPlayer.GetType();
@@ -94,6 +97,16 @@ namespace LootingBots.Patch.Components
             return _botInventoryController;
         }
 
+        public void DisableTransactions()
+        {
+            _transactionController.Enabled = false;
+        }
+
+        public void EnableTransactions()
+        {
+            _transactionController.Enabled = true;
+        }
+
         public void CalculateGearValue()
         {
             _log.LogDebug("Calculating gear value...");
@@ -131,6 +144,8 @@ namespace LootingBots.Patch.Components
                     .GetSlot(EquipmentSlot.TacticalVest)
                     .ContainedItem;
 
+            ShouldSort = false;
+
             if (tacVest != null)
             {
                 var result = LootUtils.SortContainer(tacVest, _botInventoryController);
@@ -140,6 +155,7 @@ namespace LootingBots.Patch.Components
                     return await _transactionController.TryRunNetworkTransaction(result);
                 }
             }
+
             return null;
         }
 
@@ -152,7 +168,7 @@ namespace LootingBots.Patch.Components
         {
             foreach (Item item in items)
             {
-                if (TransactionController.IsLootingInterrupted(_botOwner))
+                if (_transactionController.IsLootingInterrupted())
                 {
                     UpdateKnownItems();
                     return false;
@@ -584,8 +600,8 @@ namespace LootingBots.Patch.Components
             // If the item is a container, calculate the size and see if its bigger than what is equipped
             if (equipped.IsContainer)
             {
-                int equippedSize = GetContainerSize(equipped as SearchableItemClass);
-                int itemToLootSize = GetContainerSize(itemToLoot as SearchableItemClass);
+                int equippedSize = LootUtils.GetContainerSize(equipped as SearchableItemClass);
+                int itemToLootSize = LootUtils.GetContainerSize(itemToLoot as SearchableItemClass);
 
                 foundBiggerContainer = equippedSize < itemToLootSize;
             }
@@ -601,20 +617,6 @@ namespace LootingBots.Patch.Components
                     foundBiggerContainer
                     && (equippedArmor == null || equippedArmor.ArmorClass <= lootArmor?.ArmorClass)
                 );
-        }
-
-        /** Calculate the size of a container */
-        public int GetContainerSize(SearchableItemClass container)
-        {
-            GClass2165[] grids = container.Grids;
-            int gridSize = 0;
-
-            foreach (GClass2165 grid in grids)
-            {
-                gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
-            }
-
-            return gridSize;
         }
 
         /**
@@ -657,7 +659,7 @@ namespace LootingBots.Patch.Components
         /** Searches throught the child items of a container and attempts to loot them */
         public async Task<bool> LootNestedItems(Item parentItem)
         {
-            if (TransactionController.IsLootingInterrupted(_botOwner))
+            if (_transactionController.IsLootingInterrupted())
             {
                 return false;
             }
@@ -672,7 +674,7 @@ namespace LootingBots.Patch.Components
                             nestedItem.Id != parentItem.Id
                             && nestedItem.Id == nestedItem.GetRootItem().Id
                             && !nestedItem.QuestItem
-                            && !IsSingleUseKey(nestedItem)
+                            && !LootUtils.IsSingleUseKey(nestedItem)
                     )
                     .ToArray();
 
@@ -693,12 +695,60 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
-        // Prevents bots from looting single use quest keys like "Unknown Key"
-        public bool IsSingleUseKey(Item item)
+        public EquipmentSlot[] GetPrioritySlots()
         {
-            KeyComponent key = item.GetItemComponent<KeyComponent>();
-            return key != null && key.Template.MaximumNumberOfUsage == 1;
+            InventoryControllerClass botInventoryController = _botInventoryController;
+            bool hasBackpack =
+                botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem != null;
+            bool hasTacVest =
+                botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem != null;
+
+            EquipmentSlot[] prioritySlots = new EquipmentSlot[0];
+            EquipmentSlot[] weaponSlots = new EquipmentSlot[]
+            {
+                EquipmentSlot.Holster,
+                EquipmentSlot.FirstPrimaryWeapon,
+                EquipmentSlot.SecondPrimaryWeapon
+            };
+            EquipmentSlot[] storageSlots = new EquipmentSlot[]
+            {
+                EquipmentSlot.Backpack,
+                EquipmentSlot.ArmorVest,
+                EquipmentSlot.TacticalVest,
+                EquipmentSlot.Pockets
+            };
+
+            if (hasBackpack || hasTacVest)
+            {
+                _log.LogWarning(
+                    $"Bot {_botOwner.Id} has backpack/rig and is looting weapons first!"
+                );
+                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
+            }
+            else
+            {
+                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+            }
+
+            return prioritySlots
+                .Concat(
+                    new EquipmentSlot[]
+                    {
+                        EquipmentSlot.Headwear,
+                        EquipmentSlot.Earpiece,
+                        EquipmentSlot.Dogtag,
+                        EquipmentSlot.Scabbard,
+                        EquipmentSlot.FaceCover
+                    }
+                )
+                .ToArray();
         }
+
+        
 
         /** Generates a SwapAction to send to the transaction controller*/
         public TransactionController.SwapAction GetSwapAction(
@@ -728,7 +778,7 @@ namespace LootingBots.Patch.Components
                     ?? (
                         async () =>
                         {
-                            LootCache.AddVisitedLoot(_botOwner.Id, toThrow.Id);
+                            _lootFinder.IgnoreLoot(toThrow.Id);
                             await TransactionController.SimulatePlayerDelay(1000);
 
                             if (toThrow is Weapon weapon)

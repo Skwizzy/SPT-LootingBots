@@ -5,9 +5,12 @@ using Comfort.Common;
 
 using EFT;
 
-using LootingBots.Patch;
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
+using LootingBots.Brain;
+
+using DrakiaXYZ.BigBrain.Brains;
+using System.Collections.Generic;
 
 namespace LootingBots
 {
@@ -184,7 +187,6 @@ namespace LootingBots
 
         public void Awake()
         {
-            // ContainerLootSettings();
             LootFinderSettings();
             CorpseLootSettings();
             WeaponLootSettings();
@@ -192,10 +194,34 @@ namespace LootingBots
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
-            new LootSettingsPatch().Enable();
-            new ContainerLooting().Enable();
-            new CorpseLootingPatch().Enable();
-            new LooseLootPatch().Enable();
+            // Include "Gifter"?
+
+            // TODO: Incorporate mod settings 
+            BrainManager.RemoveLayer(
+                "Utility peace",
+                new List<string>()
+                {
+                    "Assault",
+                    "ExUsec",
+                    "BossSanitar",
+                    "CursAssault",
+                    "PMC",
+                    "SectantWarrior"
+                }
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>()
+                {
+                    "Assault",
+                    "ExUsec",
+                    "BossSanitar",
+                    "CursAssault",
+                    "PMC",
+                    "SectantWarrior"
+                },
+                2
+            );
         }
 
         public void Update()
