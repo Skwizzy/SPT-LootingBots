@@ -46,19 +46,19 @@ namespace LootingBots.Patch.Components
         public Vector3 LootObjectCenter;
 
         // Container ids that the bot has looted
-        public string[] IgnoredLootIds = new string[] { };
+        public string[] IgnoredLootIds;
 
         // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
-        public string[] NonNavigableContainerIds = new string[] { };
+        public string[] NonNavigableContainerIds;
 
         // Amount of time in seconds to wait after looting a container before finding the next container
-        public float WaitAfterLooting = 0f;
+        private float _waitAfterLootTimer;
 
-        // Amount of time to wait before clearning the nonNavigableContainerIds array
-        public float ClearNonNavigableIdTimer = 0f;
-        public static float TimeToLoot = 8f;
-        private bool _paused = false;
-        private float _scanTimer = 0f;
+        // // Amount of time to wait before clearning the nonNavigableContainerIds array
+        // public float ClearNonNavigableIdTimer = 0f;
+        private static readonly float TimeToLoot = 8f;
+        private bool _paused;
+        private float _scanTimer;
         private Log _log;
 
         public void Init(BotOwner botOwner)
@@ -66,6 +66,8 @@ namespace LootingBots.Patch.Components
             _log = LootingBots.LootLog;
             BotOwner = botOwner;
             ItemAdder = new ItemAdder(BotOwner, this);
+            IgnoredLootIds = new string[0];
+            NonNavigableContainerIds = new string[0];
         }
 
         public async Task Update()
@@ -95,7 +97,7 @@ namespace LootingBots.Patch.Components
 
                     if (
                         isLootFinderEnabled
-                        && WaitAfterLooting < Time.time
+                        && _waitAfterLootTimer < Time.time
                         && _scanTimer < Time.time
                         && !HasActiveLootable()
                     )
@@ -298,7 +300,7 @@ namespace LootingBots.Patch.Components
                 didOpen = true;
             }
 
-            await TransactionController.SimulatePlayerDelay(1000);
+            await TransactionController.SimulatePlayerDelay(2000);
 
             if (await ItemAdder.LootNestedItems(item))
             {
@@ -352,14 +354,13 @@ namespace LootingBots.Patch.Components
             NonNavigableContainerIds.Append(lootId);
             Cleanup();
             IncrementLootTimer(30f);
-            // BotOwner.PatrollingData.MoveUpdate();
         }
 
         public void IncrementLootTimer(float time = -1f)
         {
             // Increment loot wait timer
             float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
-            WaitAfterLooting = Time.time + timer;
+            _waitAfterLootTimer = Time.time + timer;
         }
 
         public bool HasActiveLootable()
@@ -411,22 +412,21 @@ namespace LootingBots.Patch.Components
         {
             LootableContainer container = ActiveContainer;
             ActiveContainer = null;
-            IgnoredLootIds.Append(container.Id);
+            IgnoreLoot(container.Id);
             ActiveLootCache.Cleanup(container.Id);
             LootingBots.LootLog.LogWarning(
-                $"Removing container: {container.name.Localized()} ({container.Id})"
+                $"Bot ${BotOwner.Id} removing container: {container.name.Localized()} ({container.Id})"
             );
         }
 
         public void CleanupItem()
         {
             LootItem item = ActiveItem;
-            IgnoredLootIds.Append(item.ItemOwner.RootItem.Id);
+            IgnoreLoot(item.ItemOwner.RootItem.Id);
             ActiveLootCache.Cleanup(item.ItemOwner.RootItem.Id);
             ActiveItem = null;
-
             LootingBots.LootLog.LogWarning(
-                $"Removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
+                $"Bot ${BotOwner.Id} removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
             );
         }
 
@@ -434,18 +434,13 @@ namespace LootingBots.Patch.Components
         {
             BotOwner corpse = ActiveCorpse;
             string corpseId = corpse.Id.ToString();
-            IgnoredLootIds.Append(corpseId);
+            IgnoreLoot(corpseId);
             ActiveLootCache.Cleanup(corpseId);
             ActiveCorpse = null;
 
             LootingBots.LootLog.LogWarning(
-                $"Removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
+                $"Bot ${BotOwner.Id} removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
             );
-        }
-
-        public void Destroy()
-        {
-            Destroy(this);
         }
     }
 }

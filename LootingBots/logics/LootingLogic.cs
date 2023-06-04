@@ -49,6 +49,14 @@ namespace LootingBots.Brain.Logics
             return !_isLooting && _lootFinder.HasActiveLootable();
         }
 
+        public override void Start()
+        {
+            _distanceToDestination = 0;
+            _stuckCount = 0;
+            _navigationAttempts = 0;
+            base.Start();
+        }
+
         public override void Stop()
         {
             StopLooting();
@@ -57,43 +65,47 @@ namespace LootingBots.Brain.Logics
 
         private void StopLooting()
         {
-            _stuckCount = 0;
-            _navigationAttempts = 0;
-            _distanceToDestination = 0;
             _isLooting = false;
             _lootFinder.Cleanup();
         }
 
         private async void TryLoot()
         {
-            // Check if the bot is close enough to the destination to commence looting
-            if (_closeEnoughTimer < Time.time)
+            try
             {
-                _closeEnoughTimer = Time.time + 2f;
-                bool isCloseEnough = IsCloseEnough();
-
-                // If the bot has not just looted something, loot the current item since we are now close enough
-                if (!_isLooting && isCloseEnough)
+                // Check if the bot is close enough to the destination to commence looting
+                if (_closeEnoughTimer < Time.time)
                 {
-                    await ExecuteLooting();
-                    return;
+                    _closeEnoughTimer = Time.time + 2f;
+                    bool isCloseEnough = IsCloseEnough();
+
+                    // If the bot has not just looted something, loot the current item since we are now close enough
+                    if (!_isLooting && isCloseEnough)
+                    {
+                        await ExecuteLooting();
+                        return;
+                    }
+                }
+
+                // Try to move the bot to the destination
+                if (_moveTimer < Time.time && !_isLooting)
+                {
+                    _moveTimer = Time.time + 4f;
+
+                    // Initiate move to loot. Will return false if the bot is not able to navigate using a NavMesh
+                    bool canMove = TryMoveToLoot();
+
+                    // If there is not a valid path to the loot, ignore the loot forever
+                    if (!canMove)
+                    {
+                        _lootFinder.HandleNonNavigableLoot();
+                        _stuckCount = 0;
+                    }
                 }
             }
-
-            // Try to move the bot to the destination
-            if (_moveTimer < Time.time && !_isLooting)
+            catch (Exception e)
             {
-                _moveTimer = Time.time + 4f;
-
-                // Initiate move to loot. Will return false if the bot is not able to navigate using a NavMesh
-                bool canMove = TryMoveToLoot();
-
-                // If there is not a valid path to the loot, ignore the loot forever
-                if (!canMove)
-                {
-                    _lootFinder.HandleNonNavigableLoot();
-                    _stuckCount = 0;
-                }
+                _log.LogError($"Bot {BotOwner.Id}: {e}");
             }
         }
 
