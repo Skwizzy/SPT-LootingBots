@@ -34,7 +34,7 @@ namespace LootingBots.Patch.Components
 
     public class ItemAdder
     {
-        private readonly Log _log;
+        private readonly BotLog _log;
         private readonly TransactionController _transactionController;
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
@@ -50,7 +50,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                _log = LootingBots.LootLog;
+                _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootFinder = lootFinder;
 
                 // Initialize bot inventory controller
@@ -238,7 +238,7 @@ namespace LootingBots.Patch.Components
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
             {
-                _log.LogWarning($"Bot {_botOwner.Id} changing to secondary");
+                _log.LogWarning($"Changing to secondary");
                 _botOwner.WeaponManager.UpdateWeaponsList();
                 _botOwner.WeaponManager.Selector.ChangeToSecond();
                 RefillAndReload();
@@ -249,7 +249,7 @@ namespace LootingBots.Patch.Components
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
             {
-                _log.LogWarning($"Bot {_botOwner.Id} changing to primary");
+                _log.LogWarning($"Changing to primary");
                 _botOwner.WeaponManager.UpdateWeaponsList();
                 _botOwner.WeaponManager.Selector.ChangeToMain();
                 RefillAndReload();
@@ -260,7 +260,7 @@ namespace LootingBots.Patch.Components
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
             {
-                _log.LogWarning($"Bot {_botOwner.Id} updating weapons");
+                _log.LogWarning($"Updating weapons");
                 _botOwner.WeaponManager.UpdateWeaponsList();
                 _botOwner.WeaponManager.Selector.TakeMainWeapon();
                 RefillAndReload();
@@ -352,7 +352,7 @@ namespace LootingBots.Patch.Components
                 // If the tac vest we are looting is higher armor class and we have a chest equipped, make sure to drop the chest and pick up the armored rig
                 if (IsLootingBetterArmor(tacVest, lootItem) && chest != null)
                 {
-                    _log.LogDebug("Bot looting armored rig and dropping chest");
+                    _log.LogDebug("Looting armored rig and dropping chest");
                     swapAction = GetSwapAction(
                         chest,
                         null,
@@ -410,7 +410,7 @@ namespace LootingBots.Patch.Components
             List<MagazineClass> mags = new List<MagazineClass>();
             _botInventoryController.GetReachableItemsOfTypeNonAlloc(mags);
 
-            _log.LogDebug($"Bot {_botOwner.Id} cleaning up old mags...");
+            _log.LogDebug($"Cleaning up old mags...");
             int reservedCount = 0;
             foreach (MagazineClass mag in mags)
             {
@@ -435,14 +435,14 @@ namespace LootingBots.Patch.Components
                 if (reservedCount < 2 && fitsInThrown && fitsInEquipped)
                 {
                     _log.LogDebug(
-                        $"Bot {_botOwner.Id} reserving shared mag {mag.Name.Localized()}"
+                        $"Reserving shared mag {mag.Name.Localized()}"
                     );
                     reservedCount++;
                 }
                 else if ((reservedCount >= 2 && fitsInEquipped) || !fitsInEquipped)
                 {
                     _log.LogDebug(
-                        $"Bot {_botOwner.Id} removing useless mag {mag.Name.Localized()}"
+                        $"Removing useless mag {mag.Name.Localized()}"
                     );
                     await _transactionController.ThrowAndEquip(
                         new TransactionController.SwapAction(mag)
@@ -725,7 +725,7 @@ namespace LootingBots.Patch.Components
             if (hasBackpack || hasTacVest)
             {
                 _log.LogWarning(
-                    $"Bot {_botOwner.Id} has backpack/rig and is looting weapons first!"
+                    $"Has backpack/rig and is looting weapons first!"
                 );
                 prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
             }

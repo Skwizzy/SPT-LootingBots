@@ -28,7 +28,7 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            return _lootFinder.IsPaused() || _lootFinder.HasActiveLootable();
+            return _lootFinder.HasActiveLootable();
         }
 
         public override void Start()

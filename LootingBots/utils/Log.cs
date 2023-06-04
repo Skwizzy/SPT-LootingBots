@@ -1,13 +1,57 @@
 using System;
 
+using EFT;
+
 namespace LootingBots.Patch.Util
 {
+    public class BotLog
+    {
+        private readonly Log _log;
+        private readonly BotOwner _botOwner;
+        private readonly string _botString;
+
+        public BotLog(Log log, BotOwner botOwner)
+        {
+            _log = log;
+            _botOwner = botOwner;
+            _botString = $"([{_botOwner.Profile.Info.Settings.Role}] {_botOwner.name})";
+        }
+
+        public void LogDebug(object msg)
+        {
+            _log.LogDebug(FormatMessage(msg));
+        }
+
+        public void LogInfo(object msg)
+        {
+            _log.LogInfo(FormatMessage(msg));
+        }
+
+        public void LogWarning(object msg)
+        {
+            _log.LogWarning(FormatMessage(msg));
+        }
+
+        public void LogError(object msg)
+        {
+            _log.LogError(FormatMessage(msg));
+        }
+
+        private string FormatMessage(object data)
+        {
+            return $"{_botString} {data}";
+        }
+    }
+
     public class Log
     {
         public BepInEx.Logging.ManualLogSource Logger;
         public BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> LogLevels;
 
-        public Log(BepInEx.Logging.ManualLogSource logger, BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels)
+        public Log(
+            BepInEx.Logging.ManualLogSource logger,
+            BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels
+        )
         {
             Logger = logger;
             LogLevels = logLevels;

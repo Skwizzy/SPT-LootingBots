@@ -57,13 +57,12 @@ namespace LootingBots.Patch.Components
         // // Amount of time to wait before clearning the nonNavigableContainerIds array
         // public float ClearNonNavigableIdTimer = 0f;
         private static readonly float TimeToLoot = 8f;
-        private bool _paused;
         private float _scanTimer;
-        private Log _log;
+        private BotLog _log;
 
         public void Init(BotOwner botOwner)
         {
-            _log = LootingBots.LootLog;
+            _log = new BotLog(LootingBots.LootLog, botOwner);
             BotOwner = botOwner;
             ItemAdder = new ItemAdder(BotOwner, this);
             IgnoredLootIds = new string[0];
@@ -72,17 +71,12 @@ namespace LootingBots.Patch.Components
 
         public async Task Update()
         {
-            if (BotOwner == null)
-            {
-                _log.LogError("No BotOwner!");
-            }
-
             try
             {
                 WildSpawnType botType = BotOwner.Profile.Info.Settings.Role;
                 bool isLootFinderEnabled =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(botType)
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(botType)
+                        LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(botType)
+                        || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(botType)
                     || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(botType);
 
                 if (ItemAdder.ShouldSort)
@@ -102,14 +96,14 @@ namespace LootingBots.Patch.Components
                         && !HasActiveLootable()
                     )
                     {
-                        _log.LogDebug($"Bot {BotOwner.Id} searching for nearby loot");
+                        _log.LogDebug($"Searching for nearby loot");
                         FindLootable();
                     }
                 }
             }
             catch (Exception e)
             {
-                _log.LogError($"Bot {BotOwner.Id} {e}");
+                _log.LogError(e);
             }
         }
 
@@ -211,30 +205,30 @@ namespace LootingBots.Patch.Components
 
             if (closestContainer != null)
             {
-                _log.LogDebug($"Bot {BotOwner.Id} found container");
+                _log.LogDebug($"Found container");
                 ActiveContainer = closestContainer;
                 LootObjectCenter = closestLootableCenter;
 
-                ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.Id);
+                ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.name);
             }
             else if (closestItem != null)
             {
                 _log.LogDebug(
-                    $"Bot {BotOwner.Id} found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
+                    $"Found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
                 );
 
                 ActiveItem = closestItem;
                 LootObjectCenter = closestLootableCenter;
 
-                ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.Id);
+                ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.name);
             }
             else if (closestCorpse != null)
             {
-                _log.LogError($"Bot {BotOwner.Id} found corpse");
+                _log.LogError($"Found corpse");
                 ActiveCorpse = closestCorpse;
                 LootObjectCenter = closestLootableCenter;
 
-                ActiveLootCache.CacheActiveLootId(closestCorpse.Id.ToString(), BotOwner.Id);
+                ActiveLootCache.CacheActiveLootId(closestCorpse.Id.ToString(), BotOwner.name);
             }
         }
 
@@ -279,7 +273,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                _log.LogError($"{BotOwner.Id} {e}");
+                _log.LogError(e);
             }
         }
 
@@ -290,7 +284,7 @@ namespace LootingBots.Patch.Components
             watch.Start();
 
             Item item = container.ItemOwner.Items.ToArray()[0];
-            _log.LogDebug($"Bot {BotOwner.Id} trying to add items from: {item.Name.Localized()}");
+            _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
             bool didOpen = false;
             // If a container was closed, open it before looting
@@ -324,7 +318,7 @@ namespace LootingBots.Patch.Components
             Item item = ActiveItem.ItemOwner.RootItem;
 
             _log.LogDebug(
-                $"Bot {BotOwner.Id} trying to pick up loose item: {item.Name.Localized()}"
+                $"Trying to pick up loose item: {item.Name.Localized()}"
             );
             BotOwner.GetPlayer.UpdateInteractionCast();
 
@@ -373,23 +367,18 @@ namespace LootingBots.Patch.Components
             IgnoredLootIds.Append(id);
         }
 
-        public bool IsPaused()
-        {
-            return _paused;
-        }
 
         public void Resume()
         {
             ItemAdder.EnableTransactions();
-            _paused = false;
         }
 
         public void Pause()
         {
             ItemAdder.DisableTransactions();
-            _paused = true;
         }
 
+        // Removes all active lootables from LootFinder and cleans them from the cache
         public void Cleanup()
         {
             if (ActiveContainer != null)
@@ -414,8 +403,8 @@ namespace LootingBots.Patch.Components
             ActiveContainer = null;
             IgnoreLoot(container.Id);
             ActiveLootCache.Cleanup(container.Id);
-            LootingBots.LootLog.LogWarning(
-                $"Bot ${BotOwner.Id} removing container: {container.name.Localized()} ({container.Id})"
+            _log.LogWarning(
+                $"Removing container: {container.name.Localized()} ({container.Id})"
             );
         }
 
@@ -425,8 +414,8 @@ namespace LootingBots.Patch.Components
             IgnoreLoot(item.ItemOwner.RootItem.Id);
             ActiveLootCache.Cleanup(item.ItemOwner.RootItem.Id);
             ActiveItem = null;
-            LootingBots.LootLog.LogWarning(
-                $"Bot ${BotOwner.Id} removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
+            _log.LogWarning(
+                $"Removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
             );
         }
 
@@ -438,8 +427,8 @@ namespace LootingBots.Patch.Components
             ActiveLootCache.Cleanup(corpseId);
             ActiveCorpse = null;
 
-            LootingBots.LootLog.LogWarning(
-                $"Bot ${BotOwner.Id} removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
+           _log.LogWarning(
+                $"Removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
             );
         }
     }

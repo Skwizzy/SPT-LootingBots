@@ -7,21 +7,21 @@ namespace LootingBots.Patch.Util
     // dont try and path to the same lootable
     public static class ActiveLootCache
     {
-        public static Dictionary<string, int> ActiveLoot = new Dictionary<string, int>();
+        public static Dictionary<string, string> ActiveLoot = new Dictionary<string, string>();
 
         public static void Reset()
         {
-            ActiveLoot = new Dictionary<string, int>();
+            ActiveLoot = new Dictionary<string, string>();
         }
 
-        public static void CacheActiveLootId(string containerId, int botId)
+        public static void CacheActiveLootId(string containerId, string botId)
         {
             ActiveLoot.Add(containerId, botId);
         }
 
         public static bool IsLootInUse(string containerId)
         {
-            return ActiveLoot.TryGetValue(containerId, out int _);
+            return ActiveLoot.TryGetValue(containerId, out string _);
         }
 
         public static void Cleanup(string lootId)

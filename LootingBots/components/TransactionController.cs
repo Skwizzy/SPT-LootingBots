@@ -13,7 +13,7 @@ namespace LootingBots.Patch.Components
 {
     public class TransactionController
     {
-        readonly Log _log;
+        readonly BotLog _log;
         readonly InventoryControllerClass _inventoryController;
         readonly BotOwner _botOwner;
         public bool Enabled;
@@ -21,7 +21,7 @@ namespace LootingBots.Patch.Components
         public TransactionController(
             BotOwner botOwner,
             InventoryControllerClass inventoryController,
-            Log log
+            BotLog log
         )
         {
             _botOwner = botOwner;
@@ -177,14 +177,13 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
 
                 // Check to see if we can equip the item
                 var ableToEquip = _inventoryController.FindSlotToPickUp(item);
                 if (ableToEquip != null)
                 {
                     _log.LogWarning(
-                        $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
+                        $"Equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
                     );
                     bool success = await MoveItem(new MoveAction(item, ableToEquip));
                     return success;
@@ -205,7 +204,6 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
                 var ableToPickUp = _inventoryController.FindGridToPickUp(item);
 
                 if (
@@ -217,7 +215,7 @@ namespace LootingBots.Patch.Components
                 )
                 {
                     _log.LogWarning(
-                        $"{botName} is picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
+                        $"Picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
                     );
                     return await MoveItem(new MoveAction(item, ableToPickUp));
                 }

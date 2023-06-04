@@ -18,7 +18,7 @@ namespace LootingBots.Brain.Logics
     internal class LootingLogic : CustomLogic
     {
         private readonly LootFinder _lootFinder;
-        private readonly Log _log;
+        private readonly BotLog _log;
         private float _closeEnoughTimer = 0f;
         private bool _isLooting = false;
         private float _moveTimer = 0f;
@@ -30,7 +30,7 @@ namespace LootingBots.Brain.Logics
         public LootingLogic(BotOwner botOwner)
             : base(botOwner)
         {
-            _log = LootingBots.LootLog;
+            _log = new BotLog(LootingBots.LootLog, botOwner);
             _lootFinder = botOwner.GetPlayer.gameObject.GetComponent<LootFinder>();
         }
 
@@ -105,7 +105,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                _log.LogError($"Bot {BotOwner.Id}: {e}");
+                _log.LogError(e);
             }
         }
 
@@ -221,14 +221,14 @@ namespace LootingBots.Brain.Logics
                         if (_navigationAttempts % 5 == 1)
                         {
                             _log.LogDebug(
-                                $"(Attempt: {_navigationAttempts}) Bot {BotOwner.Id} moving to {lootableName} status: {pathStatus}"
+                                $"[Attempt: {_navigationAttempts}] Moving to {lootableName} status: {pathStatus}"
                             );
                         }
 
                         if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
                             _log.LogWarning(
-                                $"Bot {BotOwner.Id} has no valid path to: {lootableName}. Ignoring"
+                                $"No valid path to: {lootableName}. Ignoring"
                             );
                             canMove = false;
                         }
@@ -236,7 +236,7 @@ namespace LootingBots.Brain.Logics
                     else
                     {
                         _log.LogWarning(
-                            $"Bot {BotOwner.Id} unable to snap loot position to NavMesh. Ignoring {lootableName}"
+                            $"Unable to snap loot position to NavMesh. Ignoring {lootableName}"
                         );
                         canMove = false;
                     }
@@ -246,13 +246,13 @@ namespace LootingBots.Brain.Logics
                     if (isBotStuck)
                     {
                         _log.LogError(
-                            $"Bot {BotOwner.Id} Has been stuck trying to reach: {lootableName}. Ignoring"
+                            $"Has been stuck trying to reach: {lootableName}. Ignoring"
                         );
                     }
                     else
                     {
                         _log.LogError(
-                            $"Bot {BotOwner.Id} Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
+                            $"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
                         );
                     }
                     canMove = false;
@@ -260,7 +260,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                _log.LogError($"Bot {BotOwner.Id}: {e}");
+                _log.LogError(e);
                 _log.LogError(e.Message);
                 _log.LogError(e.StackTrace);
             }
@@ -299,7 +299,7 @@ namespace LootingBots.Brain.Logics
             if (isStuck)
             {
                 _log.LogDebug(
-                    $"(Stuck: {_stuckCount}) Bot {BotOwner.Id} has not moved {changeInDist}. Dist from loot: {dist}"
+                    $"[Stuck: {_stuckCount}] Disance moved since check: {changeInDist}. Dist from loot: {dist}"
                 );
 
                 // Bot is stuck, update stuck count
