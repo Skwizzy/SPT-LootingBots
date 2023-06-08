@@ -39,6 +39,7 @@ namespace LootingBots.Patch.Components
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
         private readonly LootFinder _lootFinder;
+        private readonly bool _isBoss;
 
         private static readonly GearValue GearValue = new GearValue();
 
@@ -52,6 +53,7 @@ namespace LootingBots.Patch.Components
             {
                 _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootFinder = lootFinder;
+                _isBoss = LootUtils.IsBoss(_botOwner);
 
                 // Initialize bot inventory controller
                 Type botOwnerType = botOwner.GetPlayer.GetType();
@@ -330,7 +332,7 @@ namespace LootingBots.Patch.Components
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             TransactionController.SwapAction swapAction = null;
 
-            if (lootItem.Template is WeaponTemplate)
+            if (lootItem.Template is WeaponTemplate && !_isBoss)
             {
                 return GetWeaponEquipAction(lootItem as Weapon);
             }
@@ -434,16 +436,12 @@ namespace LootingBots.Patch.Components
                 bool isSharedMag = fitsInThrown && fitsInEquipped;
                 if (reservedCount < 2 && fitsInThrown && fitsInEquipped)
                 {
-                    _log.LogDebug(
-                        $"Reserving shared mag {mag.Name.Localized()}"
-                    );
+                    _log.LogDebug($"Reserving shared mag {mag.Name.Localized()}");
                     reservedCount++;
                 }
                 else if ((reservedCount >= 2 && fitsInEquipped) || !fitsInEquipped)
                 {
-                    _log.LogDebug(
-                        $"Removing useless mag {mag.Name.Localized()}"
-                    );
+                    _log.LogDebug($"Removing useless mag {mag.Name.Localized()}");
                     await _transactionController.ThrowAndEquip(
                         new TransactionController.SwapAction(mag)
                     );
@@ -596,6 +594,12 @@ namespace LootingBots.Patch.Components
         */
         public bool ShouldSwapGear(Item equipped, Item itemToLoot)
         {
+            // Bosses cannot swap gear as many bosses have custom logic tailored to their loadouts
+            if (_isBoss)
+            {
+                return false;
+            }
+
             bool foundBiggerContainer = false;
             // If the item is a container, calculate the size and see if its bigger than what is equipped
             if (equipped.IsContainer)
@@ -724,9 +728,7 @@ namespace LootingBots.Patch.Components
 
             if (hasBackpack || hasTacVest)
             {
-                _log.LogWarning(
-                    $"Has backpack/rig and is looting weapons first!"
-                );
+                _log.LogWarning($"Has backpack/rig and is looting weapons first!");
                 prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
             }
             else
@@ -747,8 +749,6 @@ namespace LootingBots.Patch.Components
                 )
                 .ToArray();
         }
-
-        
 
         /** Generates a SwapAction to send to the transaction controller*/
         public TransactionController.SwapAction GetSwapAction(

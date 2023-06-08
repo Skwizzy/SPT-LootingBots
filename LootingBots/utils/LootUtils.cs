@@ -9,6 +9,11 @@ namespace LootingBots.Patch.Util
 {
     public static class LootUtils
     {
+        public static bool IsBoss(BotOwner botOwner)
+        {
+            return botOwner.Boss != null;
+        }
+
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
         {
