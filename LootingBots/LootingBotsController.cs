@@ -194,9 +194,6 @@ namespace LootingBots
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
-            // Include "Gifter"?
-
-            // TODO: Incorporate mod settings 
             BrainManager.RemoveLayer(
                 "Utility peace",
                 new List<string>()
@@ -218,7 +215,23 @@ namespace LootingBots
                     "BossSanitar",
                     "CursAssault",
                     "PMC",
-                    "SectantWarrior"
+                    "SectantWarrior",
+                    "BossKojaniy",
+                    "SectantPriest",
+                    "FollowerGluharScout",
+                    "FollowerGluharProtect",
+                    "FollowerGluharAssault",
+                    "BossGluhar",
+                    "Fl_Zraychiy",
+                    "TagillaFollower",
+                    "FollowerSanitar",
+                    "FollowerBully",
+                    "BirdEye",
+                    "BigPipe",
+                    "BossZryachiy",
+                    "Tagilla",
+                    "BossSanitar",
+                    "BossBully"
                 },
                 2
             );
