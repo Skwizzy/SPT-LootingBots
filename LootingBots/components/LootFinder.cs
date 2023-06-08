@@ -156,7 +156,7 @@ namespace LootingBots.Patch.Components
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && corpse != null
-                    && !IsLootIgnored(corpse.Id.ToString());
+                    && !IsLootIgnored(corpse.name);
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
@@ -227,7 +227,7 @@ namespace LootingBots.Patch.Components
                 ActiveCorpse = closestCorpse;
                 LootObjectCenter = closestLootableCenter;
 
-                ActiveLootCache.CacheActiveLootId(closestCorpse.Id.ToString(), BotOwner.name);
+                ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }
         }
 
@@ -341,7 +341,7 @@ namespace LootingBots.Patch.Components
             string lootId =
                 ActiveContainer?.Id
                 ?? ActiveItem?.ItemOwner.RootItem.Id
-                ?? ActiveCorpse.Id.ToString();
+                ?? ActiveCorpse.name;
             NonNavigableContainerIds.Append(lootId);
             Cleanup();
             IncrementLootTimer(30f);
@@ -416,13 +416,13 @@ namespace LootingBots.Patch.Components
         public void CleanupCorpse()
         {
             BotOwner corpse = ActiveCorpse;
-            string corpseId = corpse.Id.ToString();
-            IgnoreLoot(corpseId);
-            ActiveLootCache.Cleanup(corpseId);
+            string name = corpse.name;
+            IgnoreLoot(name);
+            ActiveLootCache.Cleanup(name);
             ActiveCorpse = null;
 
             _log.LogWarning(
-                $"Removing corpse: Bot {corpseId} ({corpse.GetPlayer.name.Localized()})"
+                $"Removing corpse: Bot {name} ({corpse.GetPlayer.name.Localized()})"
             );
         }
     }
