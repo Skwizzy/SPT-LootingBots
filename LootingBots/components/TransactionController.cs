@@ -13,14 +13,15 @@ namespace LootingBots.Patch.Components
 {
     public class TransactionController
     {
-        readonly Log _log;
+        readonly BotLog _log;
         readonly InventoryControllerClass _inventoryController;
         readonly BotOwner _botOwner;
+        public bool Enabled;
 
         public TransactionController(
             BotOwner botOwner,
             InventoryControllerClass inventoryController,
-            Log log
+            BotLog log
         )
         {
             _botOwner = botOwner;
@@ -176,14 +177,13 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
 
                 // Check to see if we can equip the item
                 var ableToEquip = _inventoryController.FindSlotToPickUp(item);
                 if (ableToEquip != null)
                 {
                     _log.LogWarning(
-                        $"{botName} is equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
+                        $"Equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
                     );
                     bool success = await MoveItem(new MoveAction(item, ableToEquip));
                     return success;
@@ -204,7 +204,6 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                string botName = $"({_botOwner.Profile.Info.Settings.Role}) Bot {_botOwner.Id}";
                 var ableToPickUp = _inventoryController.FindGridToPickUp(item);
 
                 if (
@@ -216,7 +215,7 @@ namespace LootingBots.Patch.Components
                 )
                 {
                     _log.LogWarning(
-                        $"{botName} is picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
+                        $"Picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
                     );
                     return await MoveItem(new MoveAction(item, ableToPickUp));
                 }
@@ -235,7 +234,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                if (IsLootingInterrupted(_botOwner))
+                if (IsLootingInterrupted())
                 {
                     return false;
                 }
@@ -304,7 +303,7 @@ namespace LootingBots.Patch.Components
         /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
         public async Task<bool> ThrowAndEquip(SwapAction swapAction)
         {
-            if (IsLootingInterrupted(_botOwner))
+            if (IsLootingInterrupted())
             {
                 return false;
             }
@@ -313,8 +312,6 @@ namespace LootingBots.Patch.Components
             {
                 TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
                 Item toThrow = swapAction.ToThrow;
-
-                // Potentially use GClass2426.Swap instead?
 
                 _log.LogWarning($"Throwing item: {toThrow.Name.Localized()}");
                 _inventoryController.ThrowItem(
@@ -367,31 +364,16 @@ namespace LootingBots.Patch.Components
             return _inventoryController.TryRunNetworkTransaction(operationResult, callback);
         }
 
+        public bool IsLootingInterrupted()
+        {
+           return !Enabled;
+        }
+
         public static Task SimulatePlayerDelay(int delay = 500)
         {
             return Task.Delay(delay);
         }
 
-        /*
-            Check the bot Brain to see if the last decision it made was related to looting, otherwise this is an indicator the the bot is not supposed to be looting as was interrupted
-            due to combat, death, ect
-        */
-        public static bool IsLootingInterrupted(BotOwner botOwner)
-        {
-            if (
-                botOwner == null
-                || botOwner.Brain == null
-                || (
-                    botOwner.Brain.LastDecision != BotLogicDecision.deadBody
-                    && botOwner.Brain.LastDecision != BotLogicDecision.botTakeItem
-                )
-            )
-            {
-                LootingBots.LootLog.LogWarning($"Bot {botOwner?.Id} was interrupted looting!");
-                return true;
-            }
 
-            return false;
-        }
     }
 }
