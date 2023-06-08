@@ -4,6 +4,40 @@ using EFT;
 
 namespace LootingBots.Patch.Util
 {
+    [Flags]
+    public enum LogLevel
+    {
+        /// <summary>
+        ///     No level selected.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        ///     An error has occured, but can be recovered from.
+        /// </summary>
+        Error = 2,
+
+        /// <summary>
+        ///     A warning has been produced, but does not necessarily mean that something wrong has happened.
+        /// </summary>
+        Warning = 4,
+
+        /// <summary>
+        ///     A message of low importance.
+        /// </summary>
+        Info = 16,
+
+        /// <summary>
+        ///     A message that would likely only interest a developer.
+        /// </summary>
+        Debug = 32,
+
+        /// <summary>
+        ///     All log levels.
+        /// </summary>
+        All = Error | Warning | Debug
+    }
+
     public class BotLog
     {
         private readonly Log _log;
@@ -46,11 +80,11 @@ namespace LootingBots.Patch.Util
     public class Log
     {
         public BepInEx.Logging.ManualLogSource Logger;
-        public BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> LogLevels;
+        public BepInEx.Configuration.ConfigEntry<LogLevel> LogLevels;
 
         public Log(
             BepInEx.Logging.ManualLogSource logger,
-            BepInEx.Configuration.ConfigEntry<LogUtils.LogLevel> logLevels
+            BepInEx.Configuration.ConfigEntry<LogLevel> logLevels
         )
         {
             Logger = logger;
@@ -97,40 +131,6 @@ namespace LootingBots.Patch.Util
 
     public static class LogUtils
     {
-        [Flags]
-        public enum LogLevel
-        {
-            /// <summary>
-            ///     No level selected.
-            /// </summary>
-            None = 0,
-
-            /// <summary>
-            ///     An error has occured, but can be recovered from.
-            /// </summary>
-            Error = 2,
-
-            /// <summary>
-            ///     A warning has been produced, but does not necessarily mean that something wrong has happened.
-            /// </summary>
-            Warning = 4,
-
-            /// <summary>
-            ///     A message of low importance.
-            /// </summary>
-            Info = 16,
-
-            /// <summary>
-            ///     A message that would likely only interest a developer.
-            /// </summary>
-            Debug = 32,
-
-            /// <summary>
-            ///     All log levels.
-            /// </summary>
-            All = Error | Warning | Debug
-        }
-
         public static bool HasError(this LogLevel logLevel)
         {
             return logLevel.HasFlag(LogLevel.Error);
