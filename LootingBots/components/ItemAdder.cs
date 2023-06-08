@@ -53,7 +53,7 @@ namespace LootingBots.Patch.Components
             {
                 _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootFinder = lootFinder;
-                _isBoss = LootUtils.IsBoss(_botOwner);
+                _isBoss = LootUtils.IsBoss(botOwner);
 
                 // Initialize bot inventory controller
                 Type botOwnerType = botOwner.GetPlayer.GetType();
