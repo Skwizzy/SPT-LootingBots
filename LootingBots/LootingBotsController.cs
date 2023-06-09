@@ -14,14 +14,12 @@ using System.Collections.Generic;
 
 namespace LootingBots
 {
-    [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
+    [BepInPlugin("me.skwizzy.lootingbots", "LootingBots", "1.1.0")]
     [BepInDependency("xyz.drakia.bigbrain", "0.1.2")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
-        private const string MOD_GUID = "me.skwizzy.lootingbots";
-        private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.1.0";
+        public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
