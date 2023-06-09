@@ -21,8 +21,6 @@ namespace LootingBots
     {
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
-        public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
-
         // Loot Finder
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ConfigEntry<BotType> ContainerLootingEnabled;

@@ -75,14 +75,16 @@
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.5.7\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
     <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.5.7\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
+    <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.5.7\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
   </ItemGroup>
   
   <ItemGroup>
     <Compile Include="LootingBotsController.cs" />
+    <Compile Include="LootingLayer.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
     <Compile Include="components\*.cs" />
-    <Compile Include="patches\*.cs" />
+    <Compile Include="logics\*.cs" />
   </ItemGroup>
 
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
