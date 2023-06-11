@@ -7,11 +7,15 @@ using EFT;
 using LootingBots.Brain.Logics;
 using LootingBots.Patch.Components;
 
+using UnityEngine;
+
 namespace LootingBots.Brain
 {
     internal class LootingLayer : CustomLayer
     {
         private readonly LootFinder _lootFinder;
+        private float _scanTimer;
+
 
         public LootingLayer(BotOwner botOwner, int priority)
             : base(botOwner, priority)
@@ -28,24 +32,33 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            return _lootFinder.HasActiveLootable();
+            return (_scanTimer < Time.time && _lootFinder.WaitAfterLootTimer < Time.time) || _lootFinder.HasActiveLootable();
         }
 
         public override void Start()
         {
-            _lootFinder.Resume();
+            _lootFinder.EnableTransactions();
             base.Start();
         }
 
         public override void Stop()
         {
-            _lootFinder.Pause();
+            _lootFinder.DisableTransactions();
             base.Stop();
         }
 
         public override Action GetNextAction()
         {
-            return new Action(typeof(LootingLogic), "Looting");
+            if (!_lootFinder.HasActiveLootable()) {
+                _scanTimer = Time.time + 6f;
+                return new Action(typeof(FindLootLogic), "Loot Scan");
+            }
+
+            if (_lootFinder.HasActiveLootable()) {
+                return new Action(typeof(LootingLogic), "Looting");
+            }
+
+            return new Action(typeof(PeacefulLogic), "Peaceful");
         }
 
         public override bool IsCurrentActionEnding()

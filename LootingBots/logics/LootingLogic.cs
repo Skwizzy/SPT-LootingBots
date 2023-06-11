@@ -59,15 +59,9 @@ namespace LootingBots.Brain.Logics
 
         public override void Stop()
         {
-            StopLooting();
-            base.Stop();
-        }
-
-        private void StopLooting()
-        {
-            _log.LogDebug("LootingLayer stopped");
-            _isLooting = false;
+            // If the layer ends early due to interruptions, do not ignore the active lootable
             _lootFinder.Cleanup(false);
+            base.Stop();
         }
 
         private void TryLoot()
@@ -81,7 +75,7 @@ namespace LootingBots.Brain.Logics
                     bool isCloseEnough = IsCloseEnough();
 
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_isLooting && isCloseEnough)
+                    if (!_lootFinder.IsLooting && isCloseEnough)
                     {
                         ExecuteLooting();
                         return;
@@ -89,7 +83,7 @@ namespace LootingBots.Brain.Logics
                 }
 
                 // Try to move the bot to the destination
-                if (_moveTimer < Time.time && !_isLooting)
+                if (_moveTimer < Time.time && !_lootFinder.IsLooting)
                 {
                     _moveTimer = Time.time + 4f;
 
@@ -124,14 +118,7 @@ namespace LootingBots.Brain.Logics
             BotOwner.SetPose(0f);
             BotOwner.Steering.LookToPoint(lootPosition);
 
-            _isLooting = true;
             _lootFinder.StartLooting();
-
-            // Once task has completed, reset the looting state and the lootFinder
-            if (!_lootFinder.IsLooting)
-            {
-                StopLooting();
-            }
         }
 
         /*
@@ -270,8 +257,6 @@ namespace LootingBots.Brain.Logics
             catch (Exception e)
             {
                 _log.LogError(e);
-                _log.LogError(e.Message);
-                _log.LogError(e.StackTrace);
             }
 
             return canMove;
