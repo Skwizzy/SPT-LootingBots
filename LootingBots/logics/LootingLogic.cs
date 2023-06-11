@@ -65,11 +65,12 @@ namespace LootingBots.Brain.Logics
 
         private void StopLooting()
         {
+            _log.LogDebug("LootingLayer stopped");
             _isLooting = false;
-            _lootFinder.Cleanup();
+            _lootFinder.Cleanup(false);
         }
 
-        private async void TryLoot()
+        private void TryLoot()
         {
             try
             {
@@ -82,7 +83,7 @@ namespace LootingBots.Brain.Logics
                     // If the bot has not just looted something, loot the current item since we are now close enough
                     if (!_isLooting && isCloseEnough)
                     {
-                        await ExecuteLooting();
+                        ExecuteLooting();
                         return;
                     }
                 }
@@ -109,14 +110,12 @@ namespace LootingBots.Brain.Logics
             }
         }
 
-        private async Task ExecuteLooting()
+        private void ExecuteLooting()
         {
             LootItem item = _lootFinder.ActiveItem;
             LootableContainer container = _lootFinder.ActiveContainer;
             BotOwner corpse = _lootFinder.ActiveCorpse;
 
-            bool isLootingContainer = container != null;
-            bool isLootingCorpse = corpse != null;
             Vector3 lootPosition =
                 container?.transform?.position
                 ?? corpse?.GetPlayer?.Transform?.position
@@ -126,21 +125,35 @@ namespace LootingBots.Brain.Logics
             BotOwner.Steering.LookToPoint(lootPosition);
 
             _isLooting = true;
-            if (isLootingContainer)
-            {
-                await _lootFinder.LootContainer(container);
-            }
-            else if (isLootingCorpse)
-            {
-                await _lootFinder.LootCorpse();
-            }
-            else
-            {
-                await _lootFinder.LootItem();
-            }
+            _lootFinder.StartLooting();
 
             // Once task has completed, reset the looting state and the lootFinder
-            StopLooting();
+            if (!_lootFinder.IsLooting)
+            {
+                StopLooting();
+            }
+        }
+
+        /*
+            Check to see if the destination point and the loot object do not have a wall between them by casting a Ray between the two points.
+            Walls should be on the LowPolyCollider LayerMask, so we can assume if we see one of these then we cannot properly loot
+        */
+        public bool HasLOS(Vector3 destination)
+        {
+            Vector3 rayDirection = _lootFinder.LootObjectPosition - destination;
+
+            if (Physics.Raycast(destination, rayDirection, out RaycastHit hit))
+            {
+                if (hit.collider.gameObject.layer == LootUtils.LowPolyMask)
+                {
+                    _log.LogError(
+                        $"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}"
+                    );
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public bool TryMoveToLoot()
@@ -206,7 +219,7 @@ namespace LootingBots.Brain.Logics
                     }
 
                     // If we were able to snap the loot position to a NavMesh, attempt to navigate
-                    if (pointNearbyContainer != Vector3.zero)
+                    if (pointNearbyContainer != Vector3.zero && HasLOS(_destination))
                     {
                         NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                             pointNearbyContainer,
@@ -227,9 +240,7 @@ namespace LootingBots.Brain.Logics
 
                         if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
-                            _log.LogWarning(
-                                $"No valid path to: {lootableName}. Ignoring"
-                            );
+                            _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
                             canMove = false;
                         }
                     }
@@ -245,9 +256,7 @@ namespace LootingBots.Brain.Logics
                 {
                     if (isBotStuck)
                     {
-                        _log.LogError(
-                            $"Has been stuck trying to reach: {lootableName}. Ignoring"
-                        );
+                        _log.LogError($"Has been stuck trying to reach: {lootableName}. Ignoring");
                     }
                     else
                     {

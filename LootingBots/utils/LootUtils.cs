@@ -5,10 +5,15 @@ using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 
+using UnityEngine;
+
 namespace LootingBots.Patch.Util
 {
     public static class LootUtils
     {
+        public static LayerMask LowPolyMask = LayerMask.GetMask(new string[] { "LowPolyCollider" });
+        public static LayerMask LootMask = LayerMask.GetMask(new string[] { "Interactive", "Loot", "Deadbody" });
+
         public static bool IsBoss(BotOwner botOwner)
         {
             return botOwner.Boss != null;

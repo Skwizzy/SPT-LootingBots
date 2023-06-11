@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -45,11 +46,17 @@ namespace LootingBots.Patch.Components
         // Center of the container's collider used to help in navigation
         public Vector3 LootObjectCenter;
 
+        // Collider.transform.position for the active lootable. Used in LOS checks to make sure bots dont loot through walls
+        public Vector3 LootObjectPosition;
+
         // Container ids that the bot has looted
         public string[] IgnoredLootIds;
 
         // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public string[] NonNavigableContainerIds;
+
+        // Booling showing when the looting task is running
+        public bool IsLooting = false;
 
         // Amount of time in seconds to wait after looting a container before finding the next container
         private float _waitAfterLootTimer;
@@ -113,14 +120,13 @@ namespace LootingBots.Patch.Components
             LootableContainer closestContainer = null;
             LootItem closestItem = null;
             BotOwner closestCorpse = null;
-            Vector3 closestLootableCenter = new Vector3();
             float shortestDist = -1f;
 
             // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
             Collider[] array = Physics.OverlapSphere(
                 BotOwner.Position,
                 LootingBots.DetectLootDistance.Value,
-                LayerMask.GetMask(new string[] { "Interactive", "Loot", "Deadbody" }),
+                LootUtils.LootMask,
                 QueryTriggerInteraction.Collide
             );
 
@@ -194,9 +200,9 @@ namespace LootingBots.Patch.Components
                             closestItem = lootItem;
                         }
 
-                        closestLootableCenter = collider.bounds.center;
+                        LootObjectCenter = collider.bounds.center;
                         // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                        closestLootableCenter.y =
+                        LootObjectCenter.y =
                             collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
                     }
                 }
@@ -204,9 +210,9 @@ namespace LootingBots.Patch.Components
 
             if (closestContainer != null)
             {
-                _log.LogDebug($"Found container");
+                _log.LogDebug($"Found container {closestContainer.name.Localized()}");
                 ActiveContainer = closestContainer;
-                LootObjectCenter = closestLootableCenter;
+                LootObjectPosition = closestContainer.transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.name);
             }
@@ -217,115 +223,144 @@ namespace LootingBots.Patch.Components
                 );
 
                 ActiveItem = closestItem;
-                LootObjectCenter = closestLootableCenter;
+                LootObjectPosition = closestItem.transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.name);
             }
             else if (closestCorpse != null)
             {
-                _log.LogError($"Found corpse");
+                _log.LogDebug($"Found corpse: {closestCorpse.name}");
                 ActiveCorpse = closestCorpse;
-                LootObjectCenter = closestLootableCenter;
+                LootObjectPosition = closestCorpse.Transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }
         }
 
-        // Logic to handle the looting of corpses
-        public async Task LootCorpse()
+        public void StartLooting()
         {
-            try
+            if (ActiveContainer)
             {
-                var watch = new System.Diagnostics.Stopwatch();
-                watch.Start();
-                // Initialize corpse inventory controller
-                Player corpsePlayer = ActiveCorpse.GetPlayer;
-                Type corpseType = corpsePlayer.GetType();
-                FieldInfo corpseInventory = corpseType.BaseType.GetField(
-                    "_inventoryController",
-                    BindingFlags.NonPublic
-                        | BindingFlags.Static
-                        | BindingFlags.Public
-                        | BindingFlags.Instance
-                );
-                InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                    corpseInventory.GetValue(corpsePlayer);
-
-                EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
-                _log.LogWarning($"Trying to loot corpse");
-
-                Item[] priorityItems = corpseInventoryController.Inventory.Equipment
-                    .GetSlotsByName(prioritySlots)
-                    .Select(slot => slot.ContainedItem)
-                    .Where(item => item != null && !item.IsUnremovable)
-                    .ToArray();
-
-                if (await ItemAdder.TryAddItemsToBot(priorityItems))
-                {
-                    IncrementLootTimer();
-                }
-
-                ItemAdder.UpdateActiveWeapon();
-
-                watch.Stop();
-                _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+                StartCoroutine(LootContainer());
             }
-            catch (Exception e)
+            else if (ActiveItem)
             {
-                _log.LogError(e);
+                StartCoroutine(LootItem());
+            }
+            else if (ActiveCorpse)
+            {
+                StartCoroutine(LootCorpse());
             }
         }
 
+        // Logic to handle the looting of corpses
+        public IEnumerator LootCorpse()
+        {
+            IsLooting = true;
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
+            // Initialize corpse inventory controller
+            Player corpsePlayer = ActiveCorpse.GetPlayer;
+            Type corpseType = corpsePlayer.GetType();
+            FieldInfo corpseInventory = corpseType.BaseType.GetField(
+                "_inventoryController",
+                BindingFlags.NonPublic
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.Instance
+            );
+            InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
+                corpseInventory.GetValue(corpsePlayer);
+
+            EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
+            _log.LogWarning($"Trying to loot corpse");
+
+            Item[] priorityItems = corpseInventoryController.Inventory.Equipment
+                .GetSlotsByName(prioritySlots)
+                .Select(slot => slot.ContainedItem)
+                .Where(item => item != null && !item.IsUnremovable)
+                .ToArray();
+
+            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(priorityItems);
+            yield return new WaitUntil(() => lootTask.IsCompleted);
+
+            ItemAdder.UpdateActiveWeapon();
+            IsLooting = false;
+
+            if (lootTask.Result)
+            {
+                IncrementLootTimer();
+                CleanupCorpse();
+            }
+            watch.Stop();
+            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+        }
+
         // Logic to handle the looting of containers
-        public async Task LootContainer(LootableContainer container)
+        public IEnumerator LootContainer()
         {
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
+            IsLooting = true;
 
-            Item item = container.ItemOwner.Items.ToArray()[0];
+            Item item = ActiveContainer.ItemOwner.Items.ToArray()[0];
             _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
             bool didOpen = false;
             // If a container was closed, open it before looting
-            if (container.DoorState == EDoorState.Shut)
+            if (ActiveContainer.DoorState == EDoorState.Shut)
             {
-                LootUtils.InteractContainer(container, EInteractionType.Open);
+                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
                 didOpen = true;
             }
 
-            await TransactionController.SimulatePlayerDelay(2000);
+            Task delayTask = TransactionController.SimulatePlayerDelay(2000);
+            yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            if (await ItemAdder.LootNestedItems(item))
-            {
-                IncrementLootTimer();
-            }
+            Task<bool> lootTask = ItemAdder.LootNestedItems(item);
+            yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container after looting if a container was open, and the bot didnt open it
-            if (container.DoorState == EDoorState.Open && !didOpen)
+            if (ActiveContainer.DoorState == EDoorState.Open && !didOpen)
             {
-                LootUtils.InteractContainer(container, EInteractionType.Close);
+                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
             }
 
             ItemAdder.UpdateActiveWeapon();
+            IsLooting = false;
+
+            if (lootTask.Result)
+            {
+                IncrementLootTimer();
+                CleanupContainer();
+            }
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
-        public async Task LootItem()
+        public IEnumerator LootItem()
         {
+            IsLooting = true;
+
             Item item = ActiveItem.ItemOwner.RootItem;
 
             _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
             BotOwner.GetPlayer.UpdateInteractionCast();
+            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(new Item[] { item });
 
-            if (await ItemAdder.TryAddItemsToBot(new Item[] { item }))
-            {
-                IncrementLootTimer();
-            }
+            yield return new WaitUntil(() => lootTask.IsCompleted);
 
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
             ItemAdder.UpdateActiveWeapon();
+
+            if (lootTask.Result)
+            {
+                IncrementLootTimer();
+                CleanupItem(true, item);
+            }
+
+            IsLooting = false;
         }
 
         public bool IsLootIgnored(string lootId)
@@ -339,9 +374,7 @@ namespace LootingBots.Patch.Components
         public void HandleNonNavigableLoot()
         {
             string lootId =
-                ActiveContainer?.Id
-                ?? ActiveItem?.ItemOwner.RootItem.Id
-                ?? ActiveCorpse.name;
+                ActiveContainer?.Id ?? ActiveItem?.ItemOwner.RootItem.Id ?? ActiveCorpse.name;
             NonNavigableContainerIds.Append(lootId);
             Cleanup();
             IncrementLootTimer(30f);
@@ -375,55 +408,70 @@ namespace LootingBots.Patch.Components
         }
 
         // Removes all active lootables from LootFinder and cleans them from the cache
-        public void Cleanup()
+        public void Cleanup(bool ignore = true)
         {
             if (ActiveContainer != null)
             {
-                CleanupContainer();
+                CleanupContainer(ignore);
             }
 
             if (ActiveItem != null)
             {
-                CleanupItem();
+                CleanupItem(ignore);
             }
 
             if (ActiveCorpse != null)
             {
-                CleanupCorpse();
+                CleanupCorpse(ignore);
             }
         }
 
-        public void CleanupContainer()
+        public void CleanupContainer(bool ignore = true)
         {
             LootableContainer container = ActiveContainer;
-            ActiveContainer = null;
-            IgnoreLoot(container.Id);
-            ActiveLootCache.Cleanup(container.Id);
-            _log.LogWarning($"Removing container: {container.name.Localized()} ({container.Id})");
-        }
-
-        public void CleanupItem()
-        {
-            LootItem item = ActiveItem;
-            IgnoreLoot(item.ItemOwner.RootItem.Id);
-            ActiveLootCache.Cleanup(item.ItemOwner.RootItem.Id);
-            ActiveItem = null;
             _log.LogWarning(
-                $"Removing item: {item.Name.Localized()} ({item.ItemOwner.RootItem.Id})"
+                $"Clearing active container: {container.name.Localized()} ({container.Id})"
             );
+            ActiveLootCache.Cleanup(container.Id);
+
+            if (ignore)
+            {
+                IgnoreLoot(container.Id);
+            }
+
+            ActiveContainer = null;
         }
 
-        public void CleanupCorpse()
+        public void CleanupItem(bool ignore = true, Item movedItem = null)
+        {
+            Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
+
+            _log.LogWarning($"Clearing active item: {item?.Name?.Localized()} ({item?.Id})");
+            ActiveLootCache.Cleanup(item.Id);
+
+            if (ignore)
+            {
+                IgnoreLoot(item.Id);
+            }
+
+            ActiveItem = null;
+        }
+
+        public void CleanupCorpse(bool ignore = true)
         {
             BotOwner corpse = ActiveCorpse;
             string name = corpse.name;
-            IgnoreLoot(name);
-            ActiveLootCache.Cleanup(name);
-            ActiveCorpse = null;
-
             _log.LogWarning(
-                $"Removing corpse: Bot {name} ({corpse.GetPlayer.name.Localized()})"
+                $"Clearing active corpse: {name} ({corpse.GetPlayer.name.Localized()})"
             );
+            ActiveLootCache.Cleanup(name);
+
+            if (ignore)
+            {
+                IgnoreLoot(name);
+            }
+
+            ActiveCorpse = null;
         }
     }
 }
