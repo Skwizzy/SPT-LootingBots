@@ -7,6 +7,7 @@ using EFT;
 
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
+using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
@@ -157,6 +158,8 @@ namespace LootingBots
 
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
+            
+            new SettingsAndCachePatch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
