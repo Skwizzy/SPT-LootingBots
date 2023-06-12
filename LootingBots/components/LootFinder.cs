@@ -155,8 +155,11 @@ namespace LootingBots.Patch.Components
             if (lootTask.Result)
             {
                 IncrementLootTimer();
-                CleanupCorpse();
             }
+
+            // Only ignore the corpse if looting was not interrupted
+            CleanupCorpse(lootTask.Result);
+
             watch.Stop();
             _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
@@ -197,8 +200,10 @@ namespace LootingBots.Patch.Components
             if (lootTask.Result)
             {
                 IncrementLootTimer();
-                CleanupContainer();
             }
+
+            // Only ignore the container if looting was not interrupted
+            CleanupContainer(lootTask.Result);
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -222,9 +227,10 @@ namespace LootingBots.Patch.Components
             if (lootTask.Result)
             {
                 IncrementLootTimer();
-                // Need to manually cleanup item because the ItemOwner on the original object changes
-                CleanupItem(true, item);
             }
+
+            // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
+            CleanupItem(lootTask.Result, item);
 
             IsLooting = false;
         }

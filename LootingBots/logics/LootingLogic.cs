@@ -54,13 +54,6 @@ namespace LootingBots.Brain.Logics
             base.Start();
         }
 
-        public override void Stop()
-        {
-            // If the layer ends early due to interruptions, do not ignore the active lootable
-            _lootFinder.Cleanup(false);
-            base.Stop();
-        }
-
         private void TryLoot()
         {
             try
