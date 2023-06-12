@@ -83,6 +83,7 @@
     <Compile Include="LootingLayer.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
+    <Compile Include="patches\*.cs" />
     <Compile Include="components\*.cs" />
     <Compile Include="logics\*.cs" />
   </ItemGroup>

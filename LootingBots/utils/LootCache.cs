@@ -32,7 +32,7 @@ namespace LootingBots.Patch.Util
             }
             catch (Exception e)
             {
-                LootingBots.LootLog.LogError(e.StackTrace);
+                LootingBots.LootLog.LogError(e);
             }
         }
     }

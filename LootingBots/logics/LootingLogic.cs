@@ -1,11 +1,9 @@
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
-using EFT.Interactive;
 
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
@@ -20,7 +18,6 @@ namespace LootingBots.Brain.Logics
         private readonly LootFinder _lootFinder;
         private readonly BotLog _log;
         private float _closeEnoughTimer = 0f;
-        private bool _isLooting = false;
         private float _moveTimer = 0f;
         private int _stuckCount = 0;
         private int _navigationAttempts = 0;
@@ -46,7 +43,7 @@ namespace LootingBots.Brain.Logics
         // Run looting logic only when the bot is not looting and when the bot has an active item to loot
         public bool ShouldUpdate()
         {
-            return !_isLooting && _lootFinder.HasActiveLootable();
+            return !_lootFinder.IsLooting && _lootFinder.HasActiveLootable();
         }
 
         public override void Start()
@@ -77,7 +74,10 @@ namespace LootingBots.Brain.Logics
                     // If the bot has not just looted something, loot the current item since we are now close enough
                     if (!_lootFinder.IsLooting && isCloseEnough)
                     {
-                        ExecuteLooting();
+                        // Crouch and look to item
+                        BotOwner.SetPose(0f);
+                        BotOwner.Steering.LookToPoint(_lootFinder.LootObjectPosition);
+                        _lootFinder.StartLooting();
                         return;
                     }
                 }
@@ -102,23 +102,6 @@ namespace LootingBots.Brain.Logics
             {
                 _log.LogError(e);
             }
-        }
-
-        private void ExecuteLooting()
-        {
-            LootItem item = _lootFinder.ActiveItem;
-            LootableContainer container = _lootFinder.ActiveContainer;
-            BotOwner corpse = _lootFinder.ActiveCorpse;
-
-            Vector3 lootPosition =
-                container?.transform?.position
-                ?? corpse?.GetPlayer?.Transform?.position
-                ?? item.transform.position;
-            // Crouch and look to item
-            BotOwner.SetPose(0f);
-            BotOwner.Steering.LookToPoint(lootPosition);
-
-            _lootFinder.StartLooting();
         }
 
         /*
@@ -274,7 +257,7 @@ namespace LootingBots.Brain.Logics
             bool isCloseEnough = dist < 0.85f && Math.Abs(y) < 0.5f;
 
             // If the bot is not looting anything, check to see if the bot is stuck
-            if (!_isLooting && !IsBotStuck(dist))
+            if (!_lootFinder.IsLooting && !IsBotStuck(dist))
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
                 _distanceToDestination = dist;
