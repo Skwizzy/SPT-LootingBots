@@ -158,7 +158,7 @@ namespace LootingBots
 
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
-            
+
             new SettingsAndCachePatch().Enable();
 
             BrainManager.RemoveLayer(
@@ -178,11 +178,8 @@ namespace LootingBots
                 new List<string>()
                 {
                     "Assault",
-                    "ExUsec",
                     "BossSanitar",
                     "CursAssault",
-                    "PMC",
-                    "SectantWarrior",
                     "BossKojaniy",
                     "SectantPriest",
                     "FollowerGluharScout",
@@ -201,6 +198,16 @@ namespace LootingBots
                     "BossBully"
                 },
                 2
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "PMC", "ExUsec" },
+                3
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "SectantWarrior" },
+                13
             );
         }
 
