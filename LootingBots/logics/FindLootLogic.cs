@@ -38,7 +38,7 @@ namespace LootingBots.Brain.Logics
             BotOwner closestCorpse = null;
             float shortestDist = -1f;
 
-            // Cast a 25m sphere on the bot, detecting any Interacive world objects that collide with the sphere
+            // Cast a sphere on the bot, detecting any Interacive world objects that collide with the sphere
             Collider[] array = Physics.OverlapSphere(
                 BotOwner.Position,
                 LootingBots.DetectLootDistance.Value,

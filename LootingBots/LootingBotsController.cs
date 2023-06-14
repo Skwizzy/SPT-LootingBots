@@ -78,9 +78,9 @@ namespace LootingBots
             TimeToWaitBetweenLoot = Config.Bind(
                 "Loot Finder",
                 "Delay between looting",
-                45f,
+                15f,
                 new ConfigDescription(
-                    "The amount of time the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container",
+                    "The amount of time the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
@@ -88,7 +88,7 @@ namespace LootingBots
             DetectLootDistance = Config.Bind(
                 "Loot Finder",
                 "Detect loot distance",
-                25f,
+                75f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container/item/corpse",
                     null,
