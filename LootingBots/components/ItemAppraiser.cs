@@ -24,6 +24,7 @@ namespace LootingBots.Patch.Components
 
             if (LootingBots.UseMarketPrices.Value)
             {
+                // Initialize ragfair prices from the BE session
                 Singleton<ClientApplication<ISession>>.Instance
                     .GetClientBackEndSession()
                     .RagfairGetPrices(
@@ -62,7 +63,10 @@ namespace LootingBots.Patch.Components
 
             return 0;
         }
-
+        
+        /**
+        * Get the price of a weapon from the sum of its attachments mods, using the default handbook prices to appraise each mod.
+        */
         public float GetWeaponHandbookPrice(Weapon lootWeapon)
         {
             Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
@@ -86,6 +90,9 @@ namespace LootingBots.Patch.Components
             return price;
         }
 
+        /**
+        * Get the price of a weapon from the sum of its attachments mods, using the ragfair prices to appraise each mod.
+        */
         public float GetWeaponMarketPrice(Weapon lootWeapon)
         {
             Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
@@ -100,6 +107,7 @@ namespace LootingBots.Patch.Components
             return finalPrice;
         }
 
+        /** Gets the price of the item as stated from the ragfair values */
         public float GetItemMarketPrice(Item lootItem)
         {
             float price = MarketData[lootItem.TemplateId];

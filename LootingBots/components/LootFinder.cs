@@ -33,6 +33,7 @@ namespace LootingBots.Patch.Components
     public class LootFinder : MonoBehaviour
     {
         public BotOwner BotOwner;
+        // Component responsible for adding items to the bot inventory
         public ItemAdder ItemAdder;
 
         // Current container that the bot will try to loot
@@ -44,25 +45,23 @@ namespace LootingBots.Patch.Components
         // Current corpse that the bot will try to loot
         public BotOwner ActiveCorpse;
 
-        // Center of the container's collider used to help in navigation
+        // Center of the loot object's collider used to help in navigation
         public Vector3 LootObjectCenter;
 
         // Collider.transform.position for the active lootable. Used in LOS checks to make sure bots dont loot through walls
         public Vector3 LootObjectPosition;
 
-        // Container ids that the bot has looted
+        // Object ids that the bot has looted
         public List<string> IgnoredLootIds;
 
-        // Container ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
-        public List<string> NonNavigableContainerIds;
+        // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
+        public List<string> NonNavigableLootIds;
 
-        // Booling showing when the looting task is running
+        // Boolean showing when the looting coroutine is running
         public bool IsLooting = false;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
-
-        private static readonly float TimeToLoot = 8f;
         private BotLog _log;
 
         public void Init(BotOwner botOwner)
@@ -71,9 +70,12 @@ namespace LootingBots.Patch.Components
             BotOwner = botOwner;
             ItemAdder = new ItemAdder(BotOwner, this);
             IgnoredLootIds = new List<string> { };
-            NonNavigableContainerIds = new List<string> { };
+            NonNavigableLootIds = new List<string> { };
         }
 
+        /*
+        * LootFinder update should only be running if one of the looting settings is enabled and the bot is in an active state
+        */
         public async Task Update()
         {
             try
@@ -102,6 +104,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Determines the looting action to take depending on the current Active object in the LootFinder. There can only be one Active object at a time
+        */
         public void StartLooting()
         {
             if (ActiveContainer)
@@ -118,12 +123,15 @@ namespace LootingBots.Patch.Components
             }
         }
 
-        // Logic to handle the looting of corpses
+        /**
+        * Handles looting a corpse found on the map.
+        */
         public IEnumerator LootCorpse()
         {
-            IsLooting = true;
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
+
+            IsLooting = true;
             // Initialize corpse inventory controller
             Player corpsePlayer = ActiveCorpse.GetPlayer;
             Type corpseType = corpsePlayer.GetType();
@@ -137,6 +145,7 @@ namespace LootingBots.Patch.Components
             InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
                 corpseInventory.GetValue(corpsePlayer);
 
+            // Get items to loot from the corpse in a priority order based off the slots
             EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
             _log.LogWarning($"Trying to loot corpse");
 
@@ -164,7 +173,9 @@ namespace LootingBots.Patch.Components
             _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
-        // Logic to handle the looting of containers
+        /**
+        * Handles looting a container found on the map.
+        */
         public IEnumerator LootContainer()
         {
             var watch = new System.Diagnostics.Stopwatch();
@@ -209,6 +220,9 @@ namespace LootingBots.Patch.Components
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
         }
 
+        /**
+        * Handles looting a loose item found on the map.
+        */
         public IEnumerator LootItem()
         {
             IsLooting = true;
@@ -235,51 +249,73 @@ namespace LootingBots.Patch.Components
             IsLooting = false;
         }
 
+        /**
+        *  Check to see if the object being looted has been ignored due to bad navigation, being looted already, or if its in use by another bot
+        */
         public bool IsLootIgnored(string lootId)
         {
             bool alreadyTried =
-                NonNavigableContainerIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
+                NonNavigableLootIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
             return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
         }
 
+        /**
+        *  Handles adding non navigable loot to the list of non-navigable ids for use in the ignore logic. Additionaly removes the object from the active loot cache
+        */
         public void HandleNonNavigableLoot()
         {
             string lootId =
                 ActiveContainer?.Id ?? ActiveItem?.ItemOwner.RootItem.Id ?? ActiveCorpse.name;
-            NonNavigableContainerIds.Add(lootId);
+            NonNavigableLootIds.Add(lootId);
             Cleanup();
-            IncrementLootTimer(30f);
         }
 
+        /**
+        * Increment the delay timer used to delay the next loot scan after an object has been looted
+        */
         public void IncrementLootTimer(float time = -1f)
         {
             // Increment loot wait timer
-            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value + TimeToLoot;
+            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value;
             WaitAfterLootTimer = Time.time + timer;
         }
 
+        /**
+        * Returns true if the LootFinder has an ActiveContainer, ActiveItem, or ActiveCorpse defined
+        */
         public bool HasActiveLootable()
         {
             return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null;
         }
 
+        /**
+        * Adds a loot id to the list of loot items to ignore for a specific bot
+        */
         public void IgnoreLoot(string id)
         {
             IgnoredLootIds.Add(id);
         }
 
+        /**
+        * Wrapper function to enable transactions to be executed by the ItemAdder.
+        */
         public void EnableTransactions()
         {
             ItemAdder.EnableTransactions();
         }
 
+        /**
+        * Wrapper function to disable the execution of transactions by the ItemAdder.
+        */
         public void DisableTransactions()
         {
             ItemAdder.DisableTransactions();
         }
 
-        // Removes all active lootables from LootFinder and cleans them from the cache
+        /**
+        * Removes all active lootables from LootFinder and cleans them from the active loot cache
+        */
         public void Cleanup(bool ignore = true)
         {
             if (ActiveContainer != null)
@@ -298,6 +334,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Removes the ActiveContainer from the LootFinder and ActiveLootCache. Can optionally add the container to the ignore list after cleaning
+        */
         public void CleanupContainer(bool ignore = true)
         {
             LootableContainer container = ActiveContainer;
@@ -314,6 +353,9 @@ namespace LootingBots.Patch.Components
             ActiveContainer = null;
         }
 
+        /**
+        * Removes the ActiveItem from the LootFinder and ActiveLootCache. Can optionally add the item to the ignore list after cleaning
+        */
         public void CleanupItem(bool ignore = true, Item movedItem = null)
         {
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
@@ -329,6 +371,9 @@ namespace LootingBots.Patch.Components
             ActiveItem = null;
         }
 
+        /**
+        * Removes the ActiveCorpse from the LootFinder and ActiveLootCache. Can optionally add the corpse to the ignore list after cleaning
+        */
         public void CleanupCorpse(bool ignore = true)
         {
             BotOwner corpse = ActiveCorpse;

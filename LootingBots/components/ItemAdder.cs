@@ -94,21 +94,25 @@ namespace LootingBots.Patch.Components
             }
         }
 
-        public InventoryControllerClass GetInventoryController()
-        {
-            return _botInventoryController;
-        }
-
+        /**
+        * Disable the tranaction controller to ensure transactions do not occur when the looting layer is interrupted
+        */
         public void DisableTransactions()
         {
             _transactionController.Enabled = false;
         }
 
+        /**
+        * Used to enable the transaction controller when the looting layer is active
+        */
         public void EnableTransactions()
         {
             _transactionController.Enabled = true;
         }
 
+        /**
+        * Calculates the value of the bot's current weapons to use in weapon swap comparison checks
+        */
         public void CalculateGearValue()
         {
             _log.LogDebug("Calculating gear value...");
@@ -139,6 +143,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Sorts the items in the tactical vest so that items prefer to be in slots that match their size. I.E a 1x1 item will be placed in a 1x1 slot instead of a 1x2 slot
+        */
         public async Task<IResult> SortTacVest()
         {
             SearchableItemClass tacVest = (SearchableItemClass)
@@ -162,7 +169,7 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Main driving method which kicks off the logic for what a bot will do with the loot found on a corpse.
+        * Main driving method which kicks off the logic for what a bot will do with the loot found.
         * If bots are looting something that is equippable and they have nothing equipped in that slot, they will always equip it.
         * If the bot decides not to equip the item then it will attempt to put in an available container slot
         */
@@ -236,17 +243,9 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
-        public void ChangeToSecondary()
-        {
-            if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
-            {
-                _log.LogWarning($"Changing to secondary");
-                _botOwner.WeaponManager.UpdateWeaponsList();
-                _botOwner.WeaponManager.Selector.ChangeToSecond();
-                RefillAndReload();
-            }
-        }
-
+        /**
+        * Method to make the bot change to its primary weapon. Useful for making sure bots have their weapon out after they have swapped weapons.
+        */
         public void ChangeToPrimary()
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
@@ -258,6 +257,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Updates the bot's known weapon list and tells the bot to switch to its main weapon
+        */
         public void UpdateActiveWeapon()
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
@@ -269,6 +271,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Method to refill magazines with ammo and also reload the current weapon with a new magazine
+        */
         private void RefillAndReload()
         {
             if (_botOwner != null && _botOwner.WeaponManager?.Selector != null)
@@ -395,6 +400,9 @@ namespace LootingBots.Patch.Components
                     .Length > 0;
         }
 
+        /**
+        * Throws all magazines from the rig that are not able to be used by any of the weapons that the bot currently has equipped
+        */
         public async Task ThrowUselessMags(Weapon thrownWeapon)
         {
             Weapon primary = (Weapon)
@@ -449,6 +457,9 @@ namespace LootingBots.Patch.Components
             }
         }
 
+        /**
+        * Determines the kind of equip action the bot should take when encountering a weapon. Bots will always prefer to replace weapons that have lower value when encountering a higher value weapon. 
+        */
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
         {
             Weapon primary = (Weapon)
@@ -699,6 +710,9 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
+        /**
+        *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
+        */
         public EquipmentSlot[] GetPrioritySlots()
         {
             InventoryControllerClass botInventoryController = _botInventoryController;

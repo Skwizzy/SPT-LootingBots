@@ -119,6 +119,10 @@ namespace LootingBots.Brain.Logics
             return true;
         }
 
+        /** 
+        * Makes the bot look towards the target destination and begin moving towards it. Navigation will be cancelled if the bot has not moved in more than 2 navigation calls, if the destination cannot be snapped to a mesh, 
+        * or if the NavPathStatus is anything other than Completed
+        */
         public bool TryMoveToLoot()
         {
             bool canMove = true;
@@ -238,6 +242,9 @@ namespace LootingBots.Brain.Logics
             return canMove;
         }
 
+        /**
+        * Check to see if the bot is close enough to the destination so that they can stop moving and start looting
+        */
         private bool IsCloseEnough()
         {
             // Calculate distance from bot to destination

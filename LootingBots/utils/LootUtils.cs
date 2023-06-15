@@ -14,6 +14,7 @@ namespace LootingBots.Patch.Util
         public static LayerMask LowPolyMask = LayerMask.GetMask(new string[] { "LowPolyCollider" });
         public static LayerMask LootMask = LayerMask.GetMask(new string[] { "Interactive", "Loot", "Deadbody" });
 
+        /* Simple check to see if the current bot is a Boss type */
         public static bool IsBoss(BotOwner botOwner)
         {
             return botOwner.Boss != null;
@@ -39,13 +40,17 @@ namespace LootingBots.Patch.Util
             KeyComponent key = item.GetItemComponent<KeyComponent>();
             return key != null && key.Template.MaximumNumberOfUsage == 1;
         }
-
+        
+        /** Triggers a container to open/close */
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
             GClass2600 result = new GClass2600(action);
             container.Interact(result);
         }
-
+        
+        /**
+        * Sorts the items in a container and places them in grid spaces that match their exact size before moving on to a bigger slot size. This helps make more room in the container for items to be placed in
+        */
         public static GStruct322<GClass2462> SortContainer(
             SearchableItemClass container,
             InventoryControllerClass controller
@@ -111,7 +116,8 @@ namespace LootingBots.Patch.Util
             LootingBots.LootLog.LogError("No container!");
             return new GClass2857(null);
         }
-
+        
+        // Sort grids in the container from smallest to largest
         public static GClass2165[] SortGrids(GClass2165[] grids)
         {
             // Sort grids in the container from smallest to largest
@@ -127,6 +133,9 @@ namespace LootingBots.Patch.Util
             return containerGrids.ToArray();
         }
 
+        /**
+        * Returns the available grid slots of a container, omittimg 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
+        */
         public static GClass2165[] Reserve2x1Slot(GClass2165[] grids)
         {
             const int RESERVE_SLOT_COUNT = 2;
@@ -148,18 +157,20 @@ namespace LootingBots.Patch.Util
             return gridList.ToArray();
         }
 
+        /** Return the amount of spaces taken up by all the items in a given grid slot */
         public static int GetSizeOfContainedItems(this GClass2165 grid)
         {
             return grid.Items.Aggregate(0, (sum, item2) => sum + item2.GetItemSize());
         }
-
+        
+        /** Gets the size of an item in a grid */
         public static int GetItemSize(this Item item)
         {
             var dimensions = item.CalculateCellSize();
             return dimensions.X * dimensions.Y;
         }
 
-        // Custom extension for EFT InventoryControllerClass.FindGridToPickUp
+        // Custom extension for EFT InventoryControllerClass.FindGridToPickUp that uses a custom method for choosing the grid slot to place a loot item
         public static GClass2423 FindGridToPickUp(
             this InventoryControllerClass controller,
             Item item,
@@ -180,7 +191,7 @@ namespace LootingBots.Patch.Util
             return null;
         }
 
-        // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot
+        // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
         public static IEnumerable<GClass2165> GetPrioritizedGridsForLoot(
             this EquipmentClass equipment,
             Item item
