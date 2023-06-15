@@ -41,7 +41,7 @@ namespace LootingBots.Patch.Components
             }
         }
 
-        /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu*/
+        /** Will either get the lootItem's price using the ragfair service or the handbook depending on the option selected in the mod menu. If the item is a weapon, will calculate its value based off its attachments if the mod setting is enabled */
         public float GetItemPrice(Item lootItem)
         {
             bool valueFromMods = LootingBots.ValueFromMods.Value;
