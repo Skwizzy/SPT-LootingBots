@@ -1,4 +1,5 @@
 using System;
+
 using EFT;
 
 namespace LootingBots.Patch.Util
@@ -18,37 +19,37 @@ namespace LootingBots.Patch.Util
 
     public static class BotTypeUtils
     {
-        public static bool hasScav(this BotType botType)
+        public static bool HasScav(this BotType botType)
         {
             return botType.HasFlag(BotType.Scav);
         }
 
-        public static bool hasPmc(this BotType botType)
+        public static bool HasPmc(this BotType botType)
         {
             return botType.HasFlag(BotType.Pmc);
         }
 
-        public static bool hasRaider(this BotType botType)
+        public static bool HasRaider(this BotType botType)
         {
             return botType.HasFlag(BotType.Raider);
         }
 
-        public static bool hasCultist(this BotType botType)
+        public static bool HasCultist(this BotType botType)
         {
             return botType.HasFlag(BotType.Cultist);
         }
 
-        public static bool hasBoss(this BotType botType)
+        public static bool HasBoss(this BotType botType)
         {
             return botType.HasFlag(BotType.Boss);
         }
 
-        public static bool hasFollower(this BotType botType)
+        public static bool HasFollower(this BotType botType)
         {
             return botType.HasFlag(BotType.Follower);
         }
 
-        public static bool isBotEnabled(this BotType enabledTypes, WildSpawnType botType)
+        public static bool IsBotEnabled(this BotType enabledTypes, WildSpawnType botType)
         {
             // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
             unchecked
@@ -59,16 +60,16 @@ namespace LootingBots.Patch.Util
                 bool isPMC = botType == bear || botType == usec;
                 if (isPMC)
                 {
-                    return enabledTypes.hasPmc();
+                    return enabledTypes.HasPmc();
                 }
 
                 switch (botType)
                 {
                     case WildSpawnType.assault:
                     case WildSpawnType.assaultGroup:
-                    {
-                        return enabledTypes.hasScav();
-                    }
+                        {
+                            return enabledTypes.HasScav();
+                        }
                     case WildSpawnType.bossBully:
                     case WildSpawnType.bossGluhar:
                     case WildSpawnType.bossKilla:
@@ -78,9 +79,9 @@ namespace LootingBots.Patch.Util
                     case WildSpawnType.bossTagilla:
                     case WildSpawnType.bossTest:
                     case WildSpawnType.bossZryachiy:
-                    {
-                        return enabledTypes.hasBoss();
-                    }
+                        {
+                            return enabledTypes.HasBoss();
+                        }
                     case WildSpawnType.followerBigPipe:
                     case WildSpawnType.followerBirdEye:
                     case WildSpawnType.followerBully:
@@ -93,20 +94,20 @@ namespace LootingBots.Patch.Util
                     case WildSpawnType.followerTagilla:
                     case WildSpawnType.followerTest:
                     case WildSpawnType.followerZryachiy:
-                    {
-                        return enabledTypes.hasFollower();
-                    }
+                        {
+                            return enabledTypes.HasFollower();
+                        }
                     case WildSpawnType.exUsec:
                     case WildSpawnType.pmcBot:
-                    {
-                        return enabledTypes.hasRaider();
-                    }
+                        {
+                            return enabledTypes.HasRaider();
+                        }
                     case WildSpawnType.sectantPriest:
                     case WildSpawnType.sectantWarrior:
                     case WildSpawnType.cursedAssault:
-                    {
-                        return enabledTypes.hasCultist();
-                    }
+                        {
+                            return enabledTypes.HasCultist();
+                        }
                     default:
                         return false;
                 }
