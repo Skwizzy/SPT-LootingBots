@@ -1,4 +1,4 @@
-[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.0)
+[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.0-aki-3.5.7)
 [![Beta release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/v1.1.0-Beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.0-Beta)
 
 # SPT-LootingBots
