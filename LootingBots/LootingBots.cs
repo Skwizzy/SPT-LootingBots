@@ -155,7 +155,7 @@ namespace LootingBots
             ScavLootThreshold = Config.Bind(
                 "Loot Settings",
                 "Scav: Loot value threshold",
-                7000f,
+                5000f,
                 new ConfigDescription(
                     "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
                     null,
