@@ -260,6 +260,12 @@ namespace LootingBots.Patch.Components
             return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
         }
 
+        /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
+        public bool IsValuableEnough(Item lootItem)
+        {
+            return ItemAdder.IsValuableEnough(lootItem);
+        }
+
         /**
         *  Handles adding non navigable loot to the list of non-navigable ids for use in the ignore logic. Additionaly removes the object from the active loot cache
         */

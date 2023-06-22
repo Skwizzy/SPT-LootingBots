@@ -39,6 +39,7 @@ namespace LootingBots.Patch.Components
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
         private readonly LootFinder _lootFinder;
+        private readonly ItemAppraiser _itemAppraiser;
         private readonly bool _isBoss;
 
         private static readonly GearValue GearValue = new GearValue();
@@ -54,6 +55,7 @@ namespace LootingBots.Patch.Components
                 _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootFinder = lootFinder;
                 _isBoss = LootUtils.IsBoss(botOwner);
+                _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
                 Type botOwnerType = botOwner.GetPlayer.GetType();
@@ -128,17 +130,17 @@ namespace LootingBots.Patch.Components
 
             if (primary != null && GearValue.Primary.Id != primary.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(primary);
+                float value = _itemAppraiser.GetItemPrice(primary);
                 GearValue.Primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && GearValue.Secondary.Id != secondary.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(secondary);
+                float value = _itemAppraiser.GetItemPrice(secondary);
                 GearValue.Secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && GearValue.Holster.Id != holster.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(holster);
+                float value = _itemAppraiser.GetItemPrice(holster);
                 GearValue.Holster = new ValuePair(holster.Id, value);
             }
         }
@@ -185,10 +187,18 @@ namespace LootingBots.Patch.Components
 
                 if (item != null && item.Name != null)
                 {
-                    _log.LogDebug($"Loot found: {item.Name.Localized()}");
+                    _log.LogInfo($"Loot found: {item.Name.Localized()}");
                     if (item is MagazineClass mag && !CanUseMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
+                        continue;
+                    }
+
+                    if (!IsValuableEnough(item))
+                    {
+                        _log.LogDebug(
+                            $"Item does not meet value threshold: {item.Name.Localized()} ({_itemAppraiser.GetItemPrice(item)}). Skipping"
+                        );
                         continue;
                     }
 
@@ -458,7 +468,7 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Determines the kind of equip action the bot should take when encountering a weapon. Bots will always prefer to replace weapons that have lower value when encountering a higher value weapon. 
+        * Determines the kind of equip action the bot should take when encountering a weapon. Bots will always prefer to replace weapons that have lower value when encountering a higher value weapon.
         */
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
         {
@@ -477,7 +487,7 @@ namespace LootingBots.Patch.Components
 
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             bool isPistol = lootWeapon.WeapClass.Equals("pistol");
-            float lootValue = LootingBots.ItemAppraiser.GetItemPrice(lootWeapon);
+            float lootValue = _itemAppraiser.GetItemPrice(lootWeapon);
 
             if (isPistol)
             {
@@ -708,6 +718,18 @@ namespace LootingBots.Patch.Components
             }
 
             return true;
+        }
+
+        /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
+        public bool IsValuableEnough(Item lootItem)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            float price = _itemAppraiser.GetItemPrice(lootItem);
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+
+            // If the bot is a PMC, compare the price against the PMC loot threshold. For all other bot types use the scav threshold
+            return isPMC && price >= LootingBots.PMCLootThreshold.Value
+                || !isPMC && price >= LootingBots.ScavLootThreshold.Value;
         }
 
         /**
