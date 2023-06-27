@@ -16,7 +16,7 @@ using System.Collections.Generic;
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "0.1.2")]
+    [BepInDependency("xyz.drakia.bigbrain", "0.1.4")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
