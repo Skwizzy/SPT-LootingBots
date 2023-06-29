@@ -78,11 +78,12 @@ namespace LootingBots.Brain.Logics
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && corpse != null
+                    && corpse.GetPlayer != null
                     && !_lootFinder.IsLootIgnored(corpse.name);
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
-                    // If we havent already visted the container, calculate its distance and save the container with the smallest distance
+                    // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
                     Vector3 vector =
                         BotOwner.Position
                         - (
@@ -92,7 +93,7 @@ namespace LootingBots.Brain.Logics
                         );
                     float dist = vector.sqrMagnitude;
 
-                    // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
+                    // If we are considering a lootable to be the new closest lootable, make sure the bot has a valid NavMeshPath before adding it as the closest lootable
                     if (shortestDist == -1f || dist < shortestDist)
                     {
                         shortestDist = dist;

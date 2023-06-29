@@ -139,7 +139,7 @@ namespace LootingBots.Brain.Logics
                 string lootableName =
                     _lootFinder.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
                     ?? _lootFinder.ActiveItem?.Name.Localized()
-                    ?? _lootFinder.ActiveCorpse.GetPlayer.name.Localized();
+                    ?? _lootFinder.ActiveCorpse.GetPlayer?.name.Localized();
 
                 // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the lootable otherwise ignore the container forever
                 bool isBotStuck = _stuckCount > 1;
