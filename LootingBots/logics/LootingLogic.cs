@@ -43,7 +43,7 @@ namespace LootingBots.Brain.Logics
         // Run looting logic only when the bot is not looting and when the bot has an active item to loot
         public bool ShouldUpdate()
         {
-            return !_lootFinder.IsLooting && _lootFinder.HasActiveLootable();
+            return !_lootFinder.IsLooting && _lootFinder.HasActiveLootable() && BotOwner.BotState == EBotState.Active;
         }
 
         public override void Start()
@@ -101,11 +101,11 @@ namespace LootingBots.Brain.Logics
             Check to see if the destination point and the loot object do not have a wall between them by casting a Ray between the two points.
             Walls should be on the LowPolyCollider LayerMask, so we can assume if we see one of these then we cannot properly loot
         */
-        public bool HasLOS(Vector3 destination)
+        public bool HasLOS()
         {
-            Vector3 rayDirection = _lootFinder.LootObjectPosition - destination;
+            Vector3 rayDirection = _lootFinder.LootObjectPosition - _destination;
 
-            if (Physics.Raycast(destination, rayDirection, out RaycastHit hit))
+            if (Physics.Raycast(_destination, rayDirection, out RaycastHit hit))
             {
                 if (hit.collider.gameObject.layer == LootUtils.LowPolyMask)
                 {
@@ -186,7 +186,7 @@ namespace LootingBots.Brain.Logics
                     }
 
                     // If we were able to snap the loot position to a NavMesh, attempt to navigate
-                    if (pointNearbyContainer != Vector3.zero && HasLOS(_destination))
+                    if (pointNearbyContainer != Vector3.zero && HasLOS())
                     {
                         NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                             pointNearbyContainer,
