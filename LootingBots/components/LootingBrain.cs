@@ -342,9 +342,6 @@ namespace LootingBots.Patch.Components
         public void CleanupContainer(bool ignore = true)
         {
             LootableContainer container = ActiveContainer;
-            _log.LogWarning(
-                $"Clearing active container: {container.name.Localized()} ({container.Id})"
-            );
             ActiveLootCache.Cleanup(container.Id);
 
             if (ignore)
@@ -361,8 +358,6 @@ namespace LootingBots.Patch.Components
         public void CleanupItem(bool ignore = true, Item movedItem = null)
         {
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
-
-            _log.LogWarning($"Clearing active item: {item?.Name?.Localized()} ({item?.Id})");
             ActiveLootCache.Cleanup(item.Id);
 
             if (ignore)
@@ -380,9 +375,6 @@ namespace LootingBots.Patch.Components
         {
             BotOwner corpse = ActiveCorpse;
             string name = corpse.name;
-            _log.LogWarning(
-                $"Clearing active corpse: {name} ({corpse.GetPlayer.name.Localized()})"
-            );
             ActiveLootCache.Cleanup(name);
 
             if (ignore)

@@ -129,29 +129,20 @@ namespace LootingBots.Brain.Logics
 
             if (closestContainer != null)
             {
-                _log.LogDebug($"Found container {closestContainer.name.Localized()}");
                 _lootingBrain.ActiveContainer = closestContainer;
                 _lootingBrain.LootObjectPosition = closestContainer.transform.position;
-
                 ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.name);
             }
             else if (closestItem != null)
             {
-                _log.LogDebug(
-                    $"Found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
-                );
-
                 _lootingBrain.ActiveItem = closestItem;
                 _lootingBrain.LootObjectPosition = closestItem.transform.position;
-
                 ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.name);
             }
             else if (closestCorpse != null)
             {
-                _log.LogDebug($"Found corpse: {closestCorpse.name}");
                 _lootingBrain.ActiveCorpse = closestCorpse;
                 _lootingBrain.LootObjectPosition = closestCorpse.Transform.position;
-
                 ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }
         }
