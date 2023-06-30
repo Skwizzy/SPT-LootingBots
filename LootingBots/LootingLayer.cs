@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 using DrakiaXYZ.BigBrain.Brains;
 
@@ -67,6 +68,45 @@ namespace LootingBots.Brain
         {
             Type currentActionType = CurrentAction?.Type;
             return currentActionType != typeof(LootingLogic) || EndLooting();
+        }
+
+        public override void BuildDebugText(StringBuilder debugPanel)
+        {
+            string itemName = _lootingBrain.ActiveItem?.Name?.Localized();
+            string containerName = _lootingBrain.ActiveContainer?.name?.Localized();
+            string corpseName = _lootingBrain.ActiveCorpse?.name?.Localized();
+            string lootableName = itemName ?? containerName ?? corpseName ?? "-";
+
+            string category = "";
+            if (itemName != null)
+            {
+                category = "Item";
+            }
+            else if (containerName != null)
+            {
+                category = "Container";
+            }
+            else if (corpseName != null)
+            {
+                category = "Corpse";
+            }
+
+            debugPanel.AppendLine(
+                _lootingBrain.IsLooting ? "Looting in progress..." : "",
+                Color.green
+            );
+            debugPanel.AppendLabeledValue(
+                $"Target Loot",
+                $" {lootableName} ({category})",
+                Color.yellow,
+                Color.yellow
+            );
+            debugPanel.AppendLabeledValue(
+                $"Distance to Loot",
+                $" {(category == "" ? '-' : _lootingBrain.DistanceToLoot)}",
+                Color.grey,
+                Color.grey
+            );
         }
 
         public bool EndLooting()
