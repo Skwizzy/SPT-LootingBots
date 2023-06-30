@@ -1,3 +1,5 @@
+using System.Text;
+
 using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
@@ -12,20 +14,20 @@ namespace LootingBots.Brain.Logics
 {
     internal class FindLootLogic : CustomLogic
     {
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
         private readonly BotLog _log;
 
         public FindLootLogic(BotOwner botOwner)
             : base(botOwner)
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
-            _lootFinder = botOwner.GetPlayer.gameObject.GetComponent<LootFinder>();
+            _lootingBrain = botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
         }
 
         public override void Update()
         {
             // Kick off looting logic
-            if (!_lootFinder.HasActiveLootable())
+            if (!_lootingBrain.HasActiveLootable())
             {
                 FindLootable();
             }
@@ -59,7 +61,7 @@ namespace LootingBots.Brain.Logics
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && container != null
-                    && !_lootFinder.IsLootIgnored(container.Id)
+                    && !_lootingBrain.IsLootIgnored(container.Id)
                     && container.isActiveAndEnabled
                     && container.DoorState != EDoorState.Locked;
 
@@ -71,7 +73,7 @@ namespace LootingBots.Brain.Logics
                     && !(lootItem is Corpse)
                     && lootItem?.ItemOwner?.RootItem != null
                     && !lootItem.ItemOwner.RootItem.QuestItem
-                    && !_lootFinder.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
+                    && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
 
                 bool canLootCorpse =
                     LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
@@ -79,7 +81,7 @@ namespace LootingBots.Brain.Logics
                     )
                     && corpse != null
                     && corpse.GetPlayer != null
-                    && !_lootFinder.IsLootIgnored(corpse.name);
+                    && !_lootingBrain.IsLootIgnored(corpse.name);
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
@@ -117,9 +119,9 @@ namespace LootingBots.Brain.Logics
                             closestItem = lootItem;
                         }
 
-                        _lootFinder.LootObjectCenter = collider.bounds.center;
+                        _lootingBrain.LootObjectCenter = collider.bounds.center;
                         // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                        _lootFinder.LootObjectCenter.y =
+                        _lootingBrain.LootObjectCenter.y =
                             collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
                     }
                 }
@@ -128,8 +130,8 @@ namespace LootingBots.Brain.Logics
             if (closestContainer != null)
             {
                 _log.LogDebug($"Found container {closestContainer.name.Localized()}");
-                _lootFinder.ActiveContainer = closestContainer;
-                _lootFinder.LootObjectPosition = closestContainer.transform.position;
+                _lootingBrain.ActiveContainer = closestContainer;
+                _lootingBrain.LootObjectPosition = closestContainer.transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.name);
             }
@@ -139,16 +141,16 @@ namespace LootingBots.Brain.Logics
                     $"Found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
                 );
 
-                _lootFinder.ActiveItem = closestItem;
-                _lootFinder.LootObjectPosition = closestItem.transform.position;
+                _lootingBrain.ActiveItem = closestItem;
+                _lootingBrain.LootObjectPosition = closestItem.transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.name);
             }
             else if (closestCorpse != null)
             {
                 _log.LogDebug($"Found corpse: {closestCorpse.name}");
-                _lootFinder.ActiveCorpse = closestCorpse;
-                _lootFinder.LootObjectPosition = closestCorpse.Transform.position;
+                _lootingBrain.ActiveCorpse = closestCorpse;
+                _lootingBrain.LootObjectPosition = closestCorpse.Transform.position;
 
                 ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }

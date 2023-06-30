@@ -13,16 +13,15 @@ namespace LootingBots.Brain
 {
     internal class LootingLayer : CustomLayer
     {
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
         private float _scanTimer;
-
 
         public LootingLayer(BotOwner botOwner, int priority)
             : base(botOwner, priority)
         {
-            LootFinder lootFinder = botOwner.GetPlayer.gameObject.AddComponent<LootFinder>();
-            lootFinder.Init(botOwner);
-            _lootFinder = lootFinder;
+            LootingBrain lootingBrain = botOwner.GetPlayer.gameObject.AddComponent<LootingBrain>();
+            lootingBrain.Init(botOwner);
+            _lootingBrain = lootingBrain;
         }
 
         public override string GetName()
@@ -32,29 +31,32 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            return (_scanTimer < Time.time && _lootFinder.WaitAfterLootTimer < Time.time) || _lootFinder.HasActiveLootable();
+            return (_scanTimer < Time.time && _lootingBrain.WaitAfterLootTimer < Time.time)
+                || _lootingBrain.HasActiveLootable();
         }
 
         public override void Start()
         {
-            _lootFinder.EnableTransactions();
+            _lootingBrain.EnableTransactions();
             base.Start();
         }
 
         public override void Stop()
         {
-            _lootFinder.DisableTransactions();
+            _lootingBrain.DisableTransactions();
             base.Stop();
         }
 
         public override Action GetNextAction()
         {
-            if (!_lootFinder.HasActiveLootable()) {
+            if (!_lootingBrain.HasActiveLootable())
+            {
                 _scanTimer = Time.time + 6f;
                 return new Action(typeof(FindLootLogic), "Loot Scan");
             }
 
-            if (_lootFinder.HasActiveLootable()) {
+            if (_lootingBrain.HasActiveLootable())
+            {
                 return new Action(typeof(LootingLogic), "Looting");
             }
 
@@ -69,9 +71,9 @@ namespace LootingBots.Brain
 
         public bool EndLooting()
         {
-            return _lootFinder.ActiveContainer == null
-                && _lootFinder.ActiveCorpse == null
-                && _lootFinder.ActiveItem == null;
+            return _lootingBrain.ActiveContainer == null
+                && _lootingBrain.ActiveCorpse == null
+                && _lootingBrain.ActiveItem == null;
         }
     }
 }

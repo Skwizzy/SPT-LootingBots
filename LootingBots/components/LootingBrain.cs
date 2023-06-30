@@ -30,7 +30,7 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    public class LootFinder : MonoBehaviour
+    public class LootingBrain : MonoBehaviour
     {
         public BotOwner BotOwner;
         // Component responsible for adding items to the bot inventory
@@ -59,6 +59,8 @@ namespace LootingBots.Patch.Components
 
         // Boolean showing when the looting coroutine is running
         public bool IsLooting = false;
+
+        public float DistanceToLoot = 0f;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;

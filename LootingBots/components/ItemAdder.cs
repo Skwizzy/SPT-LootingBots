@@ -38,7 +38,7 @@ namespace LootingBots.Patch.Components
         private readonly TransactionController _transactionController;
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootFinder;
         private readonly bool _isBoss;
 
         private static readonly GearValue GearValue = new GearValue();
@@ -47,7 +47,7 @@ namespace LootingBots.Patch.Components
         public int CurrentBodyArmorClass = 0;
         public bool ShouldSort = true;
 
-        public ItemAdder(BotOwner botOwner, LootFinder lootFinder)
+        public ItemAdder(BotOwner botOwner, LootingBrain lootFinder)
         {
             try
             {
