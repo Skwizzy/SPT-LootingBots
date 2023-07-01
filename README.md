@@ -6,7 +6,7 @@
 This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
 
 ## Dependencies
-**SPT-BigBrain 0.1.2**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases/tag/0.1.2
+**SPT-BigBrain 0.1.4**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases/tag/0.1.4
 
 ## Behavior
 
