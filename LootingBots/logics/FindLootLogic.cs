@@ -73,6 +73,7 @@ namespace LootingBots.Brain.Logics
                     && !(lootItem is Corpse)
                     && lootItem?.ItemOwner?.RootItem != null
                     && !lootItem.ItemOwner.RootItem.QuestItem
+                    && _lootingBrain.IsValuableEnough(lootItem.ItemOwner.RootItem)
                     && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
 
                 bool canLootCorpse =

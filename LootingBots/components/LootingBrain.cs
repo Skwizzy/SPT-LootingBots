@@ -33,6 +33,7 @@ namespace LootingBots.Patch.Components
     public class LootingBrain : MonoBehaviour
     {
         public BotOwner BotOwner;
+
         // Component responsible for adding items to the bot inventory
         public ItemAdder ItemAdder;
 
@@ -161,7 +162,6 @@ namespace LootingBots.Patch.Components
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             ItemAdder.UpdateActiveWeapon();
-            IsLooting = false;
 
             if (lootTask.Result)
             {
@@ -170,6 +170,7 @@ namespace LootingBots.Patch.Components
 
             // Only ignore the corpse if looting was not interrupted
             CleanupCorpse(lootTask.Result);
+            IsLooting = false;
 
             watch.Stop();
             _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -208,7 +209,6 @@ namespace LootingBots.Patch.Components
             }
 
             ItemAdder.UpdateActiveWeapon();
-            IsLooting = false;
 
             if (lootTask.Result)
             {
@@ -217,6 +217,7 @@ namespace LootingBots.Patch.Components
 
             // Only ignore the container if looting was not interrupted
             CleanupContainer(lootTask.Result);
+            IsLooting = false;
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
@@ -247,7 +248,6 @@ namespace LootingBots.Patch.Components
 
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
-
             IsLooting = false;
         }
 
@@ -260,6 +260,12 @@ namespace LootingBots.Patch.Components
                 NonNavigableLootIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
             return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
+        }
+
+        /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
+        public bool IsValuableEnough(Item lootItem)
+        {
+            return ItemAdder.IsValuableEnough(lootItem);
         }
 
         /**

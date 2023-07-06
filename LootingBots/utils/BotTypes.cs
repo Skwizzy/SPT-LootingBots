@@ -67,9 +67,9 @@ namespace LootingBots.Patch.Util
                 {
                     case WildSpawnType.assault:
                     case WildSpawnType.assaultGroup:
-                        {
-                            return enabledTypes.HasScav();
-                        }
+                    {
+                        return enabledTypes.HasScav();
+                    }
                     case WildSpawnType.bossBully:
                     case WildSpawnType.bossGluhar:
                     case WildSpawnType.bossKilla:
@@ -79,9 +79,9 @@ namespace LootingBots.Patch.Util
                     case WildSpawnType.bossTagilla:
                     case WildSpawnType.bossTest:
                     case WildSpawnType.bossZryachiy:
-                        {
-                            return enabledTypes.HasBoss();
-                        }
+                    {
+                        return enabledTypes.HasBoss();
+                    }
                     case WildSpawnType.followerBigPipe:
                     case WildSpawnType.followerBirdEye:
                     case WildSpawnType.followerBully:
@@ -94,24 +94,41 @@ namespace LootingBots.Patch.Util
                     case WildSpawnType.followerTagilla:
                     case WildSpawnType.followerTest:
                     case WildSpawnType.followerZryachiy:
-                        {
-                            return enabledTypes.HasFollower();
-                        }
+                    {
+                        return enabledTypes.HasFollower();
+                    }
                     case WildSpawnType.exUsec:
                     case WildSpawnType.pmcBot:
-                        {
-                            return enabledTypes.HasRaider();
-                        }
+                    {
+                        return enabledTypes.HasRaider();
+                    }
                     case WildSpawnType.sectantPriest:
                     case WildSpawnType.sectantWarrior:
                     case WildSpawnType.cursedAssault:
-                        {
-                            return enabledTypes.HasCultist();
-                        }
+                    {
+                        return enabledTypes.HasCultist();
+                    }
                     default:
                         return false;
                 }
             }
+        }
+
+        public static bool IsPMC(WildSpawnType wildSpawnType)
+        {
+            unchecked
+            {
+                WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
+                WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
+
+                return wildSpawnType == bear || wildSpawnType == usec;
+            }
+        }
+
+        public static bool IsScav(WildSpawnType wildSpawnType)
+        {
+            return wildSpawnType == WildSpawnType.assault
+                || wildSpawnType == WildSpawnType.assaultGroup;
         }
     }
 }

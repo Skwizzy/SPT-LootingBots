@@ -22,11 +22,11 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.1.0";
+        private const string MOD_VERSION = "1.1.1";
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
-        // Loot Finder
+        // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ConfigEntry<BotType> ContainerLootingEnabled;
         public static ConfigEntry<BotType> LooseItemLootingEnabled;
@@ -35,12 +35,15 @@ namespace LootingBots
         public static ConfigEntry<float> DetectLootDistance;
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
+        public static Log LootLog;
+
+        // Loot Settings
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<bool> ValueFromMods;
+        public static ConfigEntry<float> PMCLootThreshold;
+        public static ConfigEntry<float> ScavLootThreshold;
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
-        public static Log LootLog;
         public static Log ItemAppraiserLog;
-
         public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
 
         public void LootFinderSettings()
@@ -117,22 +120,42 @@ namespace LootingBots
             );
         }
 
-        public void WeaponLootSettings()
+        public void LootSettings()
         {
             UseMarketPrices = Config.Bind(
-                "Weapon Looting",
+                "Loot Settings",
                 "Use flea market prices",
                 false,
                 new ConfigDescription(
-                    "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.",
+                    "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }
+                )
+            );
+            ValueFromMods = Config.Bind(
+                "Loot Settings",
+                "Calculate weapon value from attachments",
+                true,
+                new ConfigDescription(
+                    "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
+            );
+            PMCLootThreshold = Config.Bind(
+                "Loot Settings",
+                "PMC: Loot value threshold",
+                12000f,
+                new ConfigDescription(
+                    "PMC bots will only loot items that exceed the specified value in roubles",
                     null,
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            ValueFromMods = Config.Bind(
-                "Weapon Looting",
-                "Calculate value from attachments",
-                true,
+            ScavLootThreshold = Config.Bind(
+                "Loot Settings",
+                "Scav: Loot value threshold",
+                5000f,
                 new ConfigDescription(
                     "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
                     null,
@@ -140,7 +163,7 @@ namespace LootingBots
                 )
             );
             ItemAppraiserLogLevels = Config.Bind(
-                "Weapon Looting",
+                "Loot Settings",
                 "Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
@@ -154,7 +177,7 @@ namespace LootingBots
         public void Awake()
         {
             LootFinderSettings();
-            WeaponLootSettings();
+            LootSettings();
 
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
@@ -192,6 +215,7 @@ namespace LootingBots
                     "FollowerBully",
                     "BirdEye",
                     "BigPipe",
+                    "Knight",
                     "BossZryachiy",
                     "Tagilla",
                     "BossSanitar",
