@@ -35,24 +35,12 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    // public class ItemAdderResult {
-    //     public bool Interrupted = false;
-    //     public float ChangeInLootValue;
-
-    //     public ItemAdderResult(bool interrupted = false) {
-    //         Interrupted = interrupted;
-    //     }
-
-    //     public void Deconstruct(out bool interrupted, out float changeInLootValue)
-    //     {
-    //         interrupted = Interrupted;
-    //         changeInLootValue = ChangeInLootValue;
-    //     }
-    // }
-
     public class BotStats
     {
         public float NetLootValue;
+        public int AvailableGridSpaces;
+        public int TotalGridSpaces;
+
         public GearValue WeaponValues = new GearValue();
 
         public void AddNetValue(float itemPrice)
@@ -65,8 +53,27 @@ namespace LootingBots.Patch.Components
             NetLootValue += itemPrice;
         }
 
-        public void StatsDebugMenu(StringBuilder debugPanel) {
-            debugPanel.AppendLabeledValue($"Total looted value", $" {NetLootValue}₽", Color.white, Color.white);
+        public void StatsDebugPanel(StringBuilder debugPanel)
+        {
+            Color freeSpaceColor =
+                AvailableGridSpaces == 0
+                    ? Color.red
+                    : AvailableGridSpaces < TotalGridSpaces / 2
+                        ? Color.yellow
+                        : Color.green;
+
+            debugPanel.AppendLabeledValue(
+                $"Total looted value",
+                $" {NetLootValue}₽",
+                Color.white,
+                Color.white
+            );
+            debugPanel.AppendLabeledValue(
+                $"Available space",
+                $" {AvailableGridSpaces} slots",
+                Color.white,
+                freeSpaceColor
+            );
         }
     }
 
@@ -133,6 +140,7 @@ namespace LootingBots.Patch.Components
                 CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
                 CalculateGearValue();
+                UpdateGridStats();
             }
             catch (Exception e)
             {
@@ -187,6 +195,35 @@ namespace LootingBots.Patch.Components
                 float value = _itemAppraiser.GetItemPrice(holster);
                 GearValue.Holster = new ValuePair(holster.Id, value);
             }
+        }
+
+        /**
+        * Updates stats for AvailableGridSpaces and TotalGridSpaces based off the bots current gear
+        */
+        public void UpdateGridStats()
+        {
+            SearchableItemClass tacVest = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem;
+            SearchableItemClass backpack = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem;
+            SearchableItemClass pockets = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Pockets)
+                    .ContainedItem;
+
+            int freePockets = LootUtils.GetAvailableGridSlots(pockets?.Grids);
+            int freeTacVest = LootUtils.GetAvailableGridSlots(tacVest?.Grids);
+            int freeBackpack = LootUtils.GetAvailableGridSlots(backpack?.Grids);
+
+            Stats.AvailableGridSpaces = freeBackpack + freePockets + freeTacVest;
+            Stats.TotalGridSpaces =
+                (tacVest?.Grids?.Length ?? 0)
+                + (backpack?.Grids?.Length ?? 0)
+                + (pockets?.Grids?.Length ?? 0);
         }
 
         /**

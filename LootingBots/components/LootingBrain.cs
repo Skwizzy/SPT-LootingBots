@@ -170,7 +170,7 @@ namespace LootingBots.Patch.Components
 
             // Only ignore the corpse if looting was not interrupted
             CleanupCorpse(lootTask.Result);
-            IsLooting = false;
+            OnLootingEnd();
 
             watch.Stop();
             _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
@@ -217,7 +217,7 @@ namespace LootingBots.Patch.Components
 
             // Only ignore the container if looting was not interrupted
             CleanupContainer(lootTask.Result);
-            IsLooting = false;
+            OnLootingEnd();
 
             watch.Stop();
             _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
@@ -248,8 +248,18 @@ namespace LootingBots.Patch.Components
 
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
-            IsLooting = false;
+            OnLootingEnd();
             _log.LogDebug($"Net Worth: {ItemAdder.Stats.NetLootValue}");
+        }
+
+        public void OnLootingEnd() {
+            UpdateGridStats();
+            BotOwner.AIData.CalcPower();
+            IsLooting = false;
+        }
+
+        public void UpdateGridStats() {
+            ItemAdder.UpdateGridStats();
         }
 
         /**

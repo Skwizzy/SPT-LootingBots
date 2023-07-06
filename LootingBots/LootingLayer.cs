@@ -111,7 +111,7 @@ namespace LootingBots.Brain
                 Color.grey
             );
             
-            _lootingBrain.ItemAdder.Stats.StatsDebugMenu(debugPanel);
+            _lootingBrain.ItemAdder.Stats.StatsDebugPanel(debugPanel);
         }
 
         public bool EndLooting()

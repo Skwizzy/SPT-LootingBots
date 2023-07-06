@@ -12,7 +12,9 @@ namespace LootingBots.Patch.Util
     public static class LootUtils
     {
         public static LayerMask LowPolyMask = LayerMask.GetMask(new string[] { "LowPolyCollider" });
-        public static LayerMask LootMask = LayerMask.GetMask(new string[] { "Interactive", "Loot", "Deadbody" });
+        public static LayerMask LootMask = LayerMask.GetMask(
+            new string[] { "Interactive", "Loot", "Deadbody" }
+        );
 
         /* Simple check to see if the current bot is a Boss type */
         public static bool IsBoss(BotOwner botOwner)
@@ -40,14 +42,14 @@ namespace LootingBots.Patch.Util
             KeyComponent key = item.GetItemComponent<KeyComponent>();
             return key != null && key.Template.MaximumNumberOfUsage == 1;
         }
-        
+
         /** Triggers a container to open/close */
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
             GClass2600 result = new GClass2600(action);
             container.Interact(result);
         }
-        
+
         /**
         * Sorts the items in a container and places them in grid spaces that match their exact size before moving on to a bigger slot size. This helps make more room in the container for items to be placed in
         */
@@ -116,7 +118,7 @@ namespace LootingBots.Patch.Util
             LootingBots.LootLog.LogError("No container!");
             return new GClass2857(null);
         }
-        
+
         // Sort grids in the container from smallest to largest
         public static GClass2165[] SortGrids(GClass2165[] grids)
         {
@@ -134,7 +136,29 @@ namespace LootingBots.Patch.Util
         }
 
         /**
-        * Returns the available grid slots of a container, omittimg 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
+        * Calculates the amount of empty grid slots in the container
+        */
+        public static int GetAvailableGridSlots(GClass2165[] grids)
+        {
+            if (grids == null) {
+                grids = new GClass2165[] {};
+            }
+
+            List<GClass2165> gridList = grids.ToList();
+            return gridList.Aggregate(
+                0,
+                (freeSpaces, grid) =>
+                {
+                    int gridSize = grid.GridHeight.Value * grid.GridWidth.Value;
+                    int containedItemSize = grid.GetSizeOfContainedItems();
+                    freeSpaces += gridSize - containedItemSize;
+                    return freeSpaces;
+                }
+            );
+        }
+
+        /**
+        * Returns an array of available grid slots, omitting 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
         */
         public static GClass2165[] Reserve2x1Slot(GClass2165[] grids)
         {
@@ -162,7 +186,7 @@ namespace LootingBots.Patch.Util
         {
             return grid.Items.Aggregate(0, (sum, item2) => sum + item2.GetItemSize());
         }
-        
+
         /** Gets the size of an item in a grid */
         public static int GetItemSize(this Item item)
         {
