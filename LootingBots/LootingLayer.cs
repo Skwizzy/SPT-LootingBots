@@ -104,9 +104,10 @@ namespace LootingBots.Brain
                 Color.yellow,
                 Color.yellow
             );
+
             debugPanel.AppendLabeledValue(
                 $"Distance to Loot",
-                $" {(category == "" ? '-' : _lootingBrain.DistanceToLoot)}",
+                $" {(category == "" ? "-" : Math.Sqrt(_lootingBrain.DistanceToLoot).ToString("0.##"))}m",
                 Color.grey,
                 Color.grey
             );

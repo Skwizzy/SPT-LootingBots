@@ -64,7 +64,7 @@ namespace LootingBots.Patch.Components
 
             debugPanel.AppendLabeledValue(
                 $"Total looted value",
-                $" {NetLootValue}₽",
+                $" {NetLootValue:n0}₽",
                 Color.white,
                 Color.white
             );
