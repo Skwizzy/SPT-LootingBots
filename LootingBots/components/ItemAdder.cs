@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 using Comfort.Common;
@@ -10,6 +11,8 @@ using EFT;
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
+
+using UnityEngine;
 
 namespace LootingBots.Patch.Components
 {
@@ -32,6 +35,41 @@ namespace LootingBots.Patch.Components
         }
     }
 
+    // public class ItemAdderResult {
+    //     public bool Interrupted = false;
+    //     public float ChangeInLootValue;
+
+    //     public ItemAdderResult(bool interrupted = false) {
+    //         Interrupted = interrupted;
+    //     }
+
+    //     public void Deconstruct(out bool interrupted, out float changeInLootValue)
+    //     {
+    //         interrupted = Interrupted;
+    //         changeInLootValue = ChangeInLootValue;
+    //     }
+    // }
+
+    public class BotStats
+    {
+        public float NetLootValue;
+        public GearValue WeaponValues = new GearValue();
+
+        public void AddNetValue(float itemPrice)
+        {
+            NetLootValue += itemPrice;
+        }
+
+        public void SubtractNetValue(float itemPrice)
+        {
+            NetLootValue += itemPrice;
+        }
+
+        public void StatsDebugMenu(StringBuilder debugPanel) {
+            debugPanel.AppendLabeledValue($"Total looted value", $" {NetLootValue}₽", Color.white, Color.white);
+        }
+    }
+
     public class ItemAdder
     {
         private readonly BotLog _log;
@@ -42,10 +80,16 @@ namespace LootingBots.Patch.Components
         private readonly ItemAppraiser _itemAppraiser;
         private readonly bool _isBoss;
 
+        public BotStats Stats = new BotStats();
+
         private static readonly GearValue GearValue = new GearValue();
 
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int CurrentBodyArmorClass = 0;
+
+        // Represents the value in roubles of the current item
+        public float CurrentItemPrice = 0f;
+
         public bool ShouldSort = true;
 
         public ItemAdder(BotOwner botOwner, LootingBrain lootingBrain)
@@ -212,7 +256,10 @@ namespace LootingBots.Patch.Components
                     else if (action.Move != null)
                     {
                         _log.LogDebug("Moving due to GetEquipAction");
-                        await _transactionController.MoveItem(action.Move);
+                        if (await _transactionController.MoveItem(action.Move))
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                        }
                         continue;
                     }
 
@@ -221,6 +268,7 @@ namespace LootingBots.Patch.Components
 
                     if (ableToEquip)
                     {
+                        Stats.AddNetValue(CurrentItemPrice);
                         continue;
                     }
 
@@ -238,6 +286,7 @@ namespace LootingBots.Patch.Components
 
                     if (ableToPickUp)
                     {
+                        Stats.AddNetValue(CurrentItemPrice);
                         continue;
                     }
                 }
@@ -487,7 +536,7 @@ namespace LootingBots.Patch.Components
 
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             bool isPistol = lootWeapon.WeapClass.Equals("pistol");
-            float lootValue = _itemAppraiser.GetItemPrice(lootWeapon);
+            float lootValue = CurrentItemPrice;
 
             if (isPistol)
             {
@@ -524,6 +573,7 @@ namespace LootingBots.Patch.Components
                             async () =>
                             {
                                 ChangeToPrimary();
+                                Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1000);
                             }
                         );
@@ -572,6 +622,7 @@ namespace LootingBots.Patch.Components
                             {
                                 await ThrowUselessMags(secondary);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1500);
                                 ChangeToPrimary();
                             }
@@ -720,16 +771,19 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
-        /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
+        /**
+            Check if the item being looted meets the loot value threshold specified in the mod settings and saves its value in CurrentItemPrice.
+            PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold
+        */
         public bool IsValuableEnough(Item lootItem)
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
-            float price = _itemAppraiser.GetItemPrice(lootItem);
+            CurrentItemPrice = _itemAppraiser.GetItemPrice(lootItem);
             bool isPMC = BotTypeUtils.IsPMC(botType);
 
             // If the bot is a PMC, compare the price against the PMC loot threshold. For all other bot types use the scav threshold
-            return isPMC && price >= LootingBots.PMCLootThreshold.Value
-                || !isPMC && price >= LootingBots.ScavLootThreshold.Value;
+            return isPMC && CurrentItemPrice >= LootingBots.PMCLootThreshold.Value
+                || !isPMC && CurrentItemPrice >= LootingBots.ScavLootThreshold.Value;
         }
 
         /**
@@ -814,6 +868,7 @@ namespace LootingBots.Patch.Components
                     ?? (
                         async () =>
                         {
+                            Stats.SubtractNetValue(_itemAppraiser.GetItemPrice(toThrow));
                             _lootingBrain.IgnoreLoot(toThrow.Id);
                             await TransactionController.SimulatePlayerDelay(1000);
 
@@ -821,8 +876,18 @@ namespace LootingBots.Patch.Components
                             {
                                 await ThrowUselessMags(weapon);
                             }
+
+                            bool isMovingOwnedItem = _botInventoryController.IsItemEquipped(
+                                toEquip
+                            );
                             // Try to equip the item after throwing
-                            await _transactionController.TryEquipItem(toEquip);
+                            if (
+                                await _transactionController.TryEquipItem(toEquip)
+                                && !isMovingOwnedItem
+                            )
+                            {
+                                Stats.AddNetValue(CurrentItemPrice);
+                            }
                         }
                     ),
                 onComplete ?? onSwapComplete

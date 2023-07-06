@@ -173,7 +173,7 @@ namespace LootingBots.Patch.Components
             IsLooting = false;
 
             watch.Stop();
-            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
         }
 
         /**
@@ -220,7 +220,7 @@ namespace LootingBots.Patch.Components
             IsLooting = false;
 
             watch.Stop();
-            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
         }
 
         /**
@@ -249,6 +249,7 @@ namespace LootingBots.Patch.Components
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
             IsLooting = false;
+            _log.LogDebug($"Net Worth: {ItemAdder.Stats.NetLootValue}");
         }
 
         /**
