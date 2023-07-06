@@ -77,7 +77,7 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    public class ItemAdder
+    public class InventoryController
     {
         private readonly BotLog _log;
         private readonly TransactionController _transactionController;
@@ -99,7 +99,7 @@ namespace LootingBots.Patch.Components
 
         public bool ShouldSort = true;
 
-        public ItemAdder(BotOwner botOwner, LootingBrain lootingBrain)
+        public InventoryController(BotOwner botOwner, LootingBrain lootingBrain)
         {
             try
             {

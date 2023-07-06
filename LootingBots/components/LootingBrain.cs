@@ -35,7 +35,7 @@ namespace LootingBots.Patch.Components
         public BotOwner BotOwner;
 
         // Component responsible for adding items to the bot inventory
-        public ItemAdder ItemAdder;
+        public InventoryController InventoryController;
 
         // Current container that the bot will try to loot
         public LootableContainer ActiveContainer;
@@ -71,7 +71,7 @@ namespace LootingBots.Patch.Components
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
             BotOwner = botOwner;
-            ItemAdder = new ItemAdder(BotOwner, this);
+            InventoryController = new InventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
         }
@@ -91,10 +91,10 @@ namespace LootingBots.Patch.Components
 
                 if (isLootFinderEnabled && BotOwner.BotState == EBotState.Active)
                 {
-                    if (ItemAdder.ShouldSort)
+                    if (InventoryController.ShouldSort)
                     {
                         // Sort items in tacVest for better space management
-                        await ItemAdder.SortTacVest();
+                        await InventoryController.SortTacVest();
                     }
 
                     // Open any nearby door
@@ -149,7 +149,7 @@ namespace LootingBots.Patch.Components
                 corpseInventory.GetValue(corpsePlayer);
 
             // Get items to loot from the corpse in a priority order based off the slots
-            EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
+            EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
             _log.LogWarning($"Trying to loot corpse");
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
@@ -158,10 +158,10 @@ namespace LootingBots.Patch.Components
                 .Where(item => item != null && !item.IsUnremovable)
                 .ToArray();
 
-            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(priorityItems);
+            Task<bool> lootTask = InventoryController.TryAddItemsToBot(priorityItems);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            ItemAdder.UpdateActiveWeapon();
+            InventoryController.UpdateActiveWeapon();
 
             if (lootTask.Result)
             {
@@ -173,7 +173,7 @@ namespace LootingBots.Patch.Components
             OnLootingEnd();
 
             watch.Stop();
-            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
+            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}");
         }
 
         /**
@@ -199,7 +199,7 @@ namespace LootingBots.Patch.Components
             Task delayTask = TransactionController.SimulatePlayerDelay(2000);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = ItemAdder.LootNestedItems(item);
+            Task<bool> lootTask = InventoryController.LootNestedItems(item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container after looting if a container was open, and the bot didnt open it
@@ -208,7 +208,7 @@ namespace LootingBots.Patch.Components
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
             }
 
-            ItemAdder.UpdateActiveWeapon();
+            InventoryController.UpdateActiveWeapon();
 
             if (lootTask.Result)
             {
@@ -220,7 +220,7 @@ namespace LootingBots.Patch.Components
             OnLootingEnd();
 
             watch.Stop();
-            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {ItemAdder.Stats.NetLootValue}");
+            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}");
         }
 
         /**
@@ -234,12 +234,12 @@ namespace LootingBots.Patch.Components
 
             _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
             BotOwner.GetPlayer.UpdateInteractionCast();
-            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(new Item[] { item });
+            Task<bool> lootTask = InventoryController.TryAddItemsToBot(new Item[] { item });
 
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
-            ItemAdder.UpdateActiveWeapon();
+            InventoryController.UpdateActiveWeapon();
 
             if (lootTask.Result)
             {
@@ -249,7 +249,7 @@ namespace LootingBots.Patch.Components
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
             OnLootingEnd();
-            _log.LogDebug($"Net Worth: {ItemAdder.Stats.NetLootValue}");
+            _log.LogDebug($"Net Worth: {InventoryController.Stats.NetLootValue}");
         }
 
         public void OnLootingEnd() {
@@ -259,7 +259,7 @@ namespace LootingBots.Patch.Components
         }
 
         public void UpdateGridStats() {
-            ItemAdder.UpdateGridStats();
+            InventoryController.UpdateGridStats();
         }
 
         /**
@@ -276,7 +276,7 @@ namespace LootingBots.Patch.Components
         /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
         public bool IsValuableEnough(Item lootItem)
         {
-            return ItemAdder.IsValuableEnough(lootItem);
+            return InventoryController.IsValuableEnough(lootItem);
         }
 
         /**
@@ -317,19 +317,19 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Wrapper function to enable transactions to be executed by the ItemAdder.
+        * Wrapper function to enable transactions to be executed by the InventoryController.
         */
         public void EnableTransactions()
         {
-            ItemAdder.EnableTransactions();
+            InventoryController.EnableTransactions();
         }
 
         /**
-        * Wrapper function to disable the execution of transactions by the ItemAdder.
+        * Wrapper function to disable the execution of transactions by the InventoryController.
         */
         public void DisableTransactions()
         {
-            ItemAdder.DisableTransactions();
+            InventoryController.DisableTransactions();
         }
 
         /**
