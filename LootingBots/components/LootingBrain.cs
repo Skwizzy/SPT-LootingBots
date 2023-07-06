@@ -179,7 +179,7 @@ namespace LootingBots.Patch.Components
 
             watch.Stop();
             _log.LogDebug(
-                $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}"
+                $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
             );
         }
 
@@ -228,7 +228,7 @@ namespace LootingBots.Patch.Components
 
             watch.Stop();
             _log.LogDebug(
-                $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}"
+                $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
             );
         }
 
@@ -258,7 +258,7 @@ namespace LootingBots.Patch.Components
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
             OnLootingEnd();
-            _log.LogDebug($"Net Worth: {InventoryController.Stats.NetLootValue}");
+            _log.LogDebug($"Net Worth: {Stats.NetLootValue}");
         }
 
         public void OnLootingEnd()
@@ -266,7 +266,6 @@ namespace LootingBots.Patch.Components
             UpdateGridStats();
             BotOwner.AIData.CalcPower();
             IsLooting = false;
-            _log.LogDebug($"{Stats.NetLootValue}");
         }
 
         public void UpdateGridStats()
