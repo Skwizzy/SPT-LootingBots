@@ -58,6 +58,11 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+        public BotStats Stats
+        {
+            get { return InventoryController.Stats; }
+        }
+
         // Boolean showing when the looting coroutine is running
         public bool IsLooting = false;
 
@@ -173,7 +178,9 @@ namespace LootingBots.Patch.Components
             OnLootingEnd();
 
             watch.Stop();
-            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}");
+            _log.LogDebug(
+                $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}"
+            );
         }
 
         /**
@@ -220,7 +227,9 @@ namespace LootingBots.Patch.Components
             OnLootingEnd();
 
             watch.Stop();
-            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}");
+            _log.LogDebug(
+                $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {InventoryController.Stats.NetLootValue}"
+            );
         }
 
         /**
@@ -252,13 +261,16 @@ namespace LootingBots.Patch.Components
             _log.LogDebug($"Net Worth: {InventoryController.Stats.NetLootValue}");
         }
 
-        public void OnLootingEnd() {
+        public void OnLootingEnd()
+        {
             UpdateGridStats();
             BotOwner.AIData.CalcPower();
             IsLooting = false;
+            _log.LogDebug($"{Stats.NetLootValue}");
         }
 
-        public void UpdateGridStats() {
+        public void UpdateGridStats()
+        {
             InventoryController.UpdateGridStats();
         }
 
