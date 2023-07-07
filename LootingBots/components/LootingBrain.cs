@@ -63,8 +63,14 @@ namespace LootingBots.Patch.Components
             get { return InventoryController.Stats; }
         }
 
+        public bool IsBotLooting {
+            get {
+                return LootTaskRunning || HasActiveLootable();
+            }
+        }
+
         // Boolean showing when the looting coroutine is running
-        public bool IsLooting = false;
+        public bool LootTaskRunning = false;
 
         public float DistanceToLoot = 0f;
 
@@ -139,7 +145,7 @@ namespace LootingBots.Patch.Components
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
-            IsLooting = true;
+            LootTaskRunning = true;
             // Initialize corpse inventory controller
             Player corpsePlayer = ActiveCorpse.GetPlayer;
             Type corpseType = corpsePlayer.GetType();
@@ -168,14 +174,9 @@ namespace LootingBots.Patch.Components
 
             InventoryController.UpdateActiveWeapon();
 
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
-
             // Only ignore the corpse if looting was not interrupted
             CleanupCorpse(lootTask.Result);
-            OnLootingEnd();
+            OnLootTaskEnd(lootTask.Result);
 
             watch.Stop();
             _log.LogDebug(
@@ -190,7 +191,7 @@ namespace LootingBots.Patch.Components
         {
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            IsLooting = true;
+            LootTaskRunning = true;
 
             Item item = ActiveContainer.ItemOwner.Items.ToArray()[0];
             _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
@@ -217,14 +218,9 @@ namespace LootingBots.Patch.Components
 
             InventoryController.UpdateActiveWeapon();
 
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
-
             // Only ignore the container if looting was not interrupted
             CleanupContainer(lootTask.Result);
-            OnLootingEnd();
+            OnLootTaskEnd(lootTask.Result);
 
             watch.Stop();
             _log.LogDebug(
@@ -237,7 +233,7 @@ namespace LootingBots.Patch.Components
         */
         public IEnumerator LootItem()
         {
-            IsLooting = true;
+            LootTaskRunning = true;
 
             Item item = ActiveItem.ItemOwner.RootItem;
 
@@ -250,22 +246,21 @@ namespace LootingBots.Patch.Components
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
             InventoryController.UpdateActiveWeapon();
 
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
-
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
-            OnLootingEnd();
+            OnLootTaskEnd(lootTask.Result);
             _log.LogDebug($"Net Worth: {Stats.NetLootValue}");
         }
 
-        public void OnLootingEnd()
+        public void OnLootTaskEnd(bool lootingSuccessful)
         {
             UpdateGridStats();
             BotOwner.AIData.CalcPower();
-            IsLooting = false;
+            LootTaskRunning = false;
+            if (lootingSuccessful)
+            {
+                IncrementLootTimer();
+            }
         }
 
         public void UpdateGridStats()

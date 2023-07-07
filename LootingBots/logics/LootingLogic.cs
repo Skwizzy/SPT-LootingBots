@@ -50,7 +50,7 @@ namespace LootingBots.Brain.Logics
         // Run looting logic only when the bot is not looting and when the bot has an active item to loot
         public bool ShouldUpdate()
         {
-            return !_lootingBrain.IsLooting
+            return !_lootingBrain.LootTaskRunning
                 && _lootingBrain.HasActiveLootable()
                 && BotOwner.BotState == EBotState.Active;
         }
@@ -66,7 +66,7 @@ namespace LootingBots.Brain.Logics
                     bool isCloseEnough = IsCloseEnough();
 
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_lootingBrain.IsLooting && isCloseEnough)
+                    if (!_lootingBrain.LootTaskRunning && isCloseEnough)
                     {
                         // Crouch and look to item
                         BotOwner.SetPose(0f);
@@ -77,7 +77,7 @@ namespace LootingBots.Brain.Logics
                 }
 
                 // Try to move the bot to the destination
-                if (_moveTimer < Time.time && !_lootingBrain.IsLooting)
+                if (_moveTimer < Time.time && !_lootingBrain.LootTaskRunning)
                 {
                     _moveTimer = Time.time + 4f;
 
@@ -258,7 +258,7 @@ namespace LootingBots.Brain.Logics
             bool isCloseEnough = dist < 0.85f && Math.Abs(y) < 0.5f;
 
             // If the bot is not looting anything, check to see if the bot is stuck
-            if (!_lootingBrain.IsLooting && !IsBotStuck(dist))
+            if (!_lootingBrain.LootTaskRunning && !IsBotStuck(dist))
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
                 _lootingBrain.DistanceToLoot = dist;

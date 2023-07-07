@@ -17,6 +17,11 @@ namespace LootingBots.Brain
         private readonly LootingBrain _lootingBrain;
         private float _scanTimer;
 
+        private bool IsScheduledScan
+        {
+            get { return _scanTimer < Time.time && _lootingBrain.WaitAfterLootTimer < Time.time; }
+        }
+
         public LootingLayer(BotOwner botOwner, int priority)
             : base(botOwner, priority)
         {
@@ -32,11 +37,8 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            bool scheduledScan =
-                _scanTimer < Time.time && _lootingBrain.WaitAfterLootTimer < Time.time;
-
             bool isBotActive = BotOwner.BotState == EBotState.Active;
-            return isBotActive && (scheduledScan || _lootingBrain.HasActiveLootable());
+            return isBotActive && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
 
         public override void Start()
@@ -53,15 +55,15 @@ namespace LootingBots.Brain
 
         public override Action GetNextAction()
         {
-            if (!_lootingBrain.HasActiveLootable())
+            if (_lootingBrain.IsBotLooting)
+            {
+                return new Action(typeof(LootingLogic), "Looting");
+            }
+
+            if (IsScheduledScan)
             {
                 _scanTimer = Time.time + 6f;
                 return new Action(typeof(FindLootLogic), "Loot Scan");
-            }
-
-            if (_lootingBrain.HasActiveLootable())
-            {
-                return new Action(typeof(LootingLogic), "Looting");
             }
 
             return new Action(typeof(PeacefulLogic), "Peaceful");
@@ -70,7 +72,13 @@ namespace LootingBots.Brain
         public override bool IsCurrentActionEnding()
         {
             Type currentActionType = CurrentAction?.Type;
-            return currentActionType != typeof(LootingLogic) || EndLooting();
+
+            if (currentActionType == typeof(FindLootLogic))
+            {
+                return _lootingBrain.HasActiveLootable();
+            }
+
+            return !_lootingBrain.IsBotLooting;
         }
 
         public override void BuildDebugText(StringBuilder debugPanel)
@@ -95,7 +103,7 @@ namespace LootingBots.Brain
             }
 
             debugPanel.AppendLine(
-                _lootingBrain.IsLooting ? "Looting in progress..." : "",
+                _lootingBrain.LootTaskRunning ? "Looting in progress..." : "",
                 Color.green
             );
             debugPanel.AppendLabeledValue(
@@ -111,7 +119,7 @@ namespace LootingBots.Brain
                 Color.grey,
                 Color.grey
             );
-            
+
             _lootingBrain.Stats.StatsDebugPanel(debugPanel);
         }
 
