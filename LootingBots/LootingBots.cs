@@ -32,7 +32,10 @@ namespace LootingBots
         public static ConfigEntry<BotType> LooseItemLootingEnabled;
 
         public static ConfigEntry<float> TimeToWaitBetweenLoot;
-        public static ConfigEntry<float> DetectLootDistance;
+        public static ConfigEntry<float> DetectItemDistance;
+        public static ConfigEntry<float> DetectContainerDistance;
+        public static ConfigEntry<float> DetectCorpseDistance;
+
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
         public static Log LootLog;
@@ -58,6 +61,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
+            DetectCorpseDistance = Config.Bind(
+                "Loot Finder",
+                "Detect corpse distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a corpse",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
             ContainerLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable container looting",
@@ -65,7 +78,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables container looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 5 }
+                    new ConfigurationManagerAttributes { Order = 9 }
+                )
+            );
+            DetectContainerDistance = Config.Bind(
+                "Loot Finder",
+                "Detect container distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a container",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
             LooseItemLootingEnabled = Config.Bind(
@@ -75,7 +98,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables loose item looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 4 }
+                    new ConfigurationManagerAttributes { Order = 8 }
+                )
+            );
+            DetectItemDistance = Config.Bind(
+                "Loot Finder",
+                "Detect item distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect an item",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
             TimeToWaitBetweenLoot = Config.Bind(
@@ -85,17 +118,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "The amount of time the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
                     null,
-                    new ConfigurationManagerAttributes { Order = 3 }
-                )
-            );
-            DetectLootDistance = Config.Bind(
-                "Loot Finder",
-                "Detect loot distance",
-                75f,
-                new ConfigDescription(
-                    "Distance (in meters) a bot is able to detect a container/item/corpse",
-                    null,
-                    new ConfigurationManagerAttributes { Order = 2 }
+                    new ConfigurationManagerAttributes { Order = 7 }
                 )
             );
             LootingLogLevels = Config.Bind(
