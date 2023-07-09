@@ -193,7 +193,7 @@ namespace LootingBots
             );
             PMCGearToEquip = Config.Bind(
                 "Loot Settings",
-                "PMC:Allowed gear to equip",
+                "PMC: Allowed gear to equip",
                 EquipmentType.All,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to equip during raid",
