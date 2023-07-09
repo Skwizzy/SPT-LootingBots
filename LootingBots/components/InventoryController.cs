@@ -268,18 +268,11 @@ namespace LootingBots.Patch.Components
 
                 if (item != null && item.Name != null)
                 {
-                    _log.LogInfo($"Loot found: {item.Name.Localized()}");
+                    CurrentItemPrice = _itemAppraiser.GetItemPrice(item);
+                    _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
                     if (item is MagazineClass mag && !CanUseMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
-                        continue;
-                    }
-
-                    if (!IsValuableEnough(item))
-                    {
-                        _log.LogDebug(
-                            $"Item does not meet value threshold: {item.Name.Localized()} ({_itemAppraiser.GetItemPrice(item)}). Skipping"
-                        );
                         continue;
                     }
 
@@ -851,35 +844,36 @@ namespace LootingBots.Patch.Components
             Check if the item being looted meets the loot value threshold specified in the mod settings and saves its value in CurrentItemPrice.
             PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold
         */
-        public bool IsValuableEnough(Item lootItem)
+        public bool IsValuableEnough(float itemPrice)
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
-            CurrentItemPrice = _itemAppraiser.GetItemPrice(lootItem);
             bool isPMC = BotTypeUtils.IsPMC(botType);
 
             // If the bot is a PMC, compare the price against the PMC loot threshold. For all other bot types use the scav threshold
-            return isPMC && CurrentItemPrice >= LootingBots.PMCLootThreshold.Value
-                || !isPMC && CurrentItemPrice >= LootingBots.ScavLootThreshold.Value;
+            return isPMC && itemPrice >= LootingBots.PMCLootThreshold.Value
+                || !isPMC && itemPrice >= LootingBots.ScavLootThreshold.Value;
         }
 
         public bool AllowedToEquip(Item lootItem)
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
-
-            return isPMC
+            bool allowedToEquip = isPMC
                 ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
+
+            return allowedToEquip && IsValuableEnough(CurrentItemPrice);
         }
 
         public bool AllowedToPickup(Item lootItem)
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
-
-            return isPMC
+            bool allowedToPickup = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
+
+            return allowedToPickup && IsValuableEnough(CurrentItemPrice);
         }
 
         /**

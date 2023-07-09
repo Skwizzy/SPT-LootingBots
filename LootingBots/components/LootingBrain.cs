@@ -282,7 +282,8 @@ namespace LootingBots.Patch.Components
         /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
         public bool IsValuableEnough(Item lootItem)
         {
-            return InventoryController.IsValuableEnough(lootItem);
+            float itemValue = LootingBots.ItemAppraiser.GetItemPrice(lootItem);
+            return InventoryController.IsValuableEnough(itemValue);
         }
 
         /**
