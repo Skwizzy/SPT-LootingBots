@@ -38,7 +38,10 @@ namespace LootingBots.Brain
         public override bool IsActive()
         {
             bool isBotActive = BotOwner.BotState == EBotState.Active;
-            return isBotActive && (IsScheduledScan || _lootingBrain.IsBotLooting);
+            bool hasAvailableSlots = _lootingBrain.Stats.AvailableGridSpaces > 0;
+            return isBotActive
+                && hasAvailableSlots
+                && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
 
         public override void Start()
