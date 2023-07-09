@@ -298,6 +298,7 @@ namespace LootingBots
                     "Knight",
                     "BossZryachiy",
                     "Tagilla",
+                    "Killa",
                     "BossSanitar",
                     "BossBully"
                 },
