@@ -301,7 +301,8 @@ namespace LootingBots.Patch.Components
                     }
 
                     // Check to see if we can equip the item
-                    bool ableToEquip = await _transactionController.TryEquipItem(item);
+                    bool ableToEquip =
+                        AllowedToEquip(item) && await _transactionController.TryEquipItem(item);
 
                     if (ableToEquip)
                     {
@@ -309,22 +310,55 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
-                    bool success = await LootNestedItems(item);
-
-                    if (!success)
+                    // If the item we are trying to pickup is a weapon, we need to perform the "pickup" action before trying to strip the weapon of its mods. This is to
+                    // prevent stripping the mods from a weapon and then picking up the weapon afterwards.
+                    if (item is Weapon weapon)
                     {
-                        UpdateKnownItems();
-                        return success;
+                        bool ableToPickUp =
+                            AllowedToPickup(weapon)
+                            && await _transactionController.TryPickupItem(weapon);
+
+                        if (ableToPickUp)
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                            continue;
+                        }
+
+                        if (LootingBots.CanStripAttachments.Value)
+                        {
+                            // Strip the weapon of its mods if we cannot pickup the weapon
+                            bool success = await TryAddItemsToBot(
+                                weapon.Mods.Where(mod => !mod.IsUnremovable).ToArray()
+                            );
+
+                            if (!success)
+                            {
+                                UpdateKnownItems();
+                                return success;
+                            }
+                        }
                     }
-
-                    // Check to see if we can pick up the item
-                    bool ableToPickUp = await _transactionController.TryPickupItem(item);
-
-                    if (ableToPickUp)
+                    else
                     {
-                        Stats.AddNetValue(CurrentItemPrice);
-                        continue;
+                        // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
+                        bool success = await LootNestedItems(item);
+
+                        if (!success)
+                        {
+                            UpdateKnownItems();
+                            return success;
+                        }
+
+                        // Check to see if we can pick up the item
+                        bool ableToPickUp =
+                            AllowedToPickup(item)
+                            && await _transactionController.TryPickupItem(item);
+
+                        if (ableToPickUp)
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                            continue;
+                        }
                     }
                 }
                 else
@@ -432,6 +466,11 @@ namespace LootingBots.Patch.Components
             string lootID = lootItem?.Parent?.Container?.ID;
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             TransactionController.SwapAction swapAction = null;
+
+            if (!AllowedToEquip(lootItem))
+            {
+                return action;
+            }
 
             if (lootItem.Template is WeaponTemplate && !_isBoss)
             {
@@ -823,6 +862,26 @@ namespace LootingBots.Patch.Components
                 || !isPMC && CurrentItemPrice >= LootingBots.ScavLootThreshold.Value;
         }
 
+        public bool AllowedToEquip(Item lootItem)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+
+            return isPMC
+                ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
+                : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
+        }
+
+        public bool AllowedToPickup(Item lootItem)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+
+            return isPMC
+                ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
+                : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
+        }
+
         /**
         *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
         */
@@ -855,7 +914,7 @@ namespace LootingBots.Patch.Components
 
             if (hasBackpack || hasTacVest)
             {
-                _log.LogWarning($"Has backpack/rig and is looting weapons first!");
+                _log.LogDebug($"Has backpack/rig and is looting weapons first!");
                 prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
             }
             else
