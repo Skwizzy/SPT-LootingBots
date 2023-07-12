@@ -7,6 +7,14 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
+using GridClass = GClass2405;
+using InteractResultClass = GClass2843;
+using GridManagerClass = GClass2703;
+using SortResultStruct = GStruct371<GClass2703>;
+using GridItemClass = GClass2413;
+using ItemAddressExClass = GClass2664;
+using SortErrorClass = GClass3100;
+
 namespace LootingBots.Patch.Util
 {
     public static class LootUtils
@@ -25,10 +33,10 @@ namespace LootingBots.Patch.Util
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
         {
-            GClass2165[] grids = container.Grids;
+            GridClass[] grids = container.Grids;
             int gridSize = 0;
 
-            foreach (GClass2165 grid in grids)
+            foreach (GridClass grid in grids)
             {
                 gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
             }
@@ -46,14 +54,14 @@ namespace LootingBots.Patch.Util
         /** Triggers a container to open/close */
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
-            GClass2600 result = new GClass2600(action);
+            InteractResultClass result = new InteractResultClass(action);
             container.Interact(result);
         }
 
         /**
         * Sorts the items in a container and places them in grid spaces that match their exact size before moving on to a bigger slot size. This helps make more room in the container for items to be placed in
         */
-        public static GStruct322<GClass2462> SortContainer(
+        public static SortResultStruct SortContainer(
             SearchableItemClass container,
             InventoryControllerClass controller
         )
@@ -61,7 +69,7 @@ namespace LootingBots.Patch.Util
             if (container != null)
             {
                 List<object> newLocations = new List<object>();
-                GClass2462 gridManager = new GClass2462(container, controller);
+                GridManagerClass gridManager = new GridManagerClass(container, controller);
                 List<Item> itemsInContainer = new List<Item>();
 
                 // Remove positions of all loot
@@ -95,9 +103,9 @@ namespace LootingBots.Patch.Util
                             foundPlace = true;
                             gridManager.AddItemToGrid(
                                 grid,
-                                new GClass2173(
+                                new GridItemClass(
                                     item,
-                                    ((GClass2423)item.CurrentAddress).LocationInGrid
+                                    ((ItemAddressExClass)item.CurrentAddress).LocationInGrid
                                 )
                             );
                             break;
@@ -109,18 +117,18 @@ namespace LootingBots.Patch.Util
                         // Sorting has failed! Rollback state of rig
                         gridManager.RollBack();
                         LootingBots.LootLog.LogError("Sort Failed");
-                        return new GClass2857(item);
+                        return new SortErrorClass(item);
                     }
                 }
                 return gridManager;
             }
 
             LootingBots.LootLog.LogError("No container!");
-            return new GClass2857(null);
+            return new SortErrorClass(null);
         }
 
         // Sort grids in the container from smallest to largest
-        public static GClass2165[] SortGrids(GClass2165[] grids)
+        public static GridClass[] SortGrids(GridClass[] grids)
         {
             // Sort grids in the container from smallest to largest
             var containerGrids = grids.ToList();
@@ -138,13 +146,13 @@ namespace LootingBots.Patch.Util
         /**
         * Calculates the amount of empty grid slots in the container
         */
-        public static int GetAvailableGridSlots(GClass2165[] grids)
+        public static int GetAvailableGridSlots(GridClass[] grids)
         {
             if (grids == null) {
-                grids = new GClass2165[] {};
+                grids = new GridClass[] {};
             }
 
-            List<GClass2165> gridList = grids.ToList();
+            List<GridClass> gridList = grids.ToList();
             return gridList.Aggregate(
                 0,
                 (freeSpaces, grid) =>
@@ -160,10 +168,10 @@ namespace LootingBots.Patch.Util
         /**
         * Returns an array of available grid slots, omitting 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
         */
-        public static GClass2165[] Reserve2x1Slot(GClass2165[] grids)
+        public static GridClass[] Reserve2x1Slot(GridClass[] grids)
         {
             const int RESERVE_SLOT_COUNT = 2;
-            List<GClass2165> gridList = grids.ToList();
+            List<GridClass> gridList = grids.ToList();
             foreach (var grid in gridList)
             {
                 int gridSize = grid.GridHeight.Value * grid.GridWidth.Value;
@@ -182,7 +190,7 @@ namespace LootingBots.Patch.Util
         }
 
         /** Return the amount of spaces taken up by all the items in a given grid slot */
-        public static int GetSizeOfContainedItems(this GClass2165 grid)
+        public static int GetSizeOfContainedItems(this GridClass grid)
         {
             return grid.Items.Aggregate(0, (sum, item2) => sum + item2.GetItemSize());
         }
@@ -195,10 +203,10 @@ namespace LootingBots.Patch.Util
         }
 
         // Custom extension for EFT InventoryControllerClass.FindGridToPickUp that uses a custom method for choosing the grid slot to place a loot item
-        public static GClass2423 FindGridToPickUp(
+        public static ItemAddressExClass FindGridToPickUp(
             this InventoryControllerClass controller,
             Item item,
-            IEnumerable<GClass2165> grids = null
+            IEnumerable<GridClass> grids = null
         )
         {
             var prioritzedGrids =
@@ -208,7 +216,7 @@ namespace LootingBots.Patch.Util
                 var address = grid.FindFreeSpace(item);
                 if (address != null)
                 {
-                    return new GClass2423(grid, address);
+                    return new ItemAddressExClass(grid, address);
                 }
             }
 
@@ -216,7 +224,7 @@ namespace LootingBots.Patch.Util
         }
 
         // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
-        public static IEnumerable<GClass2165> GetPrioritizedGridsForLoot(
+        public static IEnumerable<GridClass> GetPrioritizedGridsForLoot(
             this EquipmentClass equipment,
             Item item
         )
@@ -230,19 +238,18 @@ namespace LootingBots.Patch.Util
             SearchableItemClass secureContainer = (SearchableItemClass)
                 equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
 
-            // GClass2165 is Grid class
-            GClass2165[] tacVestGrids = new GClass2165[0];
+            GridClass[] tacVestGrids = new GridClass[0];
             if (tacVest != null)
             {
                 var sortedGrids = SortGrids(tacVest.Grids);
                 tacVestGrids = Reserve2x1Slot(sortedGrids);
             }
 
-            GClass2165[] backpackGrids =
-                (backpack != null) ? SortGrids(backpack.Grids) : new GClass2165[0];
-            GClass2165[] pocketGrids = (pockets != null) ? pockets.Grids : new GClass2165[0];
-            GClass2165[] secureContainerGrids =
-                (secureContainer != null) ? secureContainer.Grids : new GClass2165[0];
+            GridClass[] backpackGrids =
+                (backpack != null) ? SortGrids(backpack.Grids) : new GridClass[0];
+            GridClass[] pocketGrids = (pockets != null) ? pockets.Grids : new GridClass[0];
+            GridClass[] secureContainerGrids =
+                (secureContainer != null) ? secureContainer.Grids : new GridClass[0];
 
             if (item is BulletClass || item is MagazineClass)
             {
