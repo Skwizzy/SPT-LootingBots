@@ -9,6 +9,9 @@ using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
+using InventoryOperationResultStruct = GStruct370;
+using InventoryHelperClass = GClass2669;
+
 namespace LootingBots.Patch.Components
 {
     public class TransactionController
@@ -245,7 +248,7 @@ namespace LootingBots.Patch.Components
                 }
 
                 _log.LogDebug($"Moving item to: {moveAction?.Place?.Container?.ID?.Localized()}");
-                var value = GClass2428.Move(
+                var value = InventoryHelperClass.Move(
                     moveAction.ToMove,
                     moveAction.Place,
                     _inventoryController,
@@ -357,7 +360,7 @@ namespace LootingBots.Patch.Components
         }
 
         public Task<IResult> TryRunNetworkTransaction(
-            GStruct321 operationResult,
+            InventoryOperationResultStruct operationResult,
             Callback callback = null
         )
         {

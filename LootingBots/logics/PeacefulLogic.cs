@@ -1,16 +1,18 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 
+using PeacefulNodeClass = GClass176;
+
 namespace LootingBots.Brain.Logics
 {
     internal class PeacefulLogic : CustomLogic
     {
-        private readonly GClass176 _baseLogic;
+        private readonly PeacefulNodeClass _baseLogic;
 
-        // PatrolAssault peacful logic
+        // PatrolAssault peaceful logic
         public PeacefulLogic(BotOwner botOwner) : base(botOwner)
         {
-            _baseLogic = new GClass176(botOwner);
+            _baseLogic = new PeacefulNodeClass(botOwner);
         }
 
         public override void Update()
