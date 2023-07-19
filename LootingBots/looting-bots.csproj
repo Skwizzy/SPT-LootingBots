@@ -79,7 +79,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Compile Include="LootingBotsController.cs" />
+    <Compile Include="LootingBots.cs" />
     <Compile Include="LootingLayer.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />

@@ -1,3 +1,5 @@
+using System.Text;
+
 using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
@@ -12,23 +14,32 @@ namespace LootingBots.Brain.Logics
 {
     internal class FindLootLogic : CustomLogic
     {
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
         private readonly BotLog _log;
+
+        private float DetectCorpseDistance
+        {
+            get { return Mathf.Pow(LootingBots.DetectCorpseDistance.Value, 2); }
+        }
+        private float DetectContainerDistance
+        {
+            get { return Mathf.Pow(LootingBots.DetectContainerDistance.Value, 2); }
+        }
+        private float DetectItemDistance
+        {
+            get { return Mathf.Pow(LootingBots.DetectItemDistance.Value, 2); }
+        }
 
         public FindLootLogic(BotOwner botOwner)
             : base(botOwner)
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
-            _lootFinder = botOwner.GetPlayer.gameObject.GetComponent<LootFinder>();
+            _lootingBrain = botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
         }
 
         public override void Update()
         {
-            // Kick off looting logic
-            if (!_lootFinder.HasActiveLootable())
-            {
                 FindLootable();
-            }
         }
 
         public void FindLootable()
@@ -38,10 +49,17 @@ namespace LootingBots.Brain.Logics
             BotOwner closestCorpse = null;
             float shortestDist = -1f;
 
+            // Use the largest detection radius specified in the settings as the main Sphere radius
+            float detectionRadius = Mathf.Max(
+                LootingBots.DetectItemDistance.Value,
+                LootingBots.DetectContainerDistance.Value,
+                LootingBots.DetectCorpseDistance.Value
+            );
+
             // Cast a sphere on the bot, detecting any Interacive world objects that collide with the sphere
             Collider[] array = Physics.OverlapSphere(
                 BotOwner.Position,
-                LootingBots.DetectLootDistance.Value,
+                detectionRadius,
                 LootUtils.LootMask,
                 QueryTriggerInteraction.Collide
             );
@@ -59,7 +77,7 @@ namespace LootingBots.Brain.Logics
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && container != null
-                    && !_lootFinder.IsLootIgnored(container.Id)
+                    && !_lootingBrain.IsLootIgnored(container.Id)
                     && container.isActiveAndEnabled
                     && container.DoorState != EDoorState.Locked;
 
@@ -71,32 +89,25 @@ namespace LootingBots.Brain.Logics
                     && !(lootItem is Corpse)
                     && lootItem?.ItemOwner?.RootItem != null
                     && !lootItem.ItemOwner.RootItem.QuestItem
-                    && !_lootFinder.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
+                    && _lootingBrain.IsValuableEnough(lootItem.ItemOwner.RootItem)
+                    && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
 
                 bool canLootCorpse =
                     LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && corpse != null
-                    && !_lootFinder.IsLootIgnored(corpse.name);
+                    && corpse.GetPlayer != null
+                    && !_lootingBrain.IsLootIgnored(corpse.name);
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
-                    // If we havent already visted the container, calculate its distance and save the container with the smallest distance
-                    Vector3 vector =
-                        BotOwner.Position
-                        - (
-                            container?.transform.position
-                            ?? lootItem?.transform.position
-                            ?? corpse.GetPlayer.Transform.position
-                        );
-                    float dist = vector.sqrMagnitude;
+                    // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
+                    bool isInRange = IsLootInRange(container, lootItem, corpse, out float dist);
 
-                    // If we are considering a container to be the new closest container, make sure the bot has a valid NavMeshPath for the container before adding it as the closest container
-                    if (shortestDist == -1f || dist < shortestDist)
+                    // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
+                    if (isInRange && (shortestDist == -1f || dist < shortestDist))
                     {
-                        shortestDist = dist;
-
                         if (canLootContainer)
                         {
                             closestItem = null;
@@ -116,41 +127,57 @@ namespace LootingBots.Brain.Logics
                             closestItem = lootItem;
                         }
 
-                        _lootFinder.LootObjectCenter = collider.bounds.center;
+                        _lootingBrain.LootObjectCenter = collider.bounds.center;
                         // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                        _lootFinder.LootObjectCenter.y =
+                        _lootingBrain.LootObjectCenter.y =
                             collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
+                        _lootingBrain.DistanceToLoot = shortestDist;
                     }
                 }
             }
 
             if (closestContainer != null)
             {
-                _log.LogDebug($"Found container {closestContainer.name.Localized()}");
-                _lootFinder.ActiveContainer = closestContainer;
-                _lootFinder.LootObjectPosition = closestContainer.transform.position;
-
+                _lootingBrain.ActiveContainer = closestContainer;
+                _lootingBrain.LootObjectPosition = closestContainer.transform.position;
                 ActiveLootCache.CacheActiveLootId(closestContainer.Id, BotOwner.name);
             }
             else if (closestItem != null)
             {
-                _log.LogDebug(
-                    $"Found item {closestItem.Name.Localized()} {closestItem.ItemOwner.RootItem.Id}"
-                );
-
-                _lootFinder.ActiveItem = closestItem;
-                _lootFinder.LootObjectPosition = closestItem.transform.position;
-
+                _lootingBrain.ActiveItem = closestItem;
+                _lootingBrain.LootObjectPosition = closestItem.transform.position;
                 ActiveLootCache.CacheActiveLootId(closestItem.ItemOwner.RootItem.Id, BotOwner.name);
             }
             else if (closestCorpse != null)
             {
-                _log.LogDebug($"Found corpse: {closestCorpse.name}");
-                _lootFinder.ActiveCorpse = closestCorpse;
-                _lootFinder.LootObjectPosition = closestCorpse.Transform.position;
-
+                _lootingBrain.ActiveCorpse = closestCorpse;
+                _lootingBrain.LootObjectPosition = closestCorpse.Transform.position;
                 ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }
+        }
+
+        /**
+        * Checks to see if any of the found lootable items are within their detection range specified in the mod settings.
+        */
+        public bool IsLootInRange(
+            LootableContainer container,
+            LootItem lootItem,
+            BotOwner corpse,
+            out float dist
+        )
+        {
+            Vector3 vector =
+                BotOwner.Position
+                - (
+                    container?.transform.position
+                    ?? lootItem?.transform.position
+                    ?? corpse.GetPlayer.Transform.position
+                );
+            dist = vector.sqrMagnitude;
+
+            return (container != null && DetectContainerDistance >= dist)
+                || (lootItem != null && DetectItemDistance >= dist)
+                || (corpse != null && DetectCorpseDistance >= dist);
         }
     }
 }

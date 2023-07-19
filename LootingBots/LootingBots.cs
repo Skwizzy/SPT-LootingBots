@@ -22,25 +22,37 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.1.0";
+        private const string MOD_VERSION = "1.1.1";
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
-        // Loot Finder
+        // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ConfigEntry<BotType> ContainerLootingEnabled;
         public static ConfigEntry<BotType> LooseItemLootingEnabled;
 
         public static ConfigEntry<float> TimeToWaitBetweenLoot;
-        public static ConfigEntry<float> DetectLootDistance;
+        public static ConfigEntry<float> DetectItemDistance;
+        public static ConfigEntry<float> DetectContainerDistance;
+        public static ConfigEntry<float> DetectCorpseDistance;
+
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
+        public static Log LootLog;
+
+        // Loot Settings
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<bool> ValueFromMods;
-        public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
-        public static Log LootLog;
-        public static Log ItemAppraiserLog;
+        public static ConfigEntry<bool> CanStripAttachments;
+        public static ConfigEntry<float> PMCLootThreshold;
+        public static ConfigEntry<float> ScavLootThreshold;
+        public static ConfigEntry<EquipmentType> PMCGearToEquip;
+        public static ConfigEntry<EquipmentType> PMCGearToPickup;
+        public static ConfigEntry<EquipmentType> ScavGearToEquip;
+        public static ConfigEntry<EquipmentType> ScavGearToPickup;
 
+        public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
+        public static Log ItemAppraiserLog;
         public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
 
         public void LootFinderSettings()
@@ -55,6 +67,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
+            DetectCorpseDistance = Config.Bind(
+                "Loot Finder",
+                "Detect corpse distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a corpse",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 9 }
+                )
+            );
             ContainerLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable container looting",
@@ -62,7 +84,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables container looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 5 }
+                    new ConfigurationManagerAttributes { Order = 8 }
+                )
+            );
+            DetectContainerDistance = Config.Bind(
+                "Loot Finder",
+                "Detect container distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect a container",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 7 }
                 )
             );
             LooseItemLootingEnabled = Config.Bind(
@@ -72,7 +104,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables loose item looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 4 }
+                    new ConfigurationManagerAttributes { Order = 6 }
+                )
+            );
+            DetectItemDistance = Config.Bind(
+                "Loot Finder",
+                "Detect item distance",
+                75f,
+                new ConfigDescription(
+                    "Distance (in meters) a bot is able to detect an item",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
             TimeToWaitBetweenLoot = Config.Bind(
@@ -81,16 +123,6 @@ namespace LootingBots
                 15f,
                 new ConfigDescription(
                     "The amount of time the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
-                    null,
-                    new ConfigurationManagerAttributes { Order = 3 }
-                )
-            );
-            DetectLootDistance = Config.Bind(
-                "Loot Finder",
-                "Detect loot distance",
-                75f,
-                new ConfigDescription(
-                    "Distance (in meters) a bot is able to detect a container/item/corpse",
                     null,
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
@@ -117,30 +149,101 @@ namespace LootingBots
             );
         }
 
-        public void WeaponLootSettings()
+        public void LootSettings()
         {
             UseMarketPrices = Config.Bind(
-                "Weapon Looting",
+                "Loot Settings",
                 "Use flea market prices",
                 false,
                 new ConfigDescription(
-                    "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.",
+                    "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 10 }
+                )
+            );
+            ValueFromMods = Config.Bind(
+                "Loot Settings",
+                "Calculate weapon value from attachments",
+                true,
+                new ConfigDescription(
+                    "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 9 }
+                )
+            );
+            CanStripAttachments = Config.Bind(
+                "Loot Settings",
+                "Allow weapon attachment stripping",
+                true,
+                new ConfigDescription(
+                    "Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 8 }
+                )
+            );
+            PMCLootThreshold = Config.Bind(
+                "Loot Settings",
+                "PMC: Loot value threshold",
+                12000f,
+                new ConfigDescription(
+                    "PMC bots will only loot items that exceed the specified value in roubles",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 6 }
+                )
+            );
+            PMCGearToEquip = Config.Bind(
+                "Loot Settings",
+                "PMC: Allowed gear to equip",
+                EquipmentType.All,
+                new ConfigDescription(
+                    "The equipment a PMC bot is able to equip during raid",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 5 }
+                )
+            );
+            PMCGearToPickup = Config.Bind(
+                "Loot Settings",
+                "PMC: Allowed gear in bags",
+                EquipmentType.All,
+                new ConfigDescription(
+                    "The equipment a PMC bot is able to place in their backpack/rig",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }
+                )
+            );
+            ScavLootThreshold = Config.Bind(
+                "Loot Settings",
+                "Scav: Loot value threshold",
+                5000f,
+                new ConfigDescription(
+                    "All non-PMC bots will only loot items that exceed the specified value in roubles.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
+            );
+            ScavGearToEquip = Config.Bind(
+                "Loot Settings",
+                "Scav: Allowed gear to equip",
+                EquipmentType.All,
+                new ConfigDescription(
+                    "The equipment a non-PMC bot is able to equip during raid",
                     null,
                     new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
-            ValueFromMods = Config.Bind(
-                "Weapon Looting",
-                "Calculate value from attachments",
-                true,
+            ScavGearToPickup = Config.Bind(
+                "Loot Settings",
+                "Scav: Allowed gear in bags",
+                EquipmentType.All,
                 new ConfigDescription(
-                    "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues",
+                    "The equipment a non-PMC bot is able to place in their backpack/rig",
                     null,
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
+
             ItemAppraiserLogLevels = Config.Bind(
-                "Weapon Looting",
+                "Loot Settings",
                 "Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
@@ -154,7 +257,7 @@ namespace LootingBots
         public void Awake()
         {
             LootFinderSettings();
-            WeaponLootSettings();
+            LootSettings();
 
             LootLog = new Log(Logger, LootingLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
@@ -192,8 +295,10 @@ namespace LootingBots
                     "FollowerBully",
                     "BirdEye",
                     "BigPipe",
+                    "Knight",
                     "BossZryachiy",
                     "Tagilla",
+                    "Killa",
                     "BossSanitar",
                     "BossBully"
                 },

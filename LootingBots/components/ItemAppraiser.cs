@@ -4,6 +4,7 @@ using System.Linq;
 using Comfort.Common;
 
 using EFT;
+using EFT.HandBook;
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
@@ -84,8 +85,8 @@ namespace LootingBots.Patch.Components
         /** Gets the price of the item as stated from the beSession handbook values */
         public float GetItemHandbookPrice(Item lootItem)
         {
-            float price = HandbookData[lootItem.TemplateId]?.Price ?? 0;
-
+            HandbookData.TryGetValue(lootItem.TemplateId, out HandbookData value);
+            float price = value?.Price ?? 0;
             Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
             return price;
         }

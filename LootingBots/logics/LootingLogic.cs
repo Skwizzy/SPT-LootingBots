@@ -15,20 +15,19 @@ namespace LootingBots.Brain.Logics
 {
     internal class LootingLogic : CustomLogic
     {
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
         private readonly BotLog _log;
         private float _closeEnoughTimer = 0f;
         private float _moveTimer = 0f;
         private int _stuckCount = 0;
         private int _navigationAttempts = 0;
         private Vector3 _destination;
-        private float _distanceToDestination = 0f;
 
         public LootingLogic(BotOwner botOwner)
             : base(botOwner)
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
-            _lootFinder = botOwner.GetPlayer.gameObject.GetComponent<LootFinder>();
+            _lootingBrain = botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
         }
 
         public override void Update()
@@ -40,18 +39,20 @@ namespace LootingBots.Brain.Logics
             }
         }
 
-        // Run looting logic only when the bot is not looting and when the bot has an active item to loot
-        public bool ShouldUpdate()
-        {
-            return !_lootFinder.IsLooting && _lootFinder.HasActiveLootable();
-        }
-
         public override void Start()
         {
-            _distanceToDestination = 0;
+            _lootingBrain.DistanceToLoot = 0;
             _stuckCount = 0;
             _navigationAttempts = 0;
             base.Start();
+        }
+
+        // Run looting logic only when the bot is not looting and when the bot has an active item to loot
+        public bool ShouldUpdate()
+        {
+            return !_lootingBrain.LootTaskRunning
+                && _lootingBrain.HasActiveLootable()
+                && BotOwner.BotState == EBotState.Active;
         }
 
         private void TryLoot()
@@ -65,18 +66,18 @@ namespace LootingBots.Brain.Logics
                     bool isCloseEnough = IsCloseEnough();
 
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_lootFinder.IsLooting && isCloseEnough)
+                    if (!_lootingBrain.LootTaskRunning && isCloseEnough)
                     {
                         // Crouch and look to item
                         BotOwner.SetPose(0f);
-                        BotOwner.Steering.LookToPoint(_lootFinder.LootObjectPosition);
-                        _lootFinder.StartLooting();
+                        BotOwner.Steering.LookToPoint(_lootingBrain.LootObjectPosition);
+                        _lootingBrain.StartLooting();
                         return;
                     }
                 }
 
                 // Try to move the bot to the destination
-                if (_moveTimer < Time.time && !_lootFinder.IsLooting)
+                if (_moveTimer < Time.time && !_lootingBrain.LootTaskRunning)
                 {
                     _moveTimer = Time.time + 4f;
 
@@ -86,7 +87,7 @@ namespace LootingBots.Brain.Logics
                     // If there is not a valid path to the loot, ignore the loot forever
                     if (!canMove)
                     {
-                        _lootFinder.HandleNonNavigableLoot();
+                        _lootingBrain.HandleNonNavigableLoot();
                         _stuckCount = 0;
                     }
                 }
@@ -101,11 +102,11 @@ namespace LootingBots.Brain.Logics
             Check to see if the destination point and the loot object do not have a wall between them by casting a Ray between the two points.
             Walls should be on the LowPolyCollider LayerMask, so we can assume if we see one of these then we cannot properly loot
         */
-        public bool HasLOS(Vector3 destination)
+        public bool HasLOS()
         {
-            Vector3 rayDirection = _lootFinder.LootObjectPosition - destination;
+            Vector3 rayDirection = _lootingBrain.LootObjectPosition - _destination;
 
-            if (Physics.Raycast(destination, rayDirection, out RaycastHit hit))
+            if (Physics.Raycast(_destination, rayDirection, out RaycastHit hit))
             {
                 if (hit.collider.gameObject.layer == LootUtils.LowPolyMask)
                 {
@@ -119,8 +120,8 @@ namespace LootingBots.Brain.Logics
             return true;
         }
 
-        /** 
-        * Makes the bot look towards the target destination and begin moving towards it. Navigation will be cancelled if the bot has not moved in more than 2 navigation calls, if the destination cannot be snapped to a mesh, 
+        /**
+        * Makes the bot look towards the target destination and begin moving towards it. Navigation will be cancelled if the bot has not moved in more than 2 navigation calls, if the destination cannot be snapped to a mesh,
         * or if the NavPathStatus is anything other than Completed
         */
         public bool TryMoveToLoot()
@@ -137,16 +138,16 @@ namespace LootingBots.Brain.Logics
                 _navigationAttempts++;
 
                 string lootableName =
-                    _lootFinder.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
-                    ?? _lootFinder.ActiveItem?.Name.Localized()
-                    ?? _lootFinder.ActiveCorpse.GetPlayer.name.Localized();
+                    _lootingBrain.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
+                    ?? _lootingBrain.ActiveItem?.Name.Localized()
+                    ?? _lootingBrain.ActiveCorpse.GetPlayer?.name.Localized();
 
                 // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the lootable otherwise ignore the container forever
                 bool isBotStuck = _stuckCount > 1;
                 bool isNavigationLimit = _navigationAttempts > 30;
                 if (!isBotStuck && !isNavigationLimit)
                 {
-                    Vector3 center = _lootFinder.LootObjectCenter;
+                    Vector3 center = _lootingBrain.LootObjectCenter;
 
                     // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
                     Vector3 pointNearbyContainer = NavMesh.SamplePosition(
@@ -186,7 +187,7 @@ namespace LootingBots.Brain.Logics
                     }
 
                     // If we were able to snap the loot position to a NavMesh, attempt to navigate
-                    if (pointNearbyContainer != Vector3.zero && HasLOS(_destination))
+                    if (pointNearbyContainer != Vector3.zero && HasLOS())
                     {
                         NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                             pointNearbyContainer,
@@ -257,10 +258,10 @@ namespace LootingBots.Brain.Logics
             bool isCloseEnough = dist < 0.85f && Math.Abs(y) < 0.5f;
 
             // If the bot is not looting anything, check to see if the bot is stuck
-            if (!_lootFinder.IsLooting && !IsBotStuck(dist))
+            if (!_lootingBrain.LootTaskRunning && !IsBotStuck(dist))
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
-                _distanceToDestination = dist;
+                _lootingBrain.DistanceToLoot = dist;
             }
 
             return isCloseEnough;
@@ -270,7 +271,7 @@ namespace LootingBots.Brain.Logics
         public bool IsBotStuck(float dist)
         {
             // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
-            float changeInDist = Math.Abs(_distanceToDestination - dist);
+            float changeInDist = Math.Abs(_lootingBrain.DistanceToLoot - dist);
             bool isStuck = changeInDist < 0.25f;
 
             if (isStuck)

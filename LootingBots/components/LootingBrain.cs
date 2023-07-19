@@ -30,11 +30,12 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    public class LootFinder : MonoBehaviour
+    public class LootingBrain : MonoBehaviour
     {
         public BotOwner BotOwner;
+
         // Component responsible for adding items to the bot inventory
-        public ItemAdder ItemAdder;
+        public InventoryController InventoryController;
 
         // Current container that the bot will try to loot
         public LootableContainer ActiveContainer;
@@ -57,8 +58,21 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+        public BotStats Stats
+        {
+            get { return InventoryController.Stats; }
+        }
+
+        public bool IsBotLooting {
+            get {
+                return LootTaskRunning || HasActiveLootable();
+            }
+        }
+
         // Boolean showing when the looting coroutine is running
-        public bool IsLooting = false;
+        public bool LootTaskRunning = false;
+
+        public float DistanceToLoot = 0f;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
@@ -68,7 +82,7 @@ namespace LootingBots.Patch.Components
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
             BotOwner = botOwner;
-            ItemAdder = new ItemAdder(BotOwner, this);
+            InventoryController = new InventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
         }
@@ -88,10 +102,10 @@ namespace LootingBots.Patch.Components
 
                 if (isLootFinderEnabled && BotOwner.BotState == EBotState.Active)
                 {
-                    if (ItemAdder.ShouldSort)
+                    if (InventoryController.ShouldSort)
                     {
                         // Sort items in tacVest for better space management
-                        await ItemAdder.SortTacVest();
+                        await InventoryController.SortTacVest();
                     }
 
                     // Open any nearby door
@@ -131,7 +145,7 @@ namespace LootingBots.Patch.Components
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
 
-            IsLooting = true;
+            LootTaskRunning = true;
             // Initialize corpse inventory controller
             Player corpsePlayer = ActiveCorpse.GetPlayer;
             Type corpseType = corpsePlayer.GetType();
@@ -146,7 +160,7 @@ namespace LootingBots.Patch.Components
                 corpseInventory.GetValue(corpsePlayer);
 
             // Get items to loot from the corpse in a priority order based off the slots
-            EquipmentSlot[] prioritySlots = ItemAdder.GetPrioritySlots();
+            EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
             _log.LogWarning($"Trying to loot corpse");
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
@@ -155,22 +169,19 @@ namespace LootingBots.Patch.Components
                 .Where(item => item != null && !item.IsUnremovable)
                 .ToArray();
 
-            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(priorityItems);
+            Task<bool> lootTask = InventoryController.TryAddItemsToBot(priorityItems);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            ItemAdder.UpdateActiveWeapon();
-            IsLooting = false;
-
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
+            InventoryController.UpdateActiveWeapon();
 
             // Only ignore the corpse if looting was not interrupted
             CleanupCorpse(lootTask.Result);
+            OnLootTaskEnd(lootTask.Result);
 
             watch.Stop();
-            _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug(
+                $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
+            );
         }
 
         /**
@@ -180,7 +191,7 @@ namespace LootingBots.Patch.Components
         {
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            IsLooting = true;
+            LootTaskRunning = true;
 
             Item item = ActiveContainer.ItemOwner.Items.ToArray()[0];
             _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
@@ -196,7 +207,7 @@ namespace LootingBots.Patch.Components
             Task delayTask = TransactionController.SimulatePlayerDelay(2000);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = ItemAdder.LootNestedItems(item);
+            Task<bool> lootTask = InventoryController.LootNestedItems(item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container after looting if a container was open, and the bot didnt open it
@@ -205,19 +216,16 @@ namespace LootingBots.Patch.Components
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
             }
 
-            ItemAdder.UpdateActiveWeapon();
-            IsLooting = false;
-
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
+            InventoryController.UpdateActiveWeapon();
 
             // Only ignore the container if looting was not interrupted
             CleanupContainer(lootTask.Result);
+            OnLootTaskEnd(lootTask.Result);
 
             watch.Stop();
-            _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s");
+            _log.LogDebug(
+                $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
+            );
         }
 
         /**
@@ -225,28 +233,39 @@ namespace LootingBots.Patch.Components
         */
         public IEnumerator LootItem()
         {
-            IsLooting = true;
+            LootTaskRunning = true;
 
             Item item = ActiveItem.ItemOwner.RootItem;
 
             _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
             BotOwner.GetPlayer.UpdateInteractionCast();
-            Task<bool> lootTask = ItemAdder.TryAddItemsToBot(new Item[] { item });
+            Task<bool> lootTask = InventoryController.TryAddItemsToBot(new Item[] { item });
 
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             BotOwner.GetPlayer.CurrentState.Pickup(false, null);
-            ItemAdder.UpdateActiveWeapon();
-
-            if (lootTask.Result)
-            {
-                IncrementLootTimer();
-            }
+            InventoryController.UpdateActiveWeapon();
 
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
             CleanupItem(lootTask.Result, item);
+            OnLootTaskEnd(lootTask.Result);
+            _log.LogDebug($"Net Worth: {Stats.NetLootValue}");
+        }
 
-            IsLooting = false;
+        public void OnLootTaskEnd(bool lootingSuccessful)
+        {
+            UpdateGridStats();
+            BotOwner.AIData.CalcPower();
+            LootTaskRunning = false;
+            if (lootingSuccessful)
+            {
+                IncrementLootTimer();
+            }
+        }
+
+        public void UpdateGridStats()
+        {
+            InventoryController.UpdateGridStats();
         }
 
         /**
@@ -258,6 +277,13 @@ namespace LootingBots.Patch.Components
                 NonNavigableLootIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
             return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
+        }
+
+        /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
+        public bool IsValuableEnough(Item lootItem)
+        {
+            float itemValue = LootingBots.ItemAppraiser.GetItemPrice(lootItem);
+            return InventoryController.IsValuableEnough(itemValue);
         }
 
         /**
@@ -298,19 +324,19 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Wrapper function to enable transactions to be executed by the ItemAdder.
+        * Wrapper function to enable transactions to be executed by the InventoryController.
         */
         public void EnableTransactions()
         {
-            ItemAdder.EnableTransactions();
+            InventoryController.EnableTransactions();
         }
 
         /**
-        * Wrapper function to disable the execution of transactions by the ItemAdder.
+        * Wrapper function to disable the execution of transactions by the InventoryController.
         */
         public void DisableTransactions()
         {
-            ItemAdder.DisableTransactions();
+            InventoryController.DisableTransactions();
         }
 
         /**
@@ -340,9 +366,6 @@ namespace LootingBots.Patch.Components
         public void CleanupContainer(bool ignore = true)
         {
             LootableContainer container = ActiveContainer;
-            _log.LogWarning(
-                $"Clearing active container: {container.name.Localized()} ({container.Id})"
-            );
             ActiveLootCache.Cleanup(container.Id);
 
             if (ignore)
@@ -359,8 +382,6 @@ namespace LootingBots.Patch.Components
         public void CleanupItem(bool ignore = true, Item movedItem = null)
         {
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
-
-            _log.LogWarning($"Clearing active item: {item?.Name?.Localized()} ({item?.Id})");
             ActiveLootCache.Cleanup(item.Id);
 
             if (ignore)
@@ -378,9 +399,6 @@ namespace LootingBots.Patch.Components
         {
             BotOwner corpse = ActiveCorpse;
             string name = corpse.name;
-            _log.LogWarning(
-                $"Clearing active corpse: {name} ({corpse.GetPlayer.name.Localized()})"
-            );
             ActiveLootCache.Cleanup(name);
 
             if (ignore)

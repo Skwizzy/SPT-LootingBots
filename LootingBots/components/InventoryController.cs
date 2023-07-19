@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 using Comfort.Common;
@@ -10,6 +11,8 @@ using EFT;
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
+
+using UnityEngine;
 
 namespace LootingBots.Patch.Components
 {
@@ -32,28 +35,78 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    public class ItemAdder
+    public class BotStats
+    {
+        public float NetLootValue;
+        public int AvailableGridSpaces;
+        public int TotalGridSpaces;
+
+        public GearValue WeaponValues = new GearValue();
+
+        public void AddNetValue(float itemPrice)
+        {
+            NetLootValue += itemPrice;
+        }
+
+        public void SubtractNetValue(float itemPrice)
+        {
+            NetLootValue += itemPrice;
+        }
+
+        public void StatsDebugPanel(StringBuilder debugPanel)
+        {
+            Color freeSpaceColor =
+                AvailableGridSpaces == 0
+                    ? Color.red
+                    : AvailableGridSpaces < TotalGridSpaces / 2
+                        ? Color.yellow
+                        : Color.green;
+
+            debugPanel.AppendLabeledValue(
+                $"Total looted value",
+                $" {NetLootValue:n0}₽",
+                Color.white,
+                Color.white
+            );
+            debugPanel.AppendLabeledValue(
+                $"Available space",
+                $" {AvailableGridSpaces} slots",
+                Color.white,
+                freeSpaceColor
+            );
+        }
+    }
+
+    public class InventoryController
     {
         private readonly BotLog _log;
         private readonly TransactionController _transactionController;
         private readonly BotOwner _botOwner;
         private readonly InventoryControllerClass _botInventoryController;
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
+        private readonly ItemAppraiser _itemAppraiser;
         private readonly bool _isBoss;
+
+        public BotStats Stats = new BotStats();
 
         private static readonly GearValue GearValue = new GearValue();
 
         // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
         public int CurrentBodyArmorClass = 0;
+
+        // Represents the value in roubles of the current item
+        public float CurrentItemPrice = 0f;
+
         public bool ShouldSort = true;
 
-        public ItemAdder(BotOwner botOwner, LootFinder lootFinder)
+        public InventoryController(BotOwner botOwner, LootingBrain lootingBrain)
         {
             try
             {
                 _log = new BotLog(LootingBots.LootLog, botOwner);
-                _lootFinder = lootFinder;
+                _lootingBrain = lootingBrain;
                 _isBoss = LootUtils.IsBoss(botOwner);
+                _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
                 Type botOwnerType = botOwner.GetPlayer.GetType();
@@ -87,6 +140,7 @@ namespace LootingBots.Patch.Components
                 CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
                 CalculateGearValue();
+                UpdateGridStats();
             }
             catch (Exception e)
             {
@@ -128,19 +182,48 @@ namespace LootingBots.Patch.Components
 
             if (primary != null && GearValue.Primary.Id != primary.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(primary);
+                float value = _itemAppraiser.GetItemPrice(primary);
                 GearValue.Primary = new ValuePair(primary.Id, value);
             }
             if (secondary != null && GearValue.Secondary.Id != secondary.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(secondary);
+                float value = _itemAppraiser.GetItemPrice(secondary);
                 GearValue.Secondary = new ValuePair(secondary.Id, value);
             }
             if (holster != null && GearValue.Holster.Id != holster.Id)
             {
-                float value = LootingBots.ItemAppraiser.GetItemPrice(holster);
+                float value = _itemAppraiser.GetItemPrice(holster);
                 GearValue.Holster = new ValuePair(holster.Id, value);
             }
+        }
+
+        /**
+        * Updates stats for AvailableGridSpaces and TotalGridSpaces based off the bots current gear
+        */
+        public void UpdateGridStats()
+        {
+            SearchableItemClass tacVest = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem;
+            SearchableItemClass backpack = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Backpack)
+                    .ContainedItem;
+            SearchableItemClass pockets = (SearchableItemClass)
+                _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Pockets)
+                    .ContainedItem;
+
+            int freePockets = LootUtils.GetAvailableGridSlots(pockets?.Grids);
+            int freeTacVest = LootUtils.GetAvailableGridSlots(tacVest?.Grids);
+            int freeBackpack = LootUtils.GetAvailableGridSlots(backpack?.Grids);
+
+            Stats.AvailableGridSpaces = freeBackpack + freePockets + freeTacVest;
+            Stats.TotalGridSpaces =
+                (tacVest?.Grids?.Length ?? 0)
+                + (backpack?.Grids?.Length ?? 0)
+                + (pockets?.Grids?.Length ?? 0);
         }
 
         /**
@@ -185,7 +268,8 @@ namespace LootingBots.Patch.Components
 
                 if (item != null && item.Name != null)
                 {
-                    _log.LogDebug($"Loot found: {item.Name.Localized()}");
+                    CurrentItemPrice = _itemAppraiser.GetItemPrice(item);
+                    _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
                     if (item is MagazineClass mag && !CanUseMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
@@ -202,33 +286,72 @@ namespace LootingBots.Patch.Components
                     else if (action.Move != null)
                     {
                         _log.LogDebug("Moving due to GetEquipAction");
-                        await _transactionController.MoveItem(action.Move);
+                        if (await _transactionController.MoveItem(action.Move))
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                        }
                         continue;
                     }
 
                     // Check to see if we can equip the item
-                    bool ableToEquip = await _transactionController.TryEquipItem(item);
+                    bool ableToEquip =
+                        AllowedToEquip(item) && await _transactionController.TryEquipItem(item);
 
                     if (ableToEquip)
                     {
+                        Stats.AddNetValue(CurrentItemPrice);
                         continue;
                     }
 
-                    // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
-                    bool success = await LootNestedItems(item);
-
-                    if (!success)
+                    // If the item we are trying to pickup is a weapon, we need to perform the "pickup" action before trying to strip the weapon of its mods. This is to
+                    // prevent stripping the mods from a weapon and then picking up the weapon afterwards.
+                    if (item is Weapon weapon)
                     {
-                        UpdateKnownItems();
-                        return success;
+                        bool ableToPickUp =
+                            AllowedToPickup(weapon)
+                            && await _transactionController.TryPickupItem(weapon);
+
+                        if (ableToPickUp)
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                            continue;
+                        }
+
+                        if (LootingBots.CanStripAttachments.Value)
+                        {
+                            // Strip the weapon of its mods if we cannot pickup the weapon
+                            bool success = await TryAddItemsToBot(
+                                weapon.Mods.Where(mod => !mod.IsUnremovable).ToArray()
+                            );
+
+                            if (!success)
+                            {
+                                UpdateKnownItems();
+                                return success;
+                            }
+                        }
                     }
-
-                    // Check to see if we can pick up the item
-                    bool ableToPickUp = await _transactionController.TryPickupItem(item);
-
-                    if (ableToPickUp)
+                    else
                     {
-                        continue;
+                        // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
+                        bool success = await LootNestedItems(item);
+
+                        if (!success)
+                        {
+                            UpdateKnownItems();
+                            return success;
+                        }
+
+                        // Check to see if we can pick up the item
+                        bool ableToPickUp =
+                            AllowedToPickup(item)
+                            && await _transactionController.TryPickupItem(item);
+
+                        if (ableToPickUp)
+                        {
+                            Stats.AddNetValue(CurrentItemPrice);
+                            continue;
+                        }
                     }
                 }
                 else
@@ -336,6 +459,11 @@ namespace LootingBots.Patch.Components
             string lootID = lootItem?.Parent?.Container?.ID;
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             TransactionController.SwapAction swapAction = null;
+
+            if (!AllowedToEquip(lootItem))
+            {
+                return action;
+            }
 
             if (lootItem.Template is WeaponTemplate && !_isBoss)
             {
@@ -458,7 +586,7 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Determines the kind of equip action the bot should take when encountering a weapon. Bots will always prefer to replace weapons that have lower value when encountering a higher value weapon. 
+        * Determines the kind of equip action the bot should take when encountering a weapon. Bots will always prefer to replace weapons that have lower value when encountering a higher value weapon.
         */
         public TransactionController.EquipAction GetWeaponEquipAction(Weapon lootWeapon)
         {
@@ -477,7 +605,7 @@ namespace LootingBots.Patch.Components
 
             TransactionController.EquipAction action = new TransactionController.EquipAction();
             bool isPistol = lootWeapon.WeapClass.Equals("pistol");
-            float lootValue = LootingBots.ItemAppraiser.GetItemPrice(lootWeapon);
+            float lootValue = CurrentItemPrice;
 
             if (isPistol)
             {
@@ -514,6 +642,7 @@ namespace LootingBots.Patch.Components
                             async () =>
                             {
                                 ChangeToPrimary();
+                                Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1000);
                             }
                         );
@@ -562,6 +691,7 @@ namespace LootingBots.Patch.Components
                             {
                                 await ThrowUselessMags(secondary);
                                 await _transactionController.TryEquipItem(lootWeapon);
+                                Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1500);
                                 ChangeToPrimary();
                             }
@@ -711,6 +841,42 @@ namespace LootingBots.Patch.Components
         }
 
         /**
+            Check if the item being looted meets the loot value threshold specified in the mod settings and saves its value in CurrentItemPrice.
+            PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold
+        */
+        public bool IsValuableEnough(float itemPrice)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+
+            // If the bot is a PMC, compare the price against the PMC loot threshold. For all other bot types use the scav threshold
+            return isPMC && itemPrice >= LootingBots.PMCLootThreshold.Value
+                || !isPMC && itemPrice >= LootingBots.ScavLootThreshold.Value;
+        }
+
+        public bool AllowedToEquip(Item lootItem)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+            bool allowedToEquip = isPMC
+                ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
+                : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
+
+            return allowedToEquip && IsValuableEnough(CurrentItemPrice);
+        }
+
+        public bool AllowedToPickup(Item lootItem)
+        {
+            WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
+            bool isPMC = BotTypeUtils.IsPMC(botType);
+            bool allowedToPickup = isPMC
+                ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
+                : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
+
+            return allowedToPickup && IsValuableEnough(CurrentItemPrice);
+        }
+
+        /**
         *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
         */
         public EquipmentSlot[] GetPrioritySlots()
@@ -742,7 +908,7 @@ namespace LootingBots.Patch.Components
 
             if (hasBackpack || hasTacVest)
             {
-                _log.LogWarning($"Has backpack/rig and is looting weapons first!");
+                _log.LogDebug($"Has backpack/rig and is looting weapons first!");
                 prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
             }
             else
@@ -792,15 +958,26 @@ namespace LootingBots.Patch.Components
                     ?? (
                         async () =>
                         {
-                            _lootFinder.IgnoreLoot(toThrow.Id);
+                            Stats.SubtractNetValue(_itemAppraiser.GetItemPrice(toThrow));
+                            _lootingBrain.IgnoreLoot(toThrow.Id);
                             await TransactionController.SimulatePlayerDelay(1000);
 
                             if (toThrow is Weapon weapon)
                             {
                                 await ThrowUselessMags(weapon);
                             }
+
+                            bool isMovingOwnedItem = _botInventoryController.IsItemEquipped(
+                                toEquip
+                            );
                             // Try to equip the item after throwing
-                            await _transactionController.TryEquipItem(toEquip);
+                            if (
+                                await _transactionController.TryEquipItem(toEquip)
+                                && !isMovingOwnedItem
+                            )
+                            {
+                                Stats.AddNetValue(CurrentItemPrice);
+                            }
                         }
                     ),
                 onComplete ?? onSwapComplete

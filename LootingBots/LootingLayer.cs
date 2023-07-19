@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 using DrakiaXYZ.BigBrain.Brains;
 
@@ -13,16 +14,20 @@ namespace LootingBots.Brain
 {
     internal class LootingLayer : CustomLayer
     {
-        private readonly LootFinder _lootFinder;
+        private readonly LootingBrain _lootingBrain;
         private float _scanTimer;
 
+        private bool IsScheduledScan
+        {
+            get { return _scanTimer < Time.time && _lootingBrain.WaitAfterLootTimer < Time.time; }
+        }
 
         public LootingLayer(BotOwner botOwner, int priority)
             : base(botOwner, priority)
         {
-            LootFinder lootFinder = botOwner.GetPlayer.gameObject.AddComponent<LootFinder>();
-            lootFinder.Init(botOwner);
-            _lootFinder = lootFinder;
+            LootingBrain lootingBrain = botOwner.GetPlayer.gameObject.AddComponent<LootingBrain>();
+            lootingBrain.Init(botOwner);
+            _lootingBrain = lootingBrain;
         }
 
         public override string GetName()
@@ -32,30 +37,36 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            return (_scanTimer < Time.time && _lootFinder.WaitAfterLootTimer < Time.time) || _lootFinder.HasActiveLootable();
+            bool isBotActive = BotOwner.BotState == EBotState.Active;
+            bool hasAvailableSlots = _lootingBrain.Stats.AvailableGridSpaces > 0;
+            return isBotActive
+                && hasAvailableSlots
+                && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
 
         public override void Start()
         {
-            _lootFinder.EnableTransactions();
+            _lootingBrain.EnableTransactions();
             base.Start();
         }
 
         public override void Stop()
         {
-            _lootFinder.DisableTransactions();
+            _lootingBrain.DisableTransactions();
             base.Stop();
         }
 
         public override Action GetNextAction()
         {
-            if (!_lootFinder.HasActiveLootable()) {
-                _scanTimer = Time.time + 6f;
-                return new Action(typeof(FindLootLogic), "Loot Scan");
+            if (_lootingBrain.IsBotLooting)
+            {
+                return new Action(typeof(LootingLogic), "Looting");
             }
 
-            if (_lootFinder.HasActiveLootable()) {
-                return new Action(typeof(LootingLogic), "Looting");
+            if (IsScheduledScan)
+            {
+                _scanTimer = Time.time + 6f;
+                return new Action(typeof(FindLootLogic), "Loot Scan");
             }
 
             return new Action(typeof(PeacefulLogic), "Peaceful");
@@ -64,14 +75,62 @@ namespace LootingBots.Brain
         public override bool IsCurrentActionEnding()
         {
             Type currentActionType = CurrentAction?.Type;
-            return currentActionType != typeof(LootingLogic) || EndLooting();
+
+            if (currentActionType == typeof(FindLootLogic))
+            {
+                return _lootingBrain.HasActiveLootable();
+            }
+
+            return !_lootingBrain.IsBotLooting;
+        }
+
+        public override void BuildDebugText(StringBuilder debugPanel)
+        {
+            string itemName = _lootingBrain.ActiveItem?.Name?.Localized();
+            string containerName = _lootingBrain.ActiveContainer?.name?.Localized();
+            string corpseName = _lootingBrain.ActiveCorpse?.name?.Localized();
+            string lootableName = itemName ?? containerName ?? corpseName ?? "-";
+
+            string category = "";
+            if (itemName != null)
+            {
+                category = "Item";
+            }
+            else if (containerName != null)
+            {
+                category = "Container";
+            }
+            else if (corpseName != null)
+            {
+                category = "Corpse";
+            }
+
+            debugPanel.AppendLine(
+                _lootingBrain.LootTaskRunning ? "Looting in progress..." : "",
+                Color.green
+            );
+            debugPanel.AppendLabeledValue(
+                $"Target Loot",
+                $" {lootableName} ({category})",
+                Color.yellow,
+                Color.yellow
+            );
+
+            debugPanel.AppendLabeledValue(
+                $"Distance to Loot",
+                $" {(category == "" ? "-" : Math.Sqrt(_lootingBrain.DistanceToLoot).ToString("0.##"))}m",
+                Color.grey,
+                Color.grey
+            );
+
+            _lootingBrain.Stats.StatsDebugPanel(debugPanel);
         }
 
         public bool EndLooting()
         {
-            return _lootFinder.ActiveContainer == null
-                && _lootFinder.ActiveCorpse == null
-                && _lootFinder.ActiveItem == null;
+            return _lootingBrain.ActiveContainer == null
+                && _lootingBrain.ActiveCorpse == null
+                && _lootingBrain.ActiveItem == null;
         }
     }
 }
