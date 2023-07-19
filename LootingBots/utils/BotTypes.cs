@@ -13,8 +13,9 @@ namespace LootingBots.Patch.Util
         Cultist = 8,
         Boss = 16,
         Follower = 32,
+        Bloodhound = 64,
 
-        All = Scav | Pmc | Raider | Cultist | Boss | Follower
+        All = Scav | Pmc | Raider | Cultist | Boss | Follower | Bloodhound
     }
 
     public static class BotTypeUtils
@@ -47,6 +48,11 @@ namespace LootingBots.Patch.Util
         public static bool HasFollower(this BotType botType)
         {
             return botType.HasFlag(BotType.Follower);
+        }
+
+        public static bool HasBloodhound(this BotType botType)
+        {
+            return botType.HasFlag(BotType.Bloodhound);
         }
 
         public static bool IsBotEnabled(this BotType enabledTypes, WildSpawnType botType)
@@ -107,6 +113,10 @@ namespace LootingBots.Patch.Util
                     case WildSpawnType.cursedAssault:
                     {
                         return enabledTypes.HasCultist();
+                    }
+                    case WildSpawnType.arenaFighterEvent:
+                    {
+                        return enabledTypes.HasBloodhound();
                     }
                     default:
                         return false;
