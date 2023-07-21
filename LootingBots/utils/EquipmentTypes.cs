@@ -2,10 +2,10 @@ using System;
 
 using EFT.InventoryLogic;
 
-using BodyArmorClass = GClass2535;
-using HeadArmorClass = GClass2534;
-using BackpackItemClass = GClass2581;
-using TacticalRigItemClass = GClass2582;
+using BodyArmorClass = GClass2536;
+using HeadArmorClass = GClass2535;
+using BackpackItemClass = GClass2582;
+using TacticalRigItemClass = GClass2583;
 
 namespace LootingBots.Patch.Util
 {
