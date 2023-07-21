@@ -80,7 +80,7 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 
 ## Package Contents
 - `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-NoDiscardLimits-1.1.2` - Simple server side mod that marks all items with DiscardLimits as InsuranceDisabled. It then disables the DiscardLimit settings for the server via the EnableDiscardLimits option in Server/database/config/globals.json.
+- `user/mods/Skwizzy-NoDiscardLimits` - Simple server side mod that marks all items with DiscardLimits as InsuranceDisabled. It then disables the DiscardLimit settings for the server via the EnableDiscardLimits option in Server/database/globals.json.
 
 ## Install instructions
 Simply extract the contents of the .zip file into your SPT directory.
