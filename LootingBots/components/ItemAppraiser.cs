@@ -9,7 +9,7 @@ using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
-using HandbookClass = GClass2772;
+using HandbookClass = GClass2773;
 
 namespace LootingBots.Patch.Components
 {
