@@ -72,7 +72,7 @@ namespace LootingBots.Patch.Components
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
 
-        public float DistanceToLoot = 0f;
+        public float DistanceToLoot = -1f;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
