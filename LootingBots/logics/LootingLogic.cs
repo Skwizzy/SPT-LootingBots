@@ -52,7 +52,7 @@ namespace LootingBots.Brain.Logics
         public bool ShouldUpdate()
         {
             return !_lootingBrain.LootTaskRunning
-                && _lootingBrain.HasActiveLootable()
+                && _lootingBrain.HasActiveLootable
                 && BotOwner.BotState == EBotState.Active;
         }
 
@@ -248,7 +248,8 @@ namespace LootingBots.Brain.Logics
         */
         private bool IsCloseEnough()
         {
-            if (_destination == Vector3.zero) {
+            if (_destination == Vector3.zero)
+            {
                 return false;
             }
 
