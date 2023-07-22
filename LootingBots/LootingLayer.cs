@@ -78,7 +78,7 @@ namespace LootingBots.Brain
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                return _lootingBrain.HasActiveLootable();
+                return _lootingBrain.HasActiveLootable;
             }
 
             return !_lootingBrain.IsBotLooting;
