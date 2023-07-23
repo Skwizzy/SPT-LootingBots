@@ -265,6 +265,7 @@ namespace LootingBots
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
             new SettingsAndCachePatch().Enable();
+            new RemoveComponent().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
