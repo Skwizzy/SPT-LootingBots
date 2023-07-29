@@ -10,7 +10,7 @@ using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 
 using InventoryOperationResultStruct = GStruct370;
-using InventoryHelperClass = GClass2670;
+using InventoryHelperClass = GClass2672;
 
 namespace LootingBots.Patch.Components
 {

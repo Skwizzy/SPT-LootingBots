@@ -7,13 +7,13 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
-using GridClass = GClass2406;
-using InteractResultClass = GClass2844;
-using GridManagerClass = GClass2704;
-using SortResultStruct = GStruct371<GClass2704>;
-using GridItemClass = GClass2414;
-using ItemAddressExClass = GClass2665;
-using SortErrorClass = GClass3101;
+using GridClass = GClass2408;
+using InteractResultClass = GClass2846;
+using GridManagerClass = GClass2706;
+using SortResultStruct = GStruct371<GClass2706>;
+using GridItemClass = GClass2416;
+using ItemAddressExClass = GClass2667;
+using SortErrorClass = GClass3103;
 
 namespace LootingBots.Patch.Util
 {
