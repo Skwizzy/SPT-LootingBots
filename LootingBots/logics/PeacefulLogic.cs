@@ -1,7 +1,7 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 
-using PeacefulNodeClass = GClass176;
+using PeacefulNodeClass = GClass177;
 
 namespace LootingBots.Brain.Logics
 {
