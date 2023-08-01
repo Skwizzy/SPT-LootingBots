@@ -2,7 +2,7 @@
   "name": "LootingBots",
   "license": "MIT",
   "author": "Skwizzy",
-  "akiVersion": "~3.5",
+  "akiVersion": "~3.6",
   "scripts": {
       "build": "npm run build:server && npm run build:client",
       "build:server": "cd ./NoDiscardLimit && npm run build",
