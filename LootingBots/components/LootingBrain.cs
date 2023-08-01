@@ -63,16 +63,20 @@ namespace LootingBots.Patch.Components
             get { return InventoryController.Stats; }
         }
 
-        public bool IsBotLooting {
-            get {
-                return LootTaskRunning || HasActiveLootable();
-            }
+        public bool HasActiveLootable
+        {
+            get { return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null; }
+        }
+
+        public bool IsBotLooting
+        {
+            get { return LootTaskRunning || HasActiveLootable; }
         }
 
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
 
-        public float DistanceToLoot = 0f;
+        public float DistanceToLoot = -1f;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
@@ -305,14 +309,6 @@ namespace LootingBots.Patch.Components
             // Increment loot wait timer
             float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value;
             WaitAfterLootTimer = Time.time + timer;
-        }
-
-        /**
-        * Returns true if the LootFinder has an ActiveContainer, ActiveItem, or ActiveCorpse defined
-        */
-        public bool HasActiveLootable()
-        {
-            return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null;
         }
 
         /**
