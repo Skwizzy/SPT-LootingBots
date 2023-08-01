@@ -1,4 +1,4 @@
-[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.0-aki-3.5.8)
+[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.2-aki-3.5.8)
 [![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.1-aki-3.5.8-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.1-aki-3.5.8-beta)
 
 # SPT-LootingBots
@@ -6,7 +6,7 @@
 This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
 
 ## Dependencies
-**SPT-BigBrain 0.1.4**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases/tag/0.1.4
+**SPT-BigBrain ^0.1.4**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases/tag/0.1.4
 
 ## Behavior
 
@@ -38,16 +38,25 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 ## Mod Settings (F12)
 **Loot Finder**
 - `Enable corpse looting` - Enables corpse looting for the selected bot types
+- `Detect corpse distance` - Distance (in meters) a bot is able to detect a corpse
 - `Enable container looting` - Enables container looting for the selected bot types
+- `Detect container distance` - Distance (in meters) a bot is able to detect a container
 - `Enable loose item looting` - Enables loose item looting for the selected bot types
+- `Detect item distance` - Distance (in meters) a bot is able to detect an item
 - `Delay between looting` - The amount of time the bot will wait after looting a container/item/corpse before trying to find the next nearest item/container/corpse
-- `Detect loot distance` - Distance (in meters) a bot is able to detect a container/item/corpse
 - `Log Levels` - Enable different levels of log messages to show in the logs
 - `Debug: Show navigation points` - Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).
 
-**Weapon Loot Settings**
+**Loot Settings**
 - `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
-- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check. Disable if experiencing performance issues!
+- `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check.
+- `Allow weapon attachment stripping` - Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory
+- `PMC: Loot value threshold` - PMC bots will only loot items that exceed the specified value in roubles
+- `PMC: Allowed gear to equip` - The equipment a PMC bot is able to equip during raid
+- `PMC: Allowed gear in bags` - The equipment a PMC bot is able to place in their backpack/rig
+- `Scav: Loot value threshold` - All non-PMC bots will only loot items that exceed the specified value in roubles.
+- `Scav: Allowed gear to equip` - The equipment a non-PMC bot is able to equip during raid
+- `Scav: Allowed gear in bags` - The equipment a non-PMC bot is able to place in their backpack/rig
 - `Log Levels` - Enable different levels of log messages to show in the logs
 
 
@@ -67,11 +76,11 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 - [x] Apply same looting logic to patrol patterns where scavs stop in front of lootable containers
 - [x] Loose loot detection
 - [ ] Container nesting
-- [ ] Customizable params in mod settings
+- [x] Customizable params in mod settings
 
 ## Package Contents
 - `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-NoDiscardLimits-1.0.0` - Small server plugin that sets DiscardLimitsEnabled to false in the server/globals/config. Fixes issues with PMC bots throwing exceptions when discarding items with DiscardLimits (this is the EFT live RMT protection logic)
+- `user/mods/Skwizzy-NoDiscardLimits` - Simple server side mod that marks all items with DiscardLimits as InsuranceDisabled. It then disables the DiscardLimit settings for the server via the EnableDiscardLimits option in Server/database/globals.json.
 
 ## Install instructions
 Simply extract the contents of the .zip file into your SPT directory.
