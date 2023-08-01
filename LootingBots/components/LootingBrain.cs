@@ -243,7 +243,7 @@ namespace LootingBots.Patch.Components
 
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            BotOwner.GetPlayer.CurrentState.Pickup(false, null);
+            BotOwner.GetPlayer.CurrentManagedState.Pickup(false, null);
             InventoryController.UpdateActiveWeapon();
 
             // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted

@@ -9,6 +9,8 @@ using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
+using HandbookClass = GClass2775;
+
 namespace LootingBots.Patch.Components
 {
     public class ItemAppraiser
@@ -38,7 +40,7 @@ namespace LootingBots.Patch.Components
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                HandbookData = Singleton<GClass2531>.Instance.Items.ToDictionary((item) => item.Id);
+                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 
