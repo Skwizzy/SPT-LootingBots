@@ -2,6 +2,11 @@ using System;
 
 using EFT.InventoryLogic;
 
+using BodyArmorClass = GClass2538;
+using HeadArmorClass = GClass2537;
+using BackpackItemClass = GClass2584;
+using TacticalRigItemClass = GClass2585;
+
 namespace LootingBots.Patch.Util
 {
     [Flags]
@@ -55,24 +60,24 @@ namespace LootingBots.Patch.Util
             return equipmentType.HasFlag(EquipmentType.Helmet);
         }
 
-        // GClasses based off GClass2421.FindSlotToPickUp
+        // GClasses based off GClass2645.FindSlotToPickUp
         public static bool IsItemEligible(this EquipmentType allowedGear, Item item)
         {
-            if (item is GClass2295)
+            if (item is BodyArmorClass)
             {
                 return allowedGear.HasArmorVest();
             }
         
-            if (item is GClass2294 headwear && headwear.IsArmorMod())
+            if (item is HeadArmorClass headwear && headwear.IsArmorMod())
             {
                 return allowedGear.HasHelmet();
             }
 
-            if (item is GClass2341)
+            if (item is BackpackItemClass)
             {
                 return allowedGear.HasBackpack();
             }
-            if (item is GClass2342 tacRig)
+            if (item is TacticalRigItemClass tacRig)
             {
                 return tacRig.IsArmorMod()
                     ? allowedGear.HasArmoredRig()

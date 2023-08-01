@@ -13,6 +13,8 @@ using LootingBots.Brain;
 using DrakiaXYZ.BigBrain.Brains;
 using System.Collections.Generic;
 
+using HandbookClass = GClass2775;
+
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
@@ -263,6 +265,7 @@ namespace LootingBots
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
             new SettingsAndCachePatch().Enable();
+            new RemoveComponent().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
@@ -325,7 +328,7 @@ namespace LootingBots
             // Initialize the itemAppraiser when the BE instance comes online
             if (
                 Singleton<ClientApplication<ISession>>.Instance != null
-                && Singleton<GClass2531>.Instance != null
+                && Singleton<HandbookClass>.Instance != null
                 && shoultInitAppraiser
             )
             {
