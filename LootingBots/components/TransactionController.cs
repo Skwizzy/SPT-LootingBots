@@ -11,6 +11,8 @@ using LootingBots.Patch.Util;
 
 using InventoryOperationResultStruct = GStruct370;
 using InventoryHelperClass = GClass2672;
+using GridClassEx = GClass2411;
+using GridCacheClass = GClass1384;
 
 namespace LootingBots.Patch.Components
 {
@@ -143,6 +145,7 @@ namespace LootingBots.Patch.Components
                             else
                             {
                                 ammoAdded += ammo.StackObjectsCount;
+                                Singleton<GridCacheClass>.Instance.Add(location.GetOwner().ID, location.Grid as GridClassEx, ammo);
                             }
                         }
                         else

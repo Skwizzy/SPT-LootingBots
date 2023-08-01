@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using Comfort.Common;
+
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
@@ -8,12 +10,14 @@ using EFT.InventoryLogic;
 using UnityEngine;
 
 using GridClass = GClass2408;
+using GridClassEx = GClass2411;
 using InteractResultClass = GClass2846;
 using GridManagerClass = GClass2706;
 using SortResultStruct = GStruct371<GClass2706>;
 using GridItemClass = GClass2416;
 using ItemAddressExClass = GClass2667;
 using SortErrorClass = GClass3103;
+using GridCacheClass = GClass1384;
 
 namespace LootingBots.Patch.Util
 {
@@ -78,6 +82,7 @@ namespace LootingBots.Patch.Util
                     gridManager.SetOldPositions(grid, grid.ItemCollection.ToListOfLocations());
                     itemsInContainer.AddRange(grid.Items);
                     grid.RemoveAll();
+                    Singleton<GridCacheClass>.Instance.Set(container.Owner.ID, grid as GridClassEx, new string[] { });
                     controller.RaiseEvent(new GEventArgs23(grid));
                 }
 
@@ -108,6 +113,7 @@ namespace LootingBots.Patch.Util
                                     ((ItemAddressExClass)item.CurrentAddress).LocationInGrid
                                 )
                             );
+                            Singleton<GridCacheClass>.Instance.Add(container.Owner.ID, grid as GridClassEx, item);
                             break;
                         }
                     }
