@@ -21,7 +21,7 @@ namespace LootingBots.Brain.Logics
         private float _moveTimer = 0f;
         private int _stuckCount = 0;
         private int _navigationAttempts = 0;
-        private Vector3 _destination;
+        private Vector3 _destination = Vector3.zero;
 
         public LootingLogic(BotOwner botOwner)
             : base(botOwner)
@@ -39,19 +39,20 @@ namespace LootingBots.Brain.Logics
             }
         }
 
-        public override void Start()
+        public override void Stop()
         {
-            _lootingBrain.DistanceToLoot = 0;
+            _destination = Vector3.zero;
+            _lootingBrain.DistanceToLoot = -1f;
             _stuckCount = 0;
             _navigationAttempts = 0;
-            base.Start();
+            base.Stop();
         }
 
         // Run looting logic only when the bot is not looting and when the bot has an active item to loot
         public bool ShouldUpdate()
         {
             return !_lootingBrain.LootTaskRunning
-                && _lootingBrain.HasActiveLootable()
+                && _lootingBrain.HasActiveLootable
                 && BotOwner.BotState == EBotState.Active;
         }
 
@@ -63,10 +64,9 @@ namespace LootingBots.Brain.Logics
                 if (_closeEnoughTimer < Time.time)
                 {
                     _closeEnoughTimer = Time.time + 2f;
-                    bool isCloseEnough = IsCloseEnough();
 
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_lootingBrain.LootTaskRunning && isCloseEnough)
+                    if (!_lootingBrain.LootTaskRunning && IsCloseEnough())
                     {
                         // Crouch and look to item
                         BotOwner.SetPose(0f);
@@ -248,6 +248,11 @@ namespace LootingBots.Brain.Logics
         */
         private bool IsCloseEnough()
         {
+            if (_destination == Vector3.zero)
+            {
+                return false;
+            }
+
             // Calculate distance from bot to destination
             float dist;
             Vector3 vector = BotOwner.Position - _destination;
@@ -257,10 +262,11 @@ namespace LootingBots.Brain.Logics
 
             bool isCloseEnough = dist < 0.85f && Math.Abs(y) < 0.5f;
 
-            // If the bot is not looting anything, check to see if the bot is stuck
-            if (!_lootingBrain.LootTaskRunning && !IsBotStuck(dist))
+            // Check to see if the bot is stuck
+            if (!IsBotStuck(dist))
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
+                _stuckCount = 0;
                 _lootingBrain.DistanceToLoot = dist;
             }
 
@@ -268,7 +274,7 @@ namespace LootingBots.Brain.Logics
         }
 
         // Checks if the bot is stuck moving and increments the stuck counter.
-        public bool IsBotStuck(float dist)
+        private bool IsBotStuck(float dist)
         {
             // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
             float changeInDist = Math.Abs(_lootingBrain.DistanceToLoot - dist);

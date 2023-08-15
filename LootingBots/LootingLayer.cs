@@ -78,7 +78,7 @@ namespace LootingBots.Brain
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                return _lootingBrain.HasActiveLootable();
+                return _lootingBrain.HasActiveLootable;
             }
 
             return !_lootingBrain.IsBotLooting;
@@ -118,7 +118,7 @@ namespace LootingBots.Brain
 
             debugPanel.AppendLabeledValue(
                 $"Distance to Loot",
-                $" {(category == "" ? "-" : Math.Sqrt(_lootingBrain.DistanceToLoot).ToString("0.##"))}m",
+                $" {(category == "" || _lootingBrain.DistanceToLoot == -1f ? "Calculating path..." : $"{Math.Sqrt(_lootingBrain.DistanceToLoot):0.##}m")}",
                 Color.grey,
                 Color.grey
             );
