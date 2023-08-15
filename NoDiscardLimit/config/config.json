@@ -1,0 +1,9 @@
+{
+    "bot_types": [
+        "assault",
+        "bear",
+        "usec"
+    ],
+    "emppy_bag": true,
+    "empty_pockets": true
+}
