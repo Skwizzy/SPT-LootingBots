@@ -4,7 +4,7 @@
     "main": "src/mod.js",
     "license": "MIT",
     "author": "Skwizzy",
-    "akiVersion": "~3.5",
+    "akiVersion": "~3.6",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"

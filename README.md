@@ -1,6 +1,7 @@
 [![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.2-aki-3.6.0)
 [![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.3-aki-3.5.8-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.3-aki-3.6.0-beta)
 
+
 # SPT-LootingBots
 
 This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
