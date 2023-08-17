@@ -25,11 +25,11 @@ class DisableDiscardLimits implements IPostDBLoadMod {
     for (let i in config.bot_types) {
       let botType = config.bot_types[i];
       if (config.empty_pockets) {
-        logger.info("Emptying PMC pockets");
+        logger.info(`Emptying ${botType} pockets`);
         tables.bots.types[botType].inventory.items.Pockets = [];
       }
       if (config.empty_bag) {
-        logger.info("Emptying PMC backpacks");
+        logger.info(`Emptying ${botType} backpacks`);
         tables.bots.types[botType].inventory.items.Backpack = [];
       }
     }
