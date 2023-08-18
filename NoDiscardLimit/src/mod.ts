@@ -65,10 +65,16 @@ class DisableDiscardLimits implements IPostDBLoadMod {
     logInfo("Marking items with DiscardLimits as InsuranceDisabled");
     for (let itemId in tables.templates.items) {
       const template = tables.templates.items[itemId];
-      // When we set DiscardLimitsEnabled to false further down, this will cause some items to be able to be insured when they normally should not be.
-      // The DiscardLimit property is used by BSG for RMT protections and their code internally treats things with discard limits as not insurable.
-      // For items that have a DiscardLimit >= 0, we need to manually flag them as InsuranceDisabled to make sure they still cannot be insured by the player.
-      if (template._props.DiscardLimit >= 0) {
+      /**
+       * When we set DiscardLimitsEnabled to false further down, this will cause some items to be able to be insured when they normally should not be.
+       * The DiscardLimit property is used by BSG for RMT protections and their code internally treats things with discard limits as not insurable.
+       * For items that have a DiscardLimit >= 0, we need to manually flag them as InsuranceDisabled to make sure they still cannot be insured by the player.
+       * Do not disable insurance if the item is marked as always available for insurance.
+       */
+      if (
+        template._props.DiscardLimit >= 0 &&
+        !template._props.IsAlwaysAvailableForInsurance
+      ) {
         template._props.InsuranceDisabled = true;
       }
     }
