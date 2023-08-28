@@ -10,3 +10,16 @@ A server side mod that serves two main purposes for LootingBots.
         - `"usec"` - PMC Usec
     - `empty_bag` - When set to `true`, empty the bags of all bot_types
     - `empty_pockets` - When set to `true`, empty the pockets of all bot_types
+
+        Default config: 
+        ```
+        {
+            "bot_types": [
+                "assault",
+                "bear",
+                "usec"
+            ],
+            "empty_bag": true,
+            "empty_pockets": true
+        }
+        ```

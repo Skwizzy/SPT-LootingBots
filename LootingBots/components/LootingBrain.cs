@@ -202,7 +202,7 @@ namespace LootingBots.Patch.Components
 
             bool didOpen = false;
             // If a container was closed, open it before looting
-            if (ActiveContainer.DoorState == EDoorState.Shut)
+            if (ActiveContainer?.DoorState == EDoorState.Shut)
             {
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
                 didOpen = true;
@@ -215,7 +215,7 @@ namespace LootingBots.Patch.Components
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container after looting if a container was open, and the bot didnt open it
-            if (ActiveContainer.DoorState == EDoorState.Open && !didOpen)
+            if (ActiveContainer?.DoorState == EDoorState.Open && !didOpen)
             {
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
             }
@@ -333,6 +333,7 @@ namespace LootingBots.Patch.Components
         public void DisableTransactions()
         {
             InventoryController.DisableTransactions();
+            Cleanup(false);
         }
 
         /**
@@ -361,15 +362,18 @@ namespace LootingBots.Patch.Components
         */
         public void CleanupContainer(bool ignore = true)
         {
-            LootableContainer container = ActiveContainer;
-            ActiveLootCache.Cleanup(container.Id);
-
-            if (ignore)
+            if (ActiveContainer != null)
             {
-                IgnoreLoot(container.Id);
-            }
+                LootableContainer container = ActiveContainer;
+                ActiveLootCache.Cleanup(container.Id);
 
-            ActiveContainer = null;
+                if (ignore)
+                {
+                    IgnoreLoot(container.Id);
+                }
+
+                ActiveContainer = null;
+            }
         }
 
         /**
@@ -378,14 +382,17 @@ namespace LootingBots.Patch.Components
         public void CleanupItem(bool ignore = true, Item movedItem = null)
         {
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
-            ActiveLootCache.Cleanup(item.Id);
-
-            if (ignore)
+            if (item != null)
             {
-                IgnoreLoot(item.Id);
-            }
+                ActiveLootCache.Cleanup(item.Id);
 
-            ActiveItem = null;
+                if (ignore)
+                {
+                    IgnoreLoot(item.Id);
+                }
+
+                ActiveItem = null;
+            }
         }
 
         /**
@@ -393,16 +400,19 @@ namespace LootingBots.Patch.Components
         */
         public void CleanupCorpse(bool ignore = true)
         {
-            BotOwner corpse = ActiveCorpse;
-            string name = corpse.name;
-            ActiveLootCache.Cleanup(name);
-
-            if (ignore)
+            if (ActiveCorpse != null)
             {
-                IgnoreLoot(name);
-            }
+                BotOwner corpse = ActiveCorpse;
+                string name = corpse.name;
+                ActiveLootCache.Cleanup(name);
 
-            ActiveCorpse = null;
+                if (ignore)
+                {
+                    IgnoreLoot(name);
+                }
+
+                ActiveCorpse = null;
+            }
         }
     }
 }
