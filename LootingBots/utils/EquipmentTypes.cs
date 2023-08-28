@@ -63,30 +63,32 @@ namespace LootingBots.Patch.Util
         // GClasses based off GClass2645.FindSlotToPickUp
         public static bool IsItemEligible(this EquipmentType allowedGear, Item item)
         {
-            if (item is BodyArmorClass)
+            if (IsArmorVest(item))
             {
                 return allowedGear.HasArmorVest();
             }
-        
-            if (item is HeadArmorClass headwear && headwear.IsArmorMod())
+
+            if (IsHelmet(item))
             {
                 return allowedGear.HasHelmet();
             }
 
-            if (item is BackpackItemClass)
+            if (IsBackpack(item))
             {
                 return allowedGear.HasBackpack();
             }
-            if (item is TacticalRigItemClass tacRig)
+
+            if (IsTacticalRig(item))
             {
-                return tacRig.IsArmorMod()
+                return ((TacticalRigItemClass)item).IsArmorMod()
                     ? allowedGear.HasArmoredRig()
                     : allowedGear.HasTacticalRig();
             }
 
             if (item is KnifeClass) { }
 
-            if (item is GrenadeClass) {
+            if (item is GrenadeClass)
+            {
                 return allowedGear.HasGrenade();
             }
 
@@ -98,5 +100,24 @@ namespace LootingBots.Patch.Util
             return true;
         }
 
+        public static bool IsTacticalRig(Item item)
+        {
+            return item is TacticalRigItemClass;
+        }
+
+        public static bool IsBackpack(Item item)
+        {
+            return item is BackpackItemClass;
+        }
+
+        public static bool IsHelmet(Item item)
+        {
+            return item is HeadArmorClass headwear && headwear.IsArmorMod();
+        }
+
+        public static bool IsArmorVest(Item item)
+        {
+            return item is BodyArmorClass;
+        }
     }
 }

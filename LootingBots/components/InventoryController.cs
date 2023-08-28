@@ -105,7 +105,7 @@ namespace LootingBots.Patch.Components
             {
                 _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootingBrain = lootingBrain;
-                _isBoss = LootUtils.IsBoss(botOwner);
+                _isBoss = BotTypeUtils.IsBoss(botOwner.Profile.Info.Settings.Role);
                 _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
@@ -470,20 +470,21 @@ namespace LootingBots.Patch.Components
                 return GetWeaponEquipAction(lootItem as Weapon);
             }
 
-            if (backpack?.Parent?.Container.ID == lootID && ShouldSwapGear(backpack, lootItem))
+            if (EquipmentTypeUtils.IsBackpack(lootItem) && ShouldSwapGear(backpack, lootItem))
             {
                 swapAction = GetSwapAction(backpack, lootItem, null, true);
             }
-            else if (helmet?.Parent?.Container?.ID == lootID && ShouldSwapGear(helmet, lootItem))
+            else if (EquipmentTypeUtils.IsHelmet(lootItem) && ShouldSwapGear(helmet, lootItem))
             {
                 swapAction = GetSwapAction(helmet, lootItem);
             }
-            else if (chest?.Parent?.Container?.ID == lootID && ShouldSwapGear(chest, lootItem))
+            else if (EquipmentTypeUtils.IsArmorVest(lootItem) && ShouldSwapGear(chest, lootItem))
             {
                 swapAction = GetSwapAction(chest, lootItem);
             }
-            else if (tacVest?.Parent?.Container?.ID == lootID && ShouldSwapGear(tacVest, lootItem))
+            else if (EquipmentTypeUtils.IsTacticalRig(lootItem) && ShouldSwapGear(tacVest, lootItem))
             {
+
                 // If the tac vest we are looting is higher armor class and we have a chest equipped, make sure to drop the chest and pick up the armored rig
                 if (IsLootingBetterArmor(tacVest, lootItem) && chest != null)
                 {
@@ -735,6 +736,11 @@ namespace LootingBots.Patch.Components
         */
         public bool ShouldSwapGear(Item equipped, Item itemToLoot)
         {
+            if (equipped == null)
+            {
+                return false;
+            }
+
             // Bosses cannot swap gear as many bosses have custom logic tailored to their loadouts
             if (_isBoss)
             {
@@ -862,7 +868,7 @@ namespace LootingBots.Patch.Components
                 ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
 
-            return allowedToEquip && IsValuableEnough(CurrentItemPrice);
+            return allowedToEquip;
         }
 
         public bool AllowedToPickup(Item lootItem)
