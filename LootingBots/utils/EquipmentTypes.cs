@@ -6,6 +6,7 @@ using BodyArmorClass = GClass2538;
 using HeadArmorClass = GClass2537;
 using BackpackItemClass = GClass2584;
 using TacticalRigItemClass = GClass2585;
+using FaceCoveringClass = GClass2536;
 
 namespace LootingBots.Patch.Util
 {
@@ -118,6 +119,10 @@ namespace LootingBots.Patch.Util
         public static bool IsArmorVest(Item item)
         {
             return item is BodyArmorClass;
+        }
+
+        public static bool IsFaceCovering(Item item) {
+            return item is FaceCoveringClass;
         }
     }
 }

@@ -27,6 +27,7 @@ namespace LootingBots.Brain
         {
             LootingBrain lootingBrain = botOwner.GetPlayer.gameObject.AddComponent<LootingBrain>();
             lootingBrain.Init(botOwner);
+            _scanTimer = Time.time + LootingBots.InitialStartTimer.Value;
             _lootingBrain = lootingBrain;
         }
 
