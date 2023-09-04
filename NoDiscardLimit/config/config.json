@@ -1,8 +1,4 @@
 {
-    "bot_types": [
-        "bear",
-        "usec"
-    ],
-    "empty_bag": true,
-    "empty_pockets": true
+    "pmcSpawnWithLoot": false,
+    "scavSpawnWithLoot": true
 }

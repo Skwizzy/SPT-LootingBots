@@ -7,7 +7,7 @@ import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 
-const config = require("../config/config.json");
+import config from "../config/config.json";
 import { ParentClasses } from "./enums.js";
 
 class DisableDiscardLimits implements IPostDBLoadMod {
@@ -32,34 +32,37 @@ class DisableDiscardLimits implements IPostDBLoadMod {
     ];
     const pmcConfig = botConf.pmc;
 
-    for (let i in config.bot_types) {
-      let botType = config.bot_types[i];
-      if (config.empty_pockets) {
-        logInfo(`Emptying ${botType} pockets`);
-        tables.bots.types[botType].inventory.items.Pockets = [];
-      }
-      if (config.empty_bag) {
-        logInfo(`Emptying ${botType} backpacks`);
-        tables.bots.types[botType].inventory.items.Backpack = [];
+    const emptyInventory = (botTypes: string[]) => {
+      botTypes.forEach((type) => {
+        logInfo(`Removing loot from ${type}`);
+        tables.bots.types[type].inventory.items.Pockets = [];
+        tables.bots.types[type].inventory.items.Pockets = [];
+      });
+    };
+
+    if (!config.pmcSpawnWithLoot) {
+      emptyInventory(["usec", "bear"]);
+      // Do not allow weapons to spawn in PMC bags
+      pmcConfig.looseWeaponInBackpackLootMinMax.min = 0;
+      pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
+      // Restrict the amount of food/drink items that a PMC can spawn with
+      tables.bots.types["usec"].generation.items.looseLoot.max = 4;
+      tables.bots.types["bear"].generation.items.looseLoot.max = 4;
+
+
+      //have to add all loot items we don't want to pmc blacklist because PMCs use "dynamic loot" pool
+      for (let item in tables.templates.items) {
+        const {_parent, _id} = tables.templates.items[item];
+        if (!allowedItemTypes.includes(_parent)) {
+          pmcConfig.pocketLoot.blacklist.push(_id);
+          pmcConfig.backpackLoot.blacklist.push(_id);
+          pmcConfig.vestLoot.blacklist.push(_id);
+        }
       }
     }
 
-    pmcConfig.looseWeaponInBackpackLootMinMax.min = 0;
-    pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
-
-    //have to add all loot items we don't want to pmc blacklist because PMCs use "dynamic loot" pool
-    for (let item in tables.templates.items) {
-      let serverItem = tables.templates.items[item];
-      if (!allowedItemTypes.includes(serverItem._parent)) {
-        if (config.empty_pockets) {
-          pmcConfig.pocketLoot.blacklist.push(serverItem._id);
-        }
-        if (config.empty_bag) {
-          pmcConfig.backpackLoot.blacklist.push(serverItem._id);
-        }
-
-        pmcConfig.vestLoot.blacklist.push(serverItem._id);
-      }
+    if (!config.scavSpawnWithLoot) {
+      emptyInventory(["assault"]);
     }
 
     logInfo("Marking items with DiscardLimits as InsuranceDisabled");
