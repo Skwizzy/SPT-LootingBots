@@ -27,6 +27,7 @@ namespace LootingBots.Patch.Util
         public static LayerMask LootMask = LayerMask.GetMask(
             new string[] { "Interactive", "Loot", "Deadbody" }
         );
+        public static int RESERVED_SLOT_COUNT = 2;
 
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
@@ -76,7 +77,11 @@ namespace LootingBots.Patch.Util
                     gridManager.SetOldPositions(grid, grid.ItemCollection.ToListOfLocations());
                     itemsInContainer.AddRange(grid.Items);
                     grid.RemoveAll();
-                    Singleton<GridCacheClass>.Instance.Set(container.Owner.ID, grid as GridClassEx, new string[] { });
+                    Singleton<GridCacheClass>.Instance.Set(
+                        container.Owner.ID,
+                        grid as GridClassEx,
+                        new string[] { }
+                    );
                     controller.RaiseEvent(new GEventArgs23(grid));
                 }
 
@@ -107,7 +112,11 @@ namespace LootingBots.Patch.Util
                                     ((ItemAddressExClass)item.CurrentAddress).LocationInGrid
                                 )
                             );
-                            Singleton<GridCacheClass>.Instance.Add(container.Owner.ID, grid as GridClassEx, item);
+                            Singleton<GridCacheClass>.Instance.Add(
+                                container.Owner.ID,
+                                grid as GridClassEx,
+                                item
+                            );
                             break;
                         }
                     }
@@ -148,8 +157,9 @@ namespace LootingBots.Patch.Util
         */
         public static int GetAvailableGridSlots(GridClass[] grids)
         {
-            if (grids == null) {
-                grids = new GridClass[] {};
+            if (grids == null)
+            {
+                grids = new GridClass[] { };
             }
 
             List<GridClass> gridList = grids.ToList();
@@ -170,12 +180,11 @@ namespace LootingBots.Patch.Util
         */
         public static GridClass[] Reserve2x1Slot(GridClass[] grids)
         {
-            const int RESERVE_SLOT_COUNT = 2;
             List<GridClass> gridList = grids.ToList();
             foreach (var grid in gridList)
             {
                 int gridSize = grid.GridHeight.Value * grid.GridWidth.Value;
-                bool isLargeEnough = gridSize >= RESERVE_SLOT_COUNT;
+                bool isLargeEnough = gridSize >= RESERVED_SLOT_COUNT;
 
                 // If the grid is larger than 2 spaces, and the amount of free space in the grid is greater or equal to 2
                 // reserve the grid as a place where the bot can place reloaded mags

@@ -39,7 +39,11 @@ namespace LootingBots.Brain.Logics
 
         public override void Update()
         {
+            // If the bot has more than the reserved amount of slots needed for ammo, trigger a loot scan
+            if (_lootingBrain.Stats.AvailableGridSpaces > LootUtils.RESERVED_SLOT_COUNT)
+            {
                 FindLootable();
+            }
         }
 
         public void FindLootable()
@@ -76,29 +80,31 @@ namespace LootingBots.Brain.Logics
                     LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
-                    && container != null
-                    && !_lootingBrain.IsLootIgnored(container.Id)
-                    && container.isActiveAndEnabled
-                    && container.DoorState != EDoorState.Locked;
+                    && container != null // Container exists
+                    && !_lootingBrain.IsLootIgnored(container.Id) // Container is not ignored
+                    && container.isActiveAndEnabled // Container is marked as active and enabled
+                    && container.DoorState != EDoorState.Locked; // Container is not locked
 
                 bool canLootItem =
                     LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
                     && lootItem != null
-                    && !(lootItem is Corpse)
-                    && lootItem?.ItemOwner?.RootItem != null
-                    && !lootItem.ItemOwner.RootItem.QuestItem
-                    && _lootingBrain.IsValuableEnough(lootItem.ItemOwner.RootItem)
-                    && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id);
+                    && !(lootItem is Corpse) // Item is not a corpse
+                    && lootItem?.ItemOwner?.RootItem != null // Item exists
+                    && !lootItem.ItemOwner.RootItem.QuestItem // Item is not a quest item
+                    && _lootingBrain.IsValuableEnough(lootItem.ItemOwner.RootItem) // Item meets value threshold
+                    && _lootingBrain.Stats.AvailableGridSpaces
+                        > lootItem.ItemOwner.RootItem.GetItemSize() // Bot has enough space to pickup
+                    && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id); // Item not ignored
 
                 bool canLootCorpse =
                     LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
                         BotOwner.Profile.Info.Settings.Role
                     )
-                    && corpse != null
-                    && corpse.GetPlayer != null
-                    && !_lootingBrain.IsLootIgnored(corpse.name);
+                    && corpse != null // Corpse exists
+                    && corpse.GetPlayer != null // Corpse is a bot corpse and not a static "Dead scav" corpse
+                    && !_lootingBrain.IsLootIgnored(corpse.name); // Corpse is not ignored
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
