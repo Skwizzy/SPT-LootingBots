@@ -58,6 +58,7 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+
         public BotStats Stats
         {
             get { return InventoryController.Stats; }
@@ -81,6 +82,8 @@ namespace LootingBots.Patch.Components
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
         private BotLog _log;
+
+        private const int LootingStartDelay = 3000;
 
         public void Init(BotOwner botOwner)
         {
@@ -150,6 +153,8 @@ namespace LootingBots.Patch.Components
             watch.Start();
 
             LootTaskRunning = true;
+            _log.LogWarning($"Trying to loot corpse");
+
             // Initialize corpse inventory controller
             Player corpsePlayer = ActiveCorpse.GetPlayer;
             Type corpseType = corpsePlayer.GetType();
@@ -165,13 +170,15 @@ namespace LootingBots.Patch.Components
 
             // Get items to loot from the corpse in a priority order based off the slots
             EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
-            _log.LogWarning($"Trying to loot corpse");
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(prioritySlots)
                 .Select(slot => slot.ContainedItem)
                 .Where(item => item != null && !item.IsUnremovable)
                 .ToArray();
+
+            Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
+            yield return new WaitUntil(() => delayTask.IsCompleted);
 
             Task<bool> lootTask = InventoryController.TryAddItemsToBot(priorityItems);
             yield return new WaitUntil(() => lootTask.IsCompleted);
@@ -208,7 +215,7 @@ namespace LootingBots.Patch.Components
                 didOpen = true;
             }
 
-            Task delayTask = TransactionController.SimulatePlayerDelay(2000);
+            Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
             Task<bool> lootTask = InventoryController.LootNestedItems(item);
