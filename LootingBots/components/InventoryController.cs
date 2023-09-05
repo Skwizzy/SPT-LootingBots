@@ -270,6 +270,8 @@ namespace LootingBots.Patch.Components
                 {
                     CurrentItemPrice = _itemAppraiser.GetItemPrice(item);
                     _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
+
+                    // Ignore magazines that a bot cannot actively use
                     if (item is MagazineClass mag && !CanUseMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
@@ -294,10 +296,7 @@ namespace LootingBots.Patch.Components
                     }
 
                     // Check to see if we can equip the item
-                    bool ableToEquip =
-                        AllowedToEquip(item) && await _transactionController.TryEquipItem(item);
-
-                    if (ableToEquip)
+                    if (AllowedToEquip(item) && await _transactionController.TryEquipItem(item))
                     {
                         Stats.AddNetValue(CurrentItemPrice);
                         continue;
@@ -307,13 +306,13 @@ namespace LootingBots.Patch.Components
                     // prevent stripping the mods from a weapon and then picking up the weapon afterwards.
                     if (item is Weapon weapon)
                     {
-                        bool ableToPickUp =
+                        if (
                             AllowedToPickup(weapon)
-                            && await _transactionController.TryPickupItem(weapon);
-
-                        if (ableToPickUp)
+                            && await _transactionController.TryPickupItem(weapon)
+                        )
                         {
                             Stats.AddNetValue(CurrentItemPrice);
+                            UpdateGridStats();
                             continue;
                         }
 
@@ -343,13 +342,13 @@ namespace LootingBots.Patch.Components
                         }
 
                         // Check to see if we can pick up the item
-                        bool ableToPickUp =
+                        if (
                             AllowedToPickup(item)
-                            && await _transactionController.TryPickupItem(item);
-
-                        if (ableToPickUp)
+                            && await _transactionController.TryPickupItem(item)
+                        )
                         {
                             Stats.AddNetValue(CurrentItemPrice);
+                            UpdateGridStats();
                             continue;
                         }
                     }
@@ -482,9 +481,10 @@ namespace LootingBots.Patch.Components
             {
                 swapAction = GetSwapAction(chest, lootItem);
             }
-            else if (EquipmentTypeUtils.IsTacticalRig(lootItem) && ShouldSwapGear(tacVest, lootItem))
+            else if (
+                EquipmentTypeUtils.IsTacticalRig(lootItem) && ShouldSwapGear(tacVest, lootItem)
+            )
             {
-
                 // If the tac vest we are looting is higher armor class and we have a chest equipped, make sure to drop the chest and pick up the armored rig
                 if (IsLootingBetterArmor(tacVest, lootItem) && chest != null)
                 {
