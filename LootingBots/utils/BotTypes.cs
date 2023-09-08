@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using EFT;
 
@@ -57,75 +58,61 @@ namespace LootingBots.Patch.Util
 
         public static bool IsBotEnabled(this BotType enabledTypes, WildSpawnType botType)
         {
-            // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
-            unchecked
+            if (IsPMC(botType))
             {
-                WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
-                WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
+                return enabledTypes.HasPmc();
+            }
 
-                bool isPMC = botType == bear || botType == usec;
-                if (isPMC)
-                {
-                    return enabledTypes.HasPmc();
-                }
+            if (IsBoss(botType)) {
+                return enabledTypes.HasBoss();
+            }
 
-                switch (botType)
+
+            switch (botType)
+            {
+                case WildSpawnType.assault:
+                case WildSpawnType.assaultGroup:
                 {
-                    case WildSpawnType.assault:
-                    case WildSpawnType.assaultGroup:
-                    {
-                        return enabledTypes.HasScav();
-                    }
-                    case WildSpawnType.bossBully:
-                    case WildSpawnType.bossGluhar:
-                    case WildSpawnType.bossKilla:
-                    case WildSpawnType.bossKnight:
-                    case WildSpawnType.bossKojaniy:
-                    case WildSpawnType.bossSanitar:
-                    case WildSpawnType.bossTagilla:
-                    case WildSpawnType.bossTest:
-                    case WildSpawnType.bossZryachiy:
-                    {
-                        return enabledTypes.HasBoss();
-                    }
-                    case WildSpawnType.followerBigPipe:
-                    case WildSpawnType.followerBirdEye:
-                    case WildSpawnType.followerBully:
-                    case WildSpawnType.followerGluharAssault:
-                    case WildSpawnType.followerGluharScout:
-                    case WildSpawnType.followerGluharSecurity:
-                    case WildSpawnType.followerGluharSnipe:
-                    case WildSpawnType.followerKojaniy:
-                    case WildSpawnType.followerSanitar:
-                    case WildSpawnType.followerTagilla:
-                    case WildSpawnType.followerTest:
-                    case WildSpawnType.followerZryachiy:
-                    {
-                        return enabledTypes.HasFollower();
-                    }
-                    case WildSpawnType.exUsec:
-                    case WildSpawnType.pmcBot:
-                    {
-                        return enabledTypes.HasRaider();
-                    }
-                    case WildSpawnType.sectantPriest:
-                    case WildSpawnType.sectantWarrior:
-                    case WildSpawnType.cursedAssault:
-                    {
-                        return enabledTypes.HasCultist();
-                    }
-                    case WildSpawnType.arenaFighterEvent:
-                    {
-                        return enabledTypes.HasBloodhound();
-                    }
-                    default:
-                        return false;
+                    return enabledTypes.HasScav();
                 }
+                case WildSpawnType.followerBigPipe:
+                case WildSpawnType.followerBirdEye:
+                case WildSpawnType.followerBully:
+                case WildSpawnType.followerGluharAssault:
+                case WildSpawnType.followerGluharScout:
+                case WildSpawnType.followerGluharSecurity:
+                case WildSpawnType.followerGluharSnipe:
+                case WildSpawnType.followerKojaniy:
+                case WildSpawnType.followerSanitar:
+                case WildSpawnType.followerTagilla:
+                case WildSpawnType.followerTest:
+                case WildSpawnType.followerZryachiy:
+                {
+                    return enabledTypes.HasFollower();
+                }
+                case WildSpawnType.exUsec:
+                case WildSpawnType.pmcBot:
+                {
+                    return enabledTypes.HasRaider();
+                }
+                case WildSpawnType.sectantPriest:
+                case WildSpawnType.sectantWarrior:
+                case WildSpawnType.cursedAssault:
+                {
+                    return enabledTypes.HasCultist();
+                }
+                case WildSpawnType.arenaFighterEvent:
+                {
+                    return enabledTypes.HasBloodhound();
+                }
+                default:
+                    return false;
             }
         }
 
         public static bool IsPMC(WildSpawnType wildSpawnType)
         {
+            // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
             unchecked
             {
                 WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
@@ -139,6 +126,23 @@ namespace LootingBots.Patch.Util
         {
             return wildSpawnType == WildSpawnType.assault
                 || wildSpawnType == WildSpawnType.assaultGroup;
+        }
+
+        public static bool IsBoss(WildSpawnType wildSpawnType)
+        {
+            List<WildSpawnType> bosses = new List<WildSpawnType>
+            {
+                WildSpawnType.bossBully,
+                WildSpawnType.bossGluhar,
+                WildSpawnType.bossKilla,
+                WildSpawnType.bossKnight,
+                WildSpawnType.bossKojaniy,
+                WildSpawnType.bossSanitar,
+                WildSpawnType.bossTagilla,
+                WildSpawnType.bossTest,
+                WildSpawnType.bossZryachiy
+            };
+            return bosses.Contains(wildSpawnType);
         }
     }
 }

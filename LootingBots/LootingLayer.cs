@@ -27,6 +27,7 @@ namespace LootingBots.Brain
         {
             LootingBrain lootingBrain = botOwner.GetPlayer.gameObject.AddComponent<LootingBrain>();
             lootingBrain.Init(botOwner);
+            _scanTimer = Time.time + LootingBots.InitialStartTimer.Value;
             _lootingBrain = lootingBrain;
         }
 
@@ -38,15 +39,13 @@ namespace LootingBots.Brain
         public override bool IsActive()
         {
             bool isBotActive = BotOwner.BotState == EBotState.Active;
-            bool hasAvailableSlots = _lootingBrain.Stats.AvailableGridSpaces > 0;
-            return isBotActive
-                && hasAvailableSlots
-                && (IsScheduledScan || _lootingBrain.IsBotLooting);
+            return isBotActive && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
 
         public override void Start()
         {
             _lootingBrain.EnableTransactions();
+            _lootingBrain.UpdateGridStats();
             base.Start();
         }
 
@@ -78,7 +77,7 @@ namespace LootingBots.Brain
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                return _lootingBrain.HasActiveLootable();
+                return _lootingBrain.HasActiveLootable;
             }
 
             return !_lootingBrain.IsBotLooting;
@@ -118,7 +117,7 @@ namespace LootingBots.Brain
 
             debugPanel.AppendLabeledValue(
                 $"Distance to Loot",
-                $" {(category == "" ? "-" : Math.Sqrt(_lootingBrain.DistanceToLoot).ToString("0.##"))}m",
+                $" {(category == "" || _lootingBrain.DistanceToLoot == -1f ? "Calculating path..." : $"{Math.Sqrt(_lootingBrain.DistanceToLoot):0.##}m")}",
                 Color.grey,
                 Color.grey
             );

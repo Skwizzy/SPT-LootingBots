@@ -1,5 +1,6 @@
-[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.2-aki-3.5.8)
-[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.3-aki-3.6.0-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.3-aki-3.6.0-beta)
+[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.2-aki-3.6.0)
+[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.3-aki-3.5.8-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.3-aki-3.6.0-beta)
+
 
 # SPT-LootingBots
 
@@ -14,6 +15,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - Scavs start a raid on patrol, when they finish a combat engagement they will return to patrol mode after the amount of seconds specified in the `Mind.TIME_TO_FORGOR_ABOUT_ENEMY_SEC` bot config property
   - When scavs are on patrol, they have a chance to inspect a nearby corpse and only loot their primary weapon
   - When scavs are on patrol, sometimes they stop in front of a lootable container and pretend to loot it
+  - PMCs and Scavs in SPT spawn with some potentially valuable loot already in their inventory
   
 ### Modded behavior:
   - New bot brain layer added for looting that replaces the base game logic responsible for "looting"
@@ -24,7 +26,8 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - Not all loot is navigable, relies heavily on the availablity of a nearby NavMesh that bots can use to navigate
     - If loot is behind a door, bots will open the door if unlocked 
     - If a bot is stuck in place or if the bot spends too much time moving, the loot will be ignored
-  - Once looting has finished, bots will wait a certain amount of time before the next loot scan occurs (configurable in the settings)
+  - Once looting has finished, bots will wait a certain amount of time before the next loot scan period occurs (configurable in the settings)
+  - PMCs by default will no longer spawn with loot in their inventories. (can be changed in the settings for NoDiscardLimit)
 
 **Gear Swap Critria** 
 - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
@@ -43,9 +46,13 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Detect container distance` - Distance (in meters) a bot is able to detect a container
 - `Enable loose item looting` - Enables loose item looting for the selected bot types
 - `Detect item distance` - Distance (in meters) a bot is able to detect an item
-- `Delay between looting` - The amount of time the bot will wait after looting a container/item/corpse before trying to find the next nearest item/container/corpse
 - `Log Levels` - Enable different levels of log messages to show in the logs
 - `Debug: Show navigation points` - Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).
+
+**Loot Finder (Timing)**
+- `Delay after spawn` - Amount of seconds a bot will wait to start their first loot scan after spawning into raid.
+- `Transaction delay (ms)` - Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.
+- `Delay between looting` - The amount of seconds the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse
 
 **Loot Settings**
 - `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
@@ -59,6 +66,16 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Scav: Allowed gear in bags` - The equipment a non-PMC bot is able to place in their backpack/rig
 - `Log Levels` - Enable different levels of log messages to show in the logs
 
+## Server Mod Settings (NoDiscardLimit/config/config.json)
+- `pmcSpawnWithLoot` - When set to `true`, PMCs will spawn with loot in their bags/pockets (default SPT behavior)
+- `scavSpawnWithLoot` - When set to `true`, Scavs will spawn with loot in the bags/pockets (default SPT behavior)
+
+  Default config: 
+  ```
+  {
+      "pmcSpawnWithLoot": false,
+      "scavSpawnWithLoot": true
+  }
 
 ## Conflicts
 
@@ -80,7 +97,7 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 
 ## Package Contents
 - `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-NoDiscardLimits` - Simple server side mod that marks all items with DiscardLimits as InsuranceDisabled. It then disables the DiscardLimit settings for the server via the EnableDiscardLimits option in Server/database/globals.json.
+- `user/mods/Skwizzy-NoDiscardLimit` - Provide the option to clear out the loot that PMC/Scav bots start with in their backpacks. This does not include meds, ammo, grenades ect. These options can be found in the `NoDiscardLimit/config/config.json`.
 
 ## Install instructions
 Simply extract the contents of the .zip file into your SPT directory.

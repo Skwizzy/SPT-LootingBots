@@ -145,7 +145,11 @@ namespace LootingBots.Patch.Components
                             else
                             {
                                 ammoAdded += ammo.StackObjectsCount;
-                                Singleton<GridCacheClass>.Instance.Add(location.GetOwner().ID, location.Grid as GridClassEx, ammo);
+                                Singleton<GridCacheClass>.Instance.Add(
+                                    location.GetOwner().ID,
+                                    location.Grid as GridClassEx,
+                                    ammo
+                                );
                             }
                         }
                         else
@@ -183,7 +187,6 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-
                 // Check to see if we can equip the item
                 var ableToEquip = _inventoryController.FindSlotToPickUp(item);
                 if (ableToEquip != null)
@@ -372,14 +375,17 @@ namespace LootingBots.Patch.Components
 
         public bool IsLootingInterrupted()
         {
-           return !Enabled;
+            return !Enabled;
         }
 
-        public static Task SimulatePlayerDelay(int delay = 500)
+        public static Task SimulatePlayerDelay(int delay = -1)
         {
+            if (delay == -1)
+            {
+                delay = LootingBots.TransactionDelay.Value;
+            }
+
             return Task.Delay(delay);
         }
-
-
     }
 }

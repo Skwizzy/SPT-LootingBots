@@ -24,7 +24,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.1.2";
+        private const string MOD_VERSION = "1.1.3";
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
@@ -32,6 +32,7 @@ namespace LootingBots
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ConfigEntry<BotType> ContainerLootingEnabled;
         public static ConfigEntry<BotType> LooseItemLootingEnabled;
+        public static ConfigEntry<float> InitialStartTimer;
 
         public static ConfigEntry<float> TimeToWaitBetweenLoot;
         public static ConfigEntry<float> DetectItemDistance;
@@ -44,6 +45,7 @@ namespace LootingBots
 
         // Loot Settings
         public static ConfigEntry<bool> UseMarketPrices;
+        public static ConfigEntry<int> TransactionDelay;
         public static ConfigEntry<bool> ValueFromMods;
         public static ConfigEntry<bool> CanStripAttachments;
         public static ConfigEntry<float> PMCLootThreshold;
@@ -69,6 +71,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
+
             DetectCorpseDistance = Config.Bind(
                 "Loot Finder",
                 "Detect corpse distance",
@@ -76,7 +79,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a corpse",
                     null,
-                    new ConfigurationManagerAttributes { Order = 9 }
+                    new ConfigurationManagerAttributes { Order = 8 }
                 )
             );
             ContainerLootingEnabled = Config.Bind(
@@ -86,7 +89,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables container looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 8 }
+                    new ConfigurationManagerAttributes { Order = 7 }
                 )
             );
             DetectContainerDistance = Config.Bind(
@@ -96,7 +99,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
                     null,
-                    new ConfigurationManagerAttributes { Order = 7 }
+                    new ConfigurationManagerAttributes { Order = 6 }
                 )
             );
             LooseItemLootingEnabled = Config.Bind(
@@ -106,7 +109,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables loose item looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 6 }
+                    new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
             DetectItemDistance = Config.Bind(
@@ -116,17 +119,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect an item",
                     null,
-                    new ConfigurationManagerAttributes { Order = 5 }
-                )
-            );
-            TimeToWaitBetweenLoot = Config.Bind(
-                "Loot Finder",
-                "Delay between looting",
-                15f,
-                new ConfigDescription(
-                    "The amount of time the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
-                    null,
-                    new ConfigurationManagerAttributes { Order = 2 }
+                    new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
             LootingLogLevels = Config.Bind(
@@ -136,7 +129,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enable different levels of log messages to show in the logs",
                     null,
-                    new ConfigurationManagerAttributes { Order = 1 }
+                    new ConfigurationManagerAttributes { Order = 0 }
                 )
             );
             DebugLootNavigation = Config.Bind(
@@ -146,7 +139,39 @@ namespace LootingBots
                 new ConfigDescription(
                     "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
-                    new ConfigurationManagerAttributes { Order = 0 }
+                    new ConfigurationManagerAttributes { Order = -1 }
+                )
+            );
+
+            // Loot Finder (Timing)
+            InitialStartTimer = Config.Bind(
+                "Loot Finder (Timing)",
+                "Delay after spawn",
+                6f,
+                new ConfigDescription(
+                    "Amount of seconds a bot will wait to start their first loot scan after spawning into raid.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
+                )
+            );
+            TransactionDelay = Config.Bind(
+                "Loot Finder (Timing)",
+                "Transaction delay (ms)",
+                500,
+                new ConfigDescription(
+                    "Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
+            TimeToWaitBetweenLoot = Config.Bind(
+                "Loot Finder (Timing)",
+                "Delay between looting",
+                15f,
+                new ConfigDescription(
+                    "The amount of seconds the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
         }

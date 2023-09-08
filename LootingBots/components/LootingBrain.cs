@@ -58,25 +58,32 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+
         public BotStats Stats
         {
             get { return InventoryController.Stats; }
         }
 
-        public bool IsBotLooting {
-            get {
-                return LootTaskRunning || HasActiveLootable();
-            }
+        public bool HasActiveLootable
+        {
+            get { return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null; }
+        }
+
+        public bool IsBotLooting
+        {
+            get { return LootTaskRunning || HasActiveLootable; }
         }
 
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
 
-        public float DistanceToLoot = 0f;
+        public float DistanceToLoot = -1f;
 
         // Amount of time in seconds to wait after looting successfully
         public float WaitAfterLootTimer;
         private BotLog _log;
+
+        private const int LootingStartDelay = 3000;
 
         public void Init(BotOwner botOwner)
         {
@@ -146,6 +153,8 @@ namespace LootingBots.Patch.Components
             watch.Start();
 
             LootTaskRunning = true;
+            _log.LogWarning($"Trying to loot corpse");
+
             // Initialize corpse inventory controller
             Player corpsePlayer = ActiveCorpse.GetPlayer;
             Type corpseType = corpsePlayer.GetType();
@@ -161,13 +170,15 @@ namespace LootingBots.Patch.Components
 
             // Get items to loot from the corpse in a priority order based off the slots
             EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
-            _log.LogWarning($"Trying to loot corpse");
 
             Item[] priorityItems = corpseInventoryController.Inventory.Equipment
                 .GetSlotsByName(prioritySlots)
                 .Select(slot => slot.ContainedItem)
                 .Where(item => item != null && !item.IsUnremovable)
                 .ToArray();
+
+            Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
+            yield return new WaitUntil(() => delayTask.IsCompleted);
 
             Task<bool> lootTask = InventoryController.TryAddItemsToBot(priorityItems);
             yield return new WaitUntil(() => lootTask.IsCompleted);
@@ -198,20 +209,20 @@ namespace LootingBots.Patch.Components
 
             bool didOpen = false;
             // If a container was closed, open it before looting
-            if (ActiveContainer.DoorState == EDoorState.Shut)
+            if (ActiveContainer?.DoorState == EDoorState.Shut)
             {
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
                 didOpen = true;
             }
 
-            Task delayTask = TransactionController.SimulatePlayerDelay(2000);
+            Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
             Task<bool> lootTask = InventoryController.LootNestedItems(item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container after looting if a container was open, and the bot didnt open it
-            if (ActiveContainer.DoorState == EDoorState.Open && !didOpen)
+            if (ActiveContainer?.DoorState == EDoorState.Open && !didOpen)
             {
                 LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
             }
@@ -308,14 +319,6 @@ namespace LootingBots.Patch.Components
         }
 
         /**
-        * Returns true if the LootFinder has an ActiveContainer, ActiveItem, or ActiveCorpse defined
-        */
-        public bool HasActiveLootable()
-        {
-            return ActiveContainer != null || ActiveItem != null || ActiveCorpse != null;
-        }
-
-        /**
         * Adds a loot id to the list of loot items to ignore for a specific bot
         */
         public void IgnoreLoot(string id)
@@ -337,6 +340,7 @@ namespace LootingBots.Patch.Components
         public void DisableTransactions()
         {
             InventoryController.DisableTransactions();
+            Cleanup(false);
         }
 
         /**
@@ -365,15 +369,18 @@ namespace LootingBots.Patch.Components
         */
         public void CleanupContainer(bool ignore = true)
         {
-            LootableContainer container = ActiveContainer;
-            ActiveLootCache.Cleanup(container.Id);
-
-            if (ignore)
+            if (ActiveContainer != null)
             {
-                IgnoreLoot(container.Id);
-            }
+                LootableContainer container = ActiveContainer;
+                ActiveLootCache.Cleanup(container.Id);
 
-            ActiveContainer = null;
+                if (ignore)
+                {
+                    IgnoreLoot(container.Id);
+                }
+
+                ActiveContainer = null;
+            }
         }
 
         /**
@@ -382,14 +389,17 @@ namespace LootingBots.Patch.Components
         public void CleanupItem(bool ignore = true, Item movedItem = null)
         {
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
-            ActiveLootCache.Cleanup(item.Id);
-
-            if (ignore)
+            if (item != null)
             {
-                IgnoreLoot(item.Id);
-            }
+                ActiveLootCache.Cleanup(item.Id);
 
-            ActiveItem = null;
+                if (ignore)
+                {
+                    IgnoreLoot(item.Id);
+                }
+
+                ActiveItem = null;
+            }
         }
 
         /**
@@ -397,16 +407,19 @@ namespace LootingBots.Patch.Components
         */
         public void CleanupCorpse(bool ignore = true)
         {
-            BotOwner corpse = ActiveCorpse;
-            string name = corpse.name;
-            ActiveLootCache.Cleanup(name);
-
-            if (ignore)
+            if (ActiveCorpse != null)
             {
-                IgnoreLoot(name);
-            }
+                BotOwner corpse = ActiveCorpse;
+                string name = corpse.name;
+                ActiveLootCache.Cleanup(name);
 
-            ActiveCorpse = null;
+                if (ignore)
+                {
+                    IgnoreLoot(name);
+                }
+
+                ActiveCorpse = null;
+            }
         }
     }
 }
