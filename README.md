@@ -49,7 +49,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Log Levels` - Enable different levels of log messages to show in the logs
 - `Debug: Show navigation points` - Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).
 
-**Loot Finder (Timer)**
+**Loot Finder (Timing)**
 - `Delay after spawn` - Amount of seconds a bot will wait to start their first loot scan after spawning into raid.
 - `Transaction delay (ms)` - Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.
 - `Delay between looting` - The amount of seconds the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse
