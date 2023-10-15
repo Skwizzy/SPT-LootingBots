@@ -1,7 +1,7 @@
 import { HandbookHelper } from "../helpers/HandbookHelper";
 import { ItemHelper } from "../helpers/ItemHelper";
 import { PresetHelper } from "../helpers/PresetHelper";
-import { FenceLevel, Preset } from "../models/eft/common/IGlobals";
+import { IFenceLevel, IPreset } from "../models/eft/common/IGlobals";
 import { IPmcData } from "../models/eft/common/IPmcData";
 import { Item } from "../models/eft/common/tables/IItem";
 import { ITemplateItem } from "../models/eft/common/tables/ITemplateItem";
@@ -44,12 +44,12 @@ export declare class FenceService {
      * Replace main fence assort with new assort
      * @param assort New assorts to replace old with
      */
-    protected setFenceAssort(assort: ITraderAssort): void;
+    setFenceAssort(assort: ITraderAssort): void;
     /**
      * Replace high rep level fence assort with new assort
      * @param assort New assorts to replace old with
      */
-    protected setFenceDiscountAssort(assort: ITraderAssort): void;
+    setFenceDiscountAssort(assort: ITraderAssort): void;
     /**
      * Get assorts player can purchase
      * Adjust prices based on fence level of player
@@ -106,6 +106,7 @@ export declare class FenceService {
     protected getCountOfItemsToGenerate(existingItemCountToReplace: number): number;
     /**
      * Choose an item (not mod) at random and remove from assorts
+     * @param assort Items to remove from
      */
     protected removeRandomItemFromAssorts(assort: ITraderAssort): void;
     /**
@@ -139,13 +140,31 @@ export declare class FenceService {
         max: number;
     }>, loyaltyLevel: number): void;
     /**
+     * Get stack size ofr a singular item (no mods)
+     * @param itemDbDetails item being added to fence
+     * @returns Stack size
+     */
+    protected getSingleItemStackCount(itemDbDetails: ITemplateItem): number;
+    /**
      * Add preset weapons to fence presets
      * @param assortCount how many assorts to add to assorts
      * @param defaultWeaponPresets a dictionary of default weapon presets
      * @param assorts object to add presets to
      * @param loyaltyLevel loyalty level to requre item at
      */
-    protected addPresets(desiredPresetCount: number, defaultWeaponPresets: Record<string, Preset>, assorts: ITraderAssort, loyaltyLevel: number): void;
+    protected addPresets(desiredPresetCount: number, defaultWeaponPresets: Record<string, IPreset>, assorts: ITraderAssort, loyaltyLevel: number): void;
+    /**
+     * Remove parts of a weapon prior to being listed on flea
+     * @param weaponAndMods Weapon to remove parts from
+     */
+    protected removeRandomPartsOfWeapon(weaponAndMods: Item[]): void;
+    /**
+     * Roll % chance check to see if item should be removed
+     * @param weaponMod Weapon mod being checked
+     * @param itemsBeingDeleted Current list of items on weapon being deleted
+     * @returns True if item will be removed
+     */
+    protected presetModItemWillBeRemoved(weaponMod: Item, itemsBeingDeleted: string[]): boolean;
     /**
      * Randomise items' upd properties e.g. med packs/weapons/armor
      * @param itemDetails Item being randomised
@@ -175,7 +194,7 @@ export declare class FenceService {
      * @param pmcData Player profile
      * @returns FenceLevel object
      */
-    getFenceInfo(pmcData: IPmcData): FenceLevel;
+    getFenceInfo(pmcData: IPmcData): IFenceLevel;
     /**
      * Remove an assort from fence by id
      * @param assortIdToRemove assort id to remove from fence assorts

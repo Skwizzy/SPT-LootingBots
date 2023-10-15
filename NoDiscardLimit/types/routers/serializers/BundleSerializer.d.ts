@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { Serializer } from "../../di/Serializer";
 import { BundleLoader } from "../../loaders/BundleLoader";
 import { ILogger } from "../../models/spt/utils/ILogger";

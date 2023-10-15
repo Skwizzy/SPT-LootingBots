@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { TimeUtil } from "./TimeUtil";
 export declare class HashUtil {
     protected timeUtil: TimeUtil;
@@ -18,4 +18,5 @@ export declare class HashUtil {
      * @returns hash value
      */
     generateHashForData(algorithm: string, data: crypto.BinaryLike): string;
+    generateAccountId(): number;
 }

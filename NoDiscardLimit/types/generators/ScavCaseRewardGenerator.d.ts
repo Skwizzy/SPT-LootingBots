@@ -1,5 +1,6 @@
 import { ItemHelper } from "../helpers/ItemHelper";
 import { Product } from "../models/eft/common/tables/IBotBase";
+import { Upd } from "../models/eft/common/tables/IItem";
 import { ITemplateItem } from "../models/eft/common/tables/ITemplateItem";
 import { IHideoutScavCase } from "../models/eft/hideout/IHideoutScavCase";
 import { IScavCaseConfig } from "../models/spt/config/IScavCaseConfig";
@@ -24,6 +25,8 @@ export declare class ScavCaseRewardGenerator {
     protected itemFilterService: ItemFilterService;
     protected configServer: ConfigServer;
     protected scavCaseConfig: IScavCaseConfig;
+    protected dbItemsCache: ITemplateItem[];
+    protected dbAmmoItemsCache: ITemplateItem[];
     constructor(logger: ILogger, randomUtil: RandomUtil, hashUtil: HashUtil, itemHelper: ItemHelper, databaseServer: DatabaseServer, ragfairPriceService: RagfairPriceService, itemFilterService: ItemFilterService, configServer: ConfigServer);
     /**
      * Create an array of rewards that will be given to the player upon completing their scav case build
@@ -32,12 +35,12 @@ export declare class ScavCaseRewardGenerator {
      */
     generate(recipeId: string): Product[];
     /**
-     * Get all db items that are not blacklisted in scavcase config
-     * @returns filtered array of db items
+     * Get all db items that are not blacklisted in scavcase config or global blacklist
+     * Store in class field
      */
-    protected getDbItems(): ITemplateItem[];
+    protected cacheDbItems(): void;
     /**
-     * Pick a number of items to be rewards, the count is defined by the values in
+     * Pick a number of items to be rewards, the count is defined by the values in `itemFilters` param
      * @param items item pool to pick rewards from
      * @param itemFilters how the rewards should be filtered down (by item count)
      * @returns
@@ -78,7 +81,7 @@ export declare class ScavCaseRewardGenerator {
     protected addStackCountToAmmoAndMoney(item: ITemplateItem, resultItem: {
         _id: string;
         _tpl: string;
-        upd: any;
+        upd: Upd;
     }, rarity: string): void;
     /**
      *
@@ -88,7 +91,7 @@ export declare class ScavCaseRewardGenerator {
      */
     protected getFilteredItemsByPrice(dbItems: ITemplateItem[], itemFilters: RewardCountAndPriceDetails): ITemplateItem[];
     /**
-     * Gathers the reward options from config and scavcase.json into a single object
+     * Gathers the reward min and max count params for each reward quality level from config and scavcase.json into a single object
      * @param scavCaseDetails scavcase.json values
      * @returns ScavCaseRewardCountsAndPrices object
      */

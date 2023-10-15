@@ -6,7 +6,18 @@ export interface IRepairConfig extends IBaseConfig {
     applyRandomizeDurabilityLoss: boolean;
     weaponSkillRepairGain: number;
     armorKitSkillPointGainPerRepairPointMultiplier: number;
+    /** INT gain multiplier per repaired item type */
+    repairKitIntellectGainMultiplier: IIntellectGainValues;
+    maxIntellectGainPerRepair: IMaxIntellectGainValues;
     repairKit: RepairKit;
+}
+export interface IIntellectGainValues {
+    weapon: number;
+    armor: number;
+}
+export interface IMaxIntellectGainValues {
+    kit: number;
+    trader: number;
 }
 export interface RepairKit {
     armor: BonusSettings;

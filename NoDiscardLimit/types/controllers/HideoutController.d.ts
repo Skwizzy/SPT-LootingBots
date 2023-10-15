@@ -8,6 +8,7 @@ import { IPmcData } from "../models/eft/common/IPmcData";
 import { HideoutArea, Product } from "../models/eft/common/tables/IBotBase";
 import { HideoutUpgradeCompleteRequestData } from "../models/eft/hideout/HideoutUpgradeCompleteRequestData";
 import { IHandleQTEEventRequestData } from "../models/eft/hideout/IHandleQTEEventRequestData";
+import { IHideoutArea, Stage } from "../models/eft/hideout/IHideoutArea";
 import { IHideoutContinuousProductionStartRequestData } from "../models/eft/hideout/IHideoutContinuousProductionStartRequestData";
 import { IHideoutImproveAreaRequestData } from "../models/eft/hideout/IHideoutImproveAreaRequestData";
 import { IHideoutProduction } from "../models/eft/hideout/IHideoutProduction";
@@ -21,6 +22,7 @@ import { IHideoutUpgradeRequestData } from "../models/eft/hideout/IHideoutUpgrad
 import { IQteData } from "../models/eft/hideout/IQteData";
 import { IRecordShootingRangePoints } from "../models/eft/hideout/IRecordShootingRangePoints";
 import { IItemEventRouterResponse } from "../models/eft/itemEvent/IItemEventRouterResponse";
+import { HideoutAreas } from "../models/enums/HideoutAreas";
 import { IHideoutConfig } from "../models/spt/config/IHideoutConfig";
 import { ILogger } from "../models/spt/utils/ILogger";
 import { EventOutputHolder } from "../routers/EventOutputHolder";
@@ -59,6 +61,7 @@ export declare class HideoutController {
     protected hideoutConfig: IHideoutConfig;
     constructor(logger: ILogger, hashUtil: HashUtil, timeUtil: TimeUtil, databaseServer: DatabaseServer, randomUtil: RandomUtil, inventoryHelper: InventoryHelper, saveServer: SaveServer, playerService: PlayerService, presetHelper: PresetHelper, paymentHelper: PaymentHelper, eventOutputHolder: EventOutputHolder, httpResponse: HttpResponseUtil, profileHelper: ProfileHelper, hideoutHelper: HideoutHelper, scavCaseRewardGenerator: ScavCaseRewardGenerator, localisationService: LocalisationService, configServer: ConfigServer, jsonUtil: JsonUtil, fenceService: FenceService);
     /**
+     * Handle HideoutUpgrade event
      * Start a hideout area upgrade
      * @param pmcData Player profile
      * @param request upgrade start request
@@ -67,6 +70,7 @@ export declare class HideoutController {
      */
     startUpgrade(pmcData: IPmcData, request: IHideoutUpgradeRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Handle HideoutUpgradeComplete event
      * Complete a hideout area upgrade
      * @param pmcData Player profile
      * @param request Completed upgrade request
@@ -74,6 +78,37 @@ export declare class HideoutController {
      * @returns IItemEventRouterResponse
      */
     upgradeComplete(pmcData: IPmcData, request: HideoutUpgradeCompleteRequestData, sessionID: string): IItemEventRouterResponse;
+    /**
+     * Upgrade wall status to visible in profile if medstation/water collector are both level 1
+     * @param pmcData Player profile
+     */
+    protected checkAndUpgradeWall(pmcData: IPmcData): void;
+    /**
+     *
+     * @param pmcData Profile to edit
+     * @param output Object to send back to client
+     * @param sessionID Session/player id
+     * @param profileParentHideoutArea Current hideout area for profile
+     * @param dbHideoutArea Hideout area being upgraded
+     * @param hideoutStage Stage hideout area is being upgraded to
+     */
+    protected addContainerImprovementToProfile(output: IItemEventRouterResponse, sessionID: string, pmcData: IPmcData, profileParentHideoutArea: HideoutArea, dbHideoutArea: IHideoutArea, hideoutStage: Stage): void;
+    /**
+     * Add an inventory item to profile from a hideout area stage data
+     * @param pmcData Profile to update
+     * @param dbHideoutData Hideout area from db being upgraded
+     * @param hideoutStage Stage area upgraded to
+     */
+    protected addUpdateInventoryItemToProfile(pmcData: IPmcData, dbHideoutData: IHideoutArea, hideoutStage: Stage): void;
+    /**
+     *
+     * @param output Objet to send to client
+     * @param sessionID Session/player id
+     * @param areaType Hideout area that had stash added
+     * @param hideoutDbData Hideout area that caused addition of stash
+     * @param hideoutStage Hideout area upgraded to this
+     */
+    protected addContainerUpgradeToClientOutput(output: IItemEventRouterResponse, sessionID: string, areaType: HideoutAreas, hideoutDbData: IHideoutArea, hideoutStage: Stage): void;
     /**
      * Handle HideoutPutItemsInAreaSlots
      * Create item in hideout slot item array, remove item from player inventory
@@ -84,6 +119,7 @@ export declare class HideoutController {
      */
     putItemsInAreaSlots(pmcData: IPmcData, addItemToHideoutRequest: IHideoutPutItemInRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Handle HideoutTakeItemsFromAreaSlots event
      * Remove item from hideout area and place into player inventory
      * @param pmcData Player profile
      * @param request Take item out of area request
@@ -102,6 +138,7 @@ export declare class HideoutController {
      */
     protected removeResourceFromArea(sessionID: string, pmcData: IPmcData, removeResourceRequest: IHideoutTakeItemOutRequestData, output: IItemEventRouterResponse, hideoutArea: HideoutArea): IItemEventRouterResponse;
     /**
+     * Handle HideoutToggleArea event
      * Toggle area on/off
      * @param pmcData Player profile
      * @param request Toggle area request
@@ -110,6 +147,7 @@ export declare class HideoutController {
      */
     toggleArea(pmcData: IPmcData, request: IHideoutToggleAreaRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Handle HideoutSingleProductionStart event
      * Start production for an item from hideout area
      * @param pmcData Player profile
      * @param body Start prodution of single item request
@@ -118,6 +156,7 @@ export declare class HideoutController {
      */
     singleProductionStart(pmcData: IPmcData, body: IHideoutSingleProductionStartRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Handle HideoutScavCaseProductionStart event
      * Handles event after clicking 'start' on the scav case hideout page
      * @param pmcData player profile
      * @param body client request object
@@ -137,9 +176,9 @@ export declare class HideoutController {
      * Add generated scav case rewards to player profile
      * @param pmcData player profile to add rewards to
      * @param rewards reward items to add to profile
-     * @param recipieId recipie id to save into Production dict
+     * @param recipeId recipe id to save into Production dict
      */
-    protected addScavCaseRewardsToProfile(pmcData: IPmcData, rewards: Product[], recipieId: string): void;
+    protected addScavCaseRewardsToProfile(pmcData: IPmcData, rewards: Product[], recipeId: string): void;
     /**
      * Start production of continuously created item
      * @param pmcData Player profile
@@ -149,6 +188,7 @@ export declare class HideoutController {
      */
     continuousProductionStart(pmcData: IPmcData, request: IHideoutContinuousProductionStartRequestData, sessionID: string): IItemEventRouterResponse;
     /**
+     * Handle HideoutTakeProduction event
      * Take completed item out of hideout area and place into player inventory
      * @param pmcData Player profile
      * @param request Remove production from area request
@@ -157,17 +197,17 @@ export declare class HideoutController {
      */
     takeProduction(pmcData: IPmcData, request: IHideoutTakeProductionRequestData, sessionID: string): IItemEventRouterResponse;
     /**
-     * Take recipie-type production out of hideout area and place into player inventory
+     * Take recipe-type production out of hideout area and place into player inventory
      * @param sessionID Session id
-     * @param recipe Completed recipie of item
+     * @param recipe Completed recipe of item
      * @param pmcData Player profile
      * @param request Remove production from area request
      * @param output Output object to update
      * @returns IItemEventRouterResponse
      */
-    protected handleRecipie(sessionID: string, recipe: IHideoutProduction, pmcData: IPmcData, request: IHideoutTakeProductionRequestData, output: IItemEventRouterResponse): IItemEventRouterResponse;
+    protected handleRecipe(sessionID: string, recipe: IHideoutProduction, pmcData: IPmcData, request: IHideoutTakeProductionRequestData, output: IItemEventRouterResponse): IItemEventRouterResponse;
     /**
-     * Handles giving rewards stored in player profile to player after clicking 'get rewards'
+     * Handles generating case rewards and sending to player inventory
      * @param sessionID Session id
      * @param pmcData Player profile
      * @param request Get rewards from scavcase craft request
@@ -176,7 +216,7 @@ export declare class HideoutController {
      */
     protected handleScavCase(sessionID: string, pmcData: IPmcData, request: IHideoutTakeProductionRequestData, output: IItemEventRouterResponse): IItemEventRouterResponse;
     /**
-     * Start area production for item
+     * Start area production for item by adding production to profiles' Hideout.Production array
      * @param pmcData Player profile
      * @param request Start production request
      * @param sessionID Session id

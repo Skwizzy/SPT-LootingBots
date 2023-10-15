@@ -15,9 +15,13 @@ export declare class BundleLoader {
     protected jsonUtil: JsonUtil;
     protected bundles: Record<string, BundleInfo>;
     constructor(httpServerHelper: HttpServerHelper, vfs: VFS, jsonUtil: JsonUtil);
+    /**
+     * Handle singleplayer/bundles
+     */
     getBundles(local: boolean): BundleInfo[];
     getBundle(key: string, local: boolean): BundleInfo;
     addBundles(modpath: string): void;
+    addBundle(key: string, b: BundleInfo): void;
 }
 export interface BundleManifest {
     manifest: Array<BundleManifestEntry>;

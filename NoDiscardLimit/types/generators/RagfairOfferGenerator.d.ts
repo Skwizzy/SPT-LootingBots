@@ -48,13 +48,34 @@ export declare class RagfairOfferGenerator {
         price: number;
     }[];
     constructor(logger: ILogger, jsonUtil: JsonUtil, hashUtil: HashUtil, randomUtil: RandomUtil, timeUtil: TimeUtil, databaseServer: DatabaseServer, ragfairServerHelper: RagfairServerHelper, handbookHelper: HandbookHelper, saveServer: SaveServer, presetHelper: PresetHelper, ragfairAssortGenerator: RagfairAssortGenerator, ragfairOfferService: RagfairOfferService, ragfairPriceService: RagfairPriceService, localisationService: LocalisationService, paymentHelper: PaymentHelper, ragfairCategoriesService: RagfairCategoriesService, fenceService: FenceService, itemHelper: ItemHelper, configServer: ConfigServer);
-    createOffer(userID: string, time: number, items: Item[], barterScheme: IBarterScheme[], loyalLevel: number, price: number, sellInOnePiece?: boolean): IRagfairOffer;
+    /**
+     * Create a flea offer and store it in the Ragfair server offers array
+     * @param userID Owner of the offer
+     * @param time Time offer is listed at
+     * @param items Items in the offer
+     * @param barterScheme Cost of item (currency or barter)
+     * @param loyalLevel Loyalty level needed to buy item
+     * @param sellInOnePiece Flags sellInOnePiece to be true
+     * @returns IRagfairOffer
+     */
+    createFleaOffer(userID: string, time: number, items: Item[], barterScheme: IBarterScheme[], loyalLevel: number, sellInOnePiece?: boolean): IRagfairOffer;
+    /**
+     * Create an offer object ready to send to ragfairOfferService.addOffer()
+     * @param userID Owner of the offer
+     * @param time Time offer is listed at
+     * @param items Items in the offer
+     * @param barterScheme Cost of item (currency or barter)
+     * @param loyalLevel Loyalty level needed to buy item
+     * @param sellInOnePiece Set StackObjectsCount to 1
+     * @returns IRagfairOffer
+     */
+    protected createOffer(userID: string, time: number, items: Item[], barterScheme: IBarterScheme[], loyalLevel: number, sellInOnePiece?: boolean): IRagfairOffer;
     /**
      * Calculate the offer price that's listed on the flea listing
      * @param offerRequirements barter requirements for offer
      * @returns rouble cost of offer
      */
-    protected calculateOfferListingPrice(offerRequirements: OfferRequirement[]): number;
+    protected convertOfferRequirementsIntoRoubles(offerRequirements: OfferRequirement[]): number;
     /**
      * Get avatar url from trader table in db
      * @param isTrader Is user we're getting avatar for a trader
@@ -69,8 +90,18 @@ export declare class RagfairOfferGenerator {
      * @returns count of roubles
      */
     protected calculateRoublePrice(currencyCount: number, currencyType: string): number;
-    protected getTraderId(userID: string): string;
-    protected getRating(userID: string): number;
+    /**
+     * Check userId, if its a player, return their pmc _id, otherwise return userId parameter
+     * @param userId Users Id to check
+     * @returns Users Id
+     */
+    protected getTraderId(userId: string): string;
+    /**
+     * Get a flea trading rating for the passed in user
+     * @param userId User to get flea rating of
+     * @returns Flea rating value
+     */
+    protected getRating(userId: string): number;
     /**
      * Is the offers user rating growing
      * @param userID user to check rating of
@@ -89,15 +120,22 @@ export declare class RagfairOfferGenerator {
      * @param expiredOffers optional, expired offers to regenerate
      */
     generateDynamicOffers(expiredOffers?: Item[]): Promise<void>;
+    /**
+     *
+     * @param assortItemIndex Index of assort item
+     * @param assortItemsToProcess Item array containing index
+     * @param expiredOffers Currently expired offers on flea
+     * @param config Ragfair dynamic config
+     */
     protected createOffersForItems(assortItemIndex: string, assortItemsToProcess: Item[], expiredOffers: Item[], config: Dynamic): Promise<void>;
     /**
      * Create one flea offer for a specific item
      * @param items Item to create offer for
      * @param isPreset Is item a weapon preset
      * @param itemDetails raw db item details
-     * @returns
+     * @returns Item array
      */
-    protected createSingleOfferForItem(items: Item[], isPreset: boolean, itemDetails: [boolean, ITemplateItem]): Promise<Item[]>;
+    protected createSingleOfferForItem(items: Item[], isPreset: boolean, itemDetails: [boolean, ITemplateItem]): Promise<void>;
     /**
      * Generate trader offers on flea using the traders assort data
      * @param traderID Trader to generate offers for
@@ -111,7 +149,7 @@ export declare class RagfairOfferGenerator {
      * @param itemDetails db details of first item
      * @returns
      */
-    protected getItemCondition(userID: string, itemWithMods: Item[], itemDetails: ITemplateItem): Item[];
+    protected randomiseItemUpdProperties(userID: string, itemWithMods: Item[], itemDetails: ITemplateItem): Item[];
     /**
      * Get the relevant condition id if item tpl matches in ragfair.json/condition
      * @param tpl Item to look for matching condition object
@@ -142,9 +180,9 @@ export declare class RagfairOfferGenerator {
     /**
      * Create a barter-based barter scheme, if not possible, fall back to making barter scheme currency based
      * @param offerItems Items for sale in offer
-     * @returns barter scheme
+     * @returns Barter scheme
      */
-    protected createBarterRequirement(offerItems: Item[]): IBarterScheme[];
+    protected createBarterBarterScheme(offerItems: Item[]): IBarterScheme[];
     /**
      * Get an array of flea prices + item tpl, cached in generator class inside `allowedFleaPriceItemsForBarter`
      * @returns array with tpl/price values
@@ -156,19 +194,9 @@ export declare class RagfairOfferGenerator {
     /**
      * Create a random currency-based barter scheme for an array of items
      * @param offerItems Items on offer
+     * @param isPackOffer Is the barter scheme being created for a pack offer
+     * @param multipler What to multiply the resulting price by
      * @returns Barter scheme for offer
      */
-    protected createCurrencyRequirement(offerItems: Item[]): IBarterScheme[];
-    /**
-     * Create a flea offer and store it in the Ragfair server offers array
-     * @param userID owner of the offer
-     * @param time time offer is put up
-     * @param items items in the offer
-     * @param barterScheme cost of item (currency or barter)
-     * @param loyalLevel Loyalty level needed to buy item
-     * @param price price of offer
-     * @param sellInOnePiece
-     * @returns Ragfair offer
-     */
-    createFleaOffer(userID: string, time: number, items: Item[], barterScheme: IBarterScheme[], loyalLevel: number, price: number, sellInOnePiece?: boolean): IRagfairOffer;
+    protected createCurrencyBarterScheme(offerItems: Item[], isPackOffer: boolean, multipler?: number): IBarterScheme[];
 }

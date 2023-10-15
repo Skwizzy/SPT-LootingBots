@@ -1,11 +1,12 @@
 /// <reference types="node" />
-import http, { IncomingMessage } from "http";
+import http, { IncomingMessage } from "node:http";
 import WebSocket from "ws";
 import { HttpServerHelper } from "../helpers/HttpServerHelper";
 import { INotification } from "../models/eft/notifier/INotifier";
 import { IHttpConfig } from "../models/spt/config/IHttpConfig";
 import { ILogger } from "../models/spt/utils/ILogger";
 import { LocalisationService } from "../services/LocalisationService";
+import { JsonUtil } from "../utils/JsonUtil";
 import { RandomUtil } from "../utils/RandomUtil";
 import { ConfigServer } from "./ConfigServer";
 export declare class WebSocketServer {
@@ -13,8 +14,9 @@ export declare class WebSocketServer {
     protected randomUtil: RandomUtil;
     protected configServer: ConfigServer;
     protected localisationService: LocalisationService;
+    protected jsonUtil: JsonUtil;
     protected httpServerHelper: HttpServerHelper;
-    constructor(logger: ILogger, randomUtil: RandomUtil, configServer: ConfigServer, localisationService: LocalisationService, httpServerHelper: HttpServerHelper);
+    constructor(logger: ILogger, randomUtil: RandomUtil, configServer: ConfigServer, localisationService: LocalisationService, jsonUtil: JsonUtil, httpServerHelper: HttpServerHelper);
     protected httpConfig: IHttpConfig;
     protected defaultNotification: INotification;
     protected webSockets: Record<string, WebSocket.WebSocket>;

@@ -1,4 +1,5 @@
 import { MinMax } from "../../../models/common/MinMax";
+import { LootRequest } from "../services/LootRequest";
 import { IBaseConfig } from "./IBaseConfig";
 export interface ITraderConfig extends IBaseConfig {
     kind: "aki-trader";
@@ -6,6 +7,7 @@ export interface ITraderConfig extends IBaseConfig {
     purchasesAreFoundInRaid: boolean;
     updateTimeDefault: number;
     traderPriceMultipler: number;
+    /** Keep track of purchased trader-limited items beyond server restarts to prevent server-restart item scumming */
     persistPurchaseDataInProfile: boolean;
     fence: FenceConfig;
 }
@@ -23,9 +25,23 @@ export interface FenceConfig {
     presetPriceMult: number;
     armorMaxDurabilityPercentMinMax: MinMax;
     presetMaxDurabilityPercentMinMax: MinMax;
+    /** Key: item tpl */
+    itemStackSizeOverrideMinMax: Record<string, MinMax>;
     itemTypeLimits: Record<string, number>;
     regenerateAssortsOnRefresh: boolean;
+    /** Max rouble price before item is not listed on flea */
+    itemCategoryRoublePriceLimit: Record<string, number>;
+    /** Each slotid with % to be removed prior to listing on fence */
+    presetSlotsToRemoveChancePercent: Record<string, number>;
+    /** Block seasonal items from appearing when season is inactive */
+    blacklistSeasonalItems: boolean;
     blacklist: string[];
+    coopExtractGift: CoopExtractReward;
+}
+export interface CoopExtractReward extends LootRequest {
+    sendGift: boolean;
+    messageLocaleIds: string[];
+    giftExpiryHours: number;
 }
 export interface DiscountOptions {
     assortSize: number;

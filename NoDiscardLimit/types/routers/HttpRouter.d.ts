@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { IncomingMessage } from "http";
+import { IncomingMessage } from "node:http";
 import { DynamicRouter, Router, StaticRouter } from "../di/Router";
 export declare class HttpRouter {
     protected staticRouters: StaticRouter[];

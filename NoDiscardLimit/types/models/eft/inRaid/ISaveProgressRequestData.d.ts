@@ -1,8 +1,11 @@
-import { IPmcData } from "../common/IPmcData";
+import { PlayerRaidEndState } from "../../../models/enums/PlayerRaidEndState";
+import { IPostRaidPmcData } from "../common/IPmcData";
 import { ISyncHealthRequestData } from "../health/ISyncHealthRequestData";
+import { IInsuredItemsData } from "./IInsuredItemsData";
 export interface ISaveProgressRequestData {
-    exit: string;
-    profile: IPmcData;
+    exit: PlayerRaidEndState;
+    profile: IPostRaidPmcData;
     isPlayerScav: boolean;
     health: ISyncHealthRequestData;
+    insurance: IInsuredItemsData[];
 }

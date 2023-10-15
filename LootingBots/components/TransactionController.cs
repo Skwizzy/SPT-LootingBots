@@ -9,10 +9,10 @@ using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
-using InventoryOperationResultStruct = GStruct370;
-using InventoryHelperClass = GClass2672;
-using GridClassEx = GClass2411;
-using GridCacheClass = GClass1384;
+using InventoryControllerResultStruct = GStruct374;
+using InventoryHelperClass = GClass2584;
+using GridClassEx = GClass2320;
+using GridCacheClass = GClass1281;
 
 namespace LootingBots.Patch.Components
 {
@@ -366,7 +366,7 @@ namespace LootingBots.Patch.Components
         }
 
         public Task<IResult> TryRunNetworkTransaction(
-            InventoryOperationResultStruct operationResult,
+            InventoryControllerResultStruct operationResult,
             Callback callback = null
         )
         {

@@ -9,15 +9,14 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
-using GridClass = GClass2408;
-using GridClassEx = GClass2411;
-using InteractResultClass = GClass2846;
-using GridManagerClass = GClass2706;
-using SortResultStruct = GStruct371<GClass2706>;
-using GridItemClass = GClass2416;
-using ItemAddressExClass = GClass2667;
-using SortErrorClass = GClass3103;
-using GridCacheClass = GClass1384;
+using GridClass = GClass2317;
+using GridClassEx = GClass2320;
+using GridManagerClass = GClass2618;
+using SortResultStruct = GStruct375<GClass2618>;
+using GridItemClass =  GClass2325;
+using ItemAddressExClass = GClass2579;
+using SortErrorClass = GClass3029;
+using GridCacheClass = GClass1281;
 
 namespace LootingBots.Patch.Util
 {
@@ -53,11 +52,12 @@ namespace LootingBots.Patch.Util
         /** Triggers a container to open/close */
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
-            InteractResultClass result = new InteractResultClass(action);
+            InteractionResult result = new InteractionResult(action);
             container.Interact(result);
         }
 
         /**
+        * Reference fn: GClass2584.Sort
         * Sorts the items in a container and places them in grid spaces that match their exact size before moving on to a bigger slot size. This helps make more room in the container for items to be placed in
         */
         public static SortResultStruct SortContainer(

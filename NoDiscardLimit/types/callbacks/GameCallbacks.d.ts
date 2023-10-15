@@ -1,6 +1,8 @@
 import { GameController } from "../controllers/GameController";
+import { OnLoad } from "../di/OnLoad";
 import { IEmptyRequestData } from "../models/eft/common/IEmptyRequestData";
 import { ICheckVersionResponse } from "../models/eft/game/ICheckVersionResponse";
+import { ICurrentGroupResponse } from "../models/eft/game/ICurrentGroupResponse";
 import { IGameConfigResponse } from "../models/eft/game/IGameConfigResponse";
 import { IGameEmptyCrcRequestData } from "../models/eft/game/IGameEmptyCrcRequestData";
 import { IGameKeepAliveResponse } from "../models/eft/game/IGameKeepAliveResponse";
@@ -11,13 +13,17 @@ import { IServerDetails } from "../models/eft/game/IServerDetails";
 import { IVersionValidateRequestData } from "../models/eft/game/IVersionValidateRequestData";
 import { IGetBodyResponseData } from "../models/eft/httpResponse/IGetBodyResponseData";
 import { INullResponseData } from "../models/eft/httpResponse/INullResponseData";
+import { SaveServer } from "../servers/SaveServer";
 import { HttpResponseUtil } from "../utils/HttpResponseUtil";
 import { Watermark } from "../utils/Watermark";
-declare class GameCallbacks {
+declare class GameCallbacks implements OnLoad {
     protected httpResponse: HttpResponseUtil;
     protected watermark: Watermark;
+    protected saveServer: SaveServer;
     protected gameController: GameController;
-    constructor(httpResponse: HttpResponseUtil, watermark: Watermark, gameController: GameController);
+    constructor(httpResponse: HttpResponseUtil, watermark: Watermark, saveServer: SaveServer, gameController: GameController);
+    onLoad(): Promise<void>;
+    getRoute(): string;
     /**
      * Handle client/game/version/validate
      * @returns INullResponseData
@@ -30,6 +36,7 @@ declare class GameCallbacks {
     gameStart(url: string, info: IEmptyRequestData, sessionID: string): IGetBodyResponseData<IGameStartResponse>;
     /**
      * Handle client/game/logout
+     * Save profiles on game close
      * @returns IGameLogoutResponseData
      */
     gameLogout(url: string, info: IEmptyRequestData, sessionID: string): IGetBodyResponseData<IGameLogoutResponseData>;
@@ -38,8 +45,17 @@ declare class GameCallbacks {
      * @returns IGameConfigResponse
      */
     getGameConfig(url: string, info: IGameEmptyCrcRequestData, sessionID: string): IGetBodyResponseData<IGameConfigResponse>;
+    /**
+     * Handle client/server/list
+     */
     getServer(url: string, info: IEmptyRequestData, sessionID: string): IGetBodyResponseData<IServerDetails[]>;
-    getCurrentGroup(url: string, info: IEmptyRequestData, sessionID: string): any;
+    /**
+     * Handle client/match/group/current
+     */
+    getCurrentGroup(url: string, info: IEmptyRequestData, sessionID: string): IGetBodyResponseData<ICurrentGroupResponse>;
+    /**
+     * Handle client/checkVersion
+     */
     validateGameVersion(url: string, info: IEmptyRequestData, sessionID: string): IGetBodyResponseData<ICheckVersionResponse>;
     /**
      * Handle client/game/keepalive

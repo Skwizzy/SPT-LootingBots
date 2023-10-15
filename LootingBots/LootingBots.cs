@@ -13,7 +13,7 @@ using LootingBots.Brain;
 using DrakiaXYZ.BigBrain.Brains;
 using System.Collections.Generic;
 
-using HandbookClass = GClass2775;
+using HandbookClass = GClass2690;
 
 namespace LootingBots
 {
@@ -301,6 +301,7 @@ namespace LootingBots
                     "BossSanitar",
                     "CursAssault",
                     "PMC",
+                    "ArenaFighter",
                     "SectantWarrior"
                 }
             );
@@ -334,7 +335,7 @@ namespace LootingBots
             );
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "PMC", "ExUsec" },
+                new List<string>() { "PMC", "ExUsec", "ArenaFighter" },
                 3
             );
             BrainManager.AddCustomLayer(

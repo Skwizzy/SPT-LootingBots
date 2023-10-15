@@ -1,10 +1,14 @@
 import { MinMax } from "../../../models/common/MinMax";
+import { SeasonalEventType } from "../../../models/enums/SeasonalEventType";
 import { ELocationName } from "../../enums/ELocationName";
 import { IBaseConfig } from "./IBaseConfig";
 export interface IQuestConfig extends IBaseConfig {
     kind: "aki-quest";
     redeemTime: number;
     questTemplateIds: IPlayerTypeQuestIds;
+    /** Show non-seasonal quests be shown to player */
+    showNonSeasonalEventQuests: boolean;
+    eventQuests: Record<string, IEventQuestData>;
     repeatableQuests: IRepeatableQuestConfig[];
     locationIdMap: Record<string, string>;
     bearOnlyQuests: string[];
@@ -18,6 +22,13 @@ export interface IQuestTypeIds {
     Elimination: string;
     Completion: string;
     Exploration: string;
+}
+export interface IEventQuestData {
+    name: string;
+    season: SeasonalEventType;
+    startTimestamp: number;
+    endTimestamp: number;
+    yearly: boolean;
 }
 export interface IRepeatableQuestConfig {
     name: string;
@@ -81,6 +92,12 @@ export interface IEliminationConfig {
     minDist: number;
     maxKills: number;
     minKills: number;
+    minBossKills: number;
+    maxBossKills: number;
+    weaponCategoryRequirementProb: number;
+    weaponCategoryRequirements: IWeaponRequirement[];
+    weaponRequirementProb: number;
+    weaponRequirements: IWeaponRequirement[];
 }
 export interface ITarget extends IProbabilityObject {
     data: IBossInfo;
@@ -89,6 +106,9 @@ export interface IBossInfo {
     isBoss: boolean;
 }
 export interface IBodyPart extends IProbabilityObject {
+    data: string[];
+}
+export interface IWeaponRequirement extends IProbabilityObject {
     data: string[];
 }
 export interface IProbabilityObject {

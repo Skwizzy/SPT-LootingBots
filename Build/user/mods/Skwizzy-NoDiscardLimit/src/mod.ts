@@ -30,35 +30,48 @@ class DisableDiscardLimits implements IPostDBLoadMod {
       ParentClasses.FOOD_DRINK,
       ParentClasses.STIMULATOR,
     ];
-    const pmcConfig = botConf.pmc;
+    // const pmcConfig = botConf.pmc;
 
     const emptyInventory = (botTypes: string[]) => {
       botTypes.forEach((type) => {
         logInfo(`Removing loot from ${type}`);
-        tables.bots.types[type].inventory.items.Pockets = [];
-        tables.bots.types[type].inventory.items.Pockets = [];
+        const backpackWeights = tables.bots.types[type].generation.items.backpackLoot.weights;
+        const vestWeights = tables.bots.types[type].generation.items.vestLoot.weights;
+        const pocketWeights = tables.bots.types[type].generation.items.pocketLoot.weights;
+
+        Object.values(backpackWeights).forEach(weight => weight = 0);
+        Object.values(vestWeights).forEach(weight => weight = 0);
+        Object.values(pocketWeights).forEach(weight => weight = 0);
       });
     };
 
     if (!config.pmcSpawnWithLoot) {
       emptyInventory(["usec", "bear"]);
       // Do not allow weapons to spawn in PMC bags
-      pmcConfig.looseWeaponInBackpackLootMinMax.min = 0;
-      pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
+      // botConf.equipment["pmc"].min = 0;
+      // pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
       // Restrict the amount of food/drink items that a PMC can spawn with
-      tables.bots.types["usec"].generation.items.looseLoot.max = 4;
-      tables.bots.types["bear"].generation.items.looseLoot.max = 4;
+      // for (const weight in tables.bots.types["usec"].generation.items.backpackLoot.weights) {
+      //   tables.bots.types["usec"].generation.items.backpackLoot.weights[weight] = 0;
+      //   tables.bots.types["usec"].generation.items.vestLoot.weights[weight] = 0;
+      //   tables.bots.types["usec"].generation.items.pocketLoot.weights[weight] = 0;
+      // }
 
+      // for (const weight in tables.bots.types["bear"].generation.items.backpackLoot.weights) {
+      //   tables.bots.types["bear"].generation.items.backpackLoot.weights[weight] = 0;
+      //   tables.bots.types["bear"].generation.items.vestLoot.weights[weight] = 0;
+      //   tables.bots.types["bear"].generation.items.pocketLoot.weights[weight] = 0;
+      // }
 
       //have to add all loot items we don't want to pmc blacklist because PMCs use "dynamic loot" pool
-      for (let item in tables.templates.items) {
-        const {_parent, _id} = tables.templates.items[item];
-        if (!allowedItemTypes.includes(_parent)) {
-          pmcConfig.pocketLoot.blacklist.push(_id);
-          pmcConfig.backpackLoot.blacklist.push(_id);
-          pmcConfig.vestLoot.blacklist.push(_id);
-        }
-      }
+      // for (let item in tables.templates.items) {
+      //   const {_parent, _id} = tables.templates.items[item];
+      //   if (!allowedItemTypes.includes(_parent)) {
+      //     pmcConfig.pocketLoot.blacklist.push(_id);
+      //     pmcConfig.backpackLoot.blacklist.push(_id);
+      //     pmcConfig.vestLoot.blacklist.push(_id);
+      //   }
+      // }
     }
 
     if (!config.scavSpawnWithLoot) {

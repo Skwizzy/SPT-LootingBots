@@ -1,5 +1,5 @@
 import { IPmcData } from "../models/eft/common/IPmcData";
-import { Stats } from "../models/eft/common/tables/IBotBase";
+import { CounterKeyValue, Stats } from "../models/eft/common/tables/IBotBase";
 import { IAkiProfile } from "../models/eft/profile/IAkiProfile";
 import { IValidateNicknameRequestData } from "../models/eft/profile/IValidateNicknameRequestData";
 import { ILogger } from "../models/spt/utils/ILogger";
@@ -21,11 +21,11 @@ export declare class ProfileHelper {
     protected profileSnapshotService: ProfileSnapshotService;
     constructor(logger: ILogger, jsonUtil: JsonUtil, watermark: Watermark, timeUtil: TimeUtil, saveServer: SaveServer, databaseServer: DatabaseServer, itemHelper: ItemHelper, profileSnapshotService: ProfileSnapshotService);
     /**
-     * Remove/reset started quest condtions in player profile
+     * Remove/reset a completed quest condtion from players profile quest data
      * @param sessionID Session id
-     * @param conditionIds Condition ids that need to be reset/removed
+     * @param questConditionId Quest with condition to remove
      */
-    resetProfileQuestCondition(sessionID: string, conditionIds: string[]): void;
+    removeCompletedQuestConditionFromProfile(pmcData: IPmcData, questConditionId: Record<string, string>): void;
     /**
      * Get all profiles from server
      * @returns Dictionary of profiles
@@ -45,7 +45,16 @@ export declare class ProfileHelper {
      * @returns updated profile array
      */
     protected postRaidXpWorkaroundFix(sessionId: string, output: IPmcData[], pmcProfile: IPmcData, scavProfile: IPmcData): IPmcData[];
-    isNicknameTaken(info: IValidateNicknameRequestData, sessionID: string): boolean;
+    /**
+     * Check if a nickname is used by another profile loaded by the server
+     * @param nicknameRequest
+     * @param sessionID Session id
+     * @returns True if already used
+     */
+    isNicknameTaken(nicknameRequest: IValidateNicknameRequestData, sessionID: string): boolean;
+    protected profileHasInfoProperty(profile: IAkiProfile): boolean;
+    protected nicknameMatches(profileName: string, nicknameRequest: string): boolean;
+    protected sessionIdMatchesProfileId(profileId: string, sessionId: string): boolean;
     /**
      * Add experience to a PMC inside the players profile
      * @param sessionID Session id
@@ -59,6 +68,10 @@ export declare class ProfileHelper {
     getFullProfile(sessionID: string): IAkiProfile;
     getPmcProfile(sessionID: string): IPmcData;
     getScavProfile(sessionID: string): IPmcData;
+    /**
+     * Get baseline counter values for a fresh profile
+     * @returns Stats
+     */
     getDefaultCounters(): Stats;
     protected isWiped(sessionID: string): boolean;
     protected getServerVersion(): string;
@@ -68,4 +81,24 @@ export declare class ProfileHelper {
      * @returns profile without secure container
      */
     removeSecureContainer(profile: IPmcData): IPmcData;
+    /**
+     *  Flag a profile as having received a gift
+     * Store giftid in profile aki object
+     * @param playerId Player to add gift flag to
+     * @param giftId Gift player received
+     */
+    addGiftReceivedFlagToProfile(playerId: string, giftId: string): void;
+    /**
+     * Check if profile has recieved a gift by id
+     * @param playerId Player profile to check for gift
+     * @param giftId Gift to check for
+     * @returns True if player has recieved gift previously
+     */
+    playerHasRecievedGift(playerId: string, giftId: string): boolean;
+    /**
+     * Find Stat in profile counters and increment by one
+     * @param counters Counters to search for key
+     * @param keyToIncrement Key
+     */
+    incrementStatCounter(counters: CounterKeyValue[], keyToIncrement: string): void;
 }
