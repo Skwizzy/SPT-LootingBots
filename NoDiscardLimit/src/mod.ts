@@ -67,7 +67,7 @@ class DisableDiscardLimits implements IPostDBLoadMod {
       // for (let item in tables.templates.items) {
       //   const {_parent, _id} = tables.templates.items[item];
       //   if (!allowedItemTypes.includes(_parent)) {
-      //     pmcConfig.pocketLoot.blacklist.push(_id);
+    //     pmcConfig.pocketLoot.blacklist.push(_id);
       //     pmcConfig.backpackLoot.blacklist.push(_id);
       //     pmcConfig.vestLoot.blacklist.push(_id);
       //   }
