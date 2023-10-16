@@ -310,18 +310,10 @@ namespace LootingBots
                 new List<string>()
                 {
                     "Assault",
-                    "BossSanitar",
                     "CursAssault",
+                    "BossSanitar",
                     "BossKojaniy",
-                    "SectantPriest",
-                    "FollowerGluharScout",
-                    "FollowerGluharProtect",
-                    "FollowerGluharAssault",
                     "BossGluhar",
-                    "Fl_Zraychiy",
-                    "TagillaFollower",
-                    "FollowerSanitar",
-                    "FollowerBully",
                     "BirdEye",
                     "BigPipe",
                     "Knight",
@@ -329,7 +321,18 @@ namespace LootingBots
                     "Tagilla",
                     "Killa",
                     "BossSanitar",
-                    "BossBully"
+                    "BossBully",
+                    "BossBoar",
+                    "BoarSniper",
+
+                    "FollowerGluharScout",
+                    "FollowerGluharProtect",
+                    "FollowerGluharAssault",
+                    "Fl_Zraychiy",
+                    "TagillaFollower",
+                    "FollowerSanitar",
+                    "FollowerBully",
+                    "FlBoar"
                 },
                 2
             );
@@ -342,6 +345,16 @@ namespace LootingBots
                 typeof(LootingLayer),
                 new List<string>() { "SectantWarrior" },
                 13
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "SectantPriest" },
+                12
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "Obdolbs" },
+                11
             );
         }
 
