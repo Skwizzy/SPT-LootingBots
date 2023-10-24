@@ -114,7 +114,7 @@ namespace LootingBots.Patch.Util
 
         public static bool IsHelmet(Item item)
         {
-            return item is HeadArmorClass headwear && headwear.IsArmorMod();
+            return item is HeadArmorClass;
         }
 
         public static bool IsArmorVest(Item item)
