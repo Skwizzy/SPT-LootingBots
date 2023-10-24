@@ -133,11 +133,12 @@ namespace LootingBots.Brain.Logics
                             closestItem = lootItem;
                         }
 
+                        shortestDist = dist;
+
                         _lootingBrain.LootObjectCenter = collider.bounds.center;
                         // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
                         _lootingBrain.LootObjectCenter.y =
                             collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
-                        _lootingBrain.DistanceToLoot = shortestDist;
                     }
                 }
             }
@@ -160,6 +161,8 @@ namespace LootingBots.Brain.Logics
                 _lootingBrain.LootObjectPosition = closestCorpse.Transform.position;
                 ActiveLootCache.CacheActiveLootId(closestCorpse.name, BotOwner.name);
             }
+
+            _lootingBrain.DistanceToLoot = shortestDist;
         }
 
         /**
