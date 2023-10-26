@@ -10,8 +10,8 @@ using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 
 using InventoryControllerResultStruct = GStruct374;
-using InventoryHelperClass = GClass2584;
-using GridClassEx = GClass2320;
+using InventoryHelperClass = GClass2585;
+using GridClassEx = GClass2321;
 using GridCacheClass = GClass1281;
 
 namespace LootingBots.Patch.Components

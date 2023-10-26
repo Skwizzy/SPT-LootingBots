@@ -9,12 +9,12 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
-using GridClass = GClass2317;
-using GridClassEx = GClass2320;
-using GridManagerClass = GClass2618;
-using SortResultStruct = GStruct375<GClass2618>;
-using GridItemClass =  GClass2325;
-using ItemAddressExClass = GClass2579;
+using GridClass = GClass2318;
+using GridClassEx = GClass2321;
+using GridManagerClass = GClass2619;
+using SortResultStruct = GStruct375<GClass2619>;
+using GridItemClass =  GClass2326;
+using ItemAddressExClass = GClass2580;
 using SortErrorClass = GClass3029;
 using GridCacheClass = GClass1281;
 
