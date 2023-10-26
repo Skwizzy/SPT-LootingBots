@@ -7,7 +7,6 @@ export declare class ItemFilterService {
     protected logger: ILogger;
     protected databaseServer: DatabaseServer;
     protected configServer: ConfigServer;
-    protected blacklist: string[];
     protected itemConfig: IItemConfig;
     constructor(logger: ILogger, databaseServer: DatabaseServer, configServer: ConfigServer);
     /**
@@ -21,4 +20,15 @@ export declare class ItemFilterService {
      * @returns string array of blacklisted tempalte ids
      */
     getBlacklistedItems(): string[];
+    /**
+     * Check if the provided template id is boss item in config/item.json
+     * @param tpl template id
+     * @returns true if boss item
+     */
+    isBossItem(tpl: string): boolean;
+    /**
+     * Return boss items in config/item.json
+     * @returns string array of boss item tempalte ids
+     */
+    getBossItems(): string[];
 }

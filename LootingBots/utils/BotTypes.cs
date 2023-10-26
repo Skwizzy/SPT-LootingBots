@@ -87,6 +87,7 @@ namespace LootingBots.Patch.Util
                 case WildSpawnType.followerTagilla:
                 case WildSpawnType.followerTest:
                 case WildSpawnType.followerZryachiy:
+                case WildSpawnType.followerBoar:
                 {
                     return enabledTypes.HasFollower();
                 }
@@ -101,7 +102,9 @@ namespace LootingBots.Patch.Util
                 {
                     return enabledTypes.HasCultist();
                 }
+                case WildSpawnType.arenaFighter:
                 case WildSpawnType.arenaFighterEvent:
+                case WildSpawnType.crazyAssaultEvent:
                 {
                     return enabledTypes.HasBloodhound();
                 }
@@ -140,7 +143,9 @@ namespace LootingBots.Patch.Util
                 WildSpawnType.bossSanitar,
                 WildSpawnType.bossTagilla,
                 WildSpawnType.bossTest,
-                WildSpawnType.bossZryachiy
+                WildSpawnType.bossZryachiy,
+                WildSpawnType.bossBoar,
+                WildSpawnType.bossBoarSniper
             };
             return bosses.Contains(wildSpawnType);
         }

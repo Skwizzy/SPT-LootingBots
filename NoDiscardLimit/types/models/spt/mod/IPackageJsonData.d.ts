@@ -6,6 +6,9 @@ export interface IPackageJsonData {
     author: string;
     version: string;
     akiVersion: string;
+    /** We deliberately purge this data */
+    scripts: Record<string, string>;
+    devDependencies: Record<string, string>;
     licence: string;
     main: string;
     isBundleMod: boolean;

@@ -10,14 +10,14 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(BotControllerClass).GetMethod(
+            return typeof(BotsController).GetMethod(
                 "Init",
                 BindingFlags.Public | BindingFlags.Instance
             );
         }
 
         [PatchPostfix]
-        private static void PatchPostfix(BotControllerClass __instance)
+        private static void PatchPostfix(BotsController __instance)
         {
             __instance.BotSpawner.OnBotRemoved += botOwner =>
             {

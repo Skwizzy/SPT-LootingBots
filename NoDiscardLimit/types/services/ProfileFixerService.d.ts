@@ -1,12 +1,21 @@
 import { HideoutHelper } from "../helpers/HideoutHelper";
+import { InventoryHelper } from "../helpers/InventoryHelper";
+import { ItemHelper } from "../helpers/ItemHelper";
+import { ProfileHelper } from "../helpers/ProfileHelper";
+import { TraderHelper } from "../helpers/TraderHelper";
 import { IPmcData } from "../models/eft/common/IPmcData";
 import { Bonus, HideoutSlot } from "../models/eft/common/tables/IBotBase";
 import { IPmcDataRepeatableQuest, IRepeatableQuest } from "../models/eft/common/tables/IRepeatableQuests";
 import { StageBonus } from "../models/eft/hideout/IHideoutArea";
 import { IAkiProfile } from "../models/eft/profile/IAkiProfile";
 import { HideoutAreas } from "../models/enums/HideoutAreas";
+import { ICoreConfig } from "../models/spt/config/ICoreConfig";
+import { IRagfairConfig } from "../models/spt/config/IRagfairConfig";
 import { ILogger } from "../models/spt/utils/ILogger";
+import { ConfigServer } from "../servers/ConfigServer";
 import { DatabaseServer } from "../servers/DatabaseServer";
+import { HashUtil } from "../utils/HashUtil";
+import { JsonUtil } from "../utils/JsonUtil";
 import { TimeUtil } from "../utils/TimeUtil";
 import { Watermark } from "../utils/Watermark";
 import { LocalisationService } from "./LocalisationService";
@@ -14,15 +23,29 @@ export declare class ProfileFixerService {
     protected logger: ILogger;
     protected watermark: Watermark;
     protected hideoutHelper: HideoutHelper;
+    protected inventoryHelper: InventoryHelper;
+    protected traderHelper: TraderHelper;
+    protected profileHelper: ProfileHelper;
+    protected itemHelper: ItemHelper;
     protected localisationService: LocalisationService;
     protected timeUtil: TimeUtil;
+    protected jsonUtil: JsonUtil;
+    protected hashUtil: HashUtil;
     protected databaseServer: DatabaseServer;
-    constructor(logger: ILogger, watermark: Watermark, hideoutHelper: HideoutHelper, localisationService: LocalisationService, timeUtil: TimeUtil, databaseServer: DatabaseServer);
+    protected configServer: ConfigServer;
+    protected coreConfig: ICoreConfig;
+    protected ragfairConfig: IRagfairConfig;
+    constructor(logger: ILogger, watermark: Watermark, hideoutHelper: HideoutHelper, inventoryHelper: InventoryHelper, traderHelper: TraderHelper, profileHelper: ProfileHelper, itemHelper: ItemHelper, localisationService: LocalisationService, timeUtil: TimeUtil, jsonUtil: JsonUtil, hashUtil: HashUtil, databaseServer: DatabaseServer, configServer: ConfigServer);
     /**
      * Find issues in the pmc profile data that may cause issues and fix them
      * @param pmcProfile profile to check and fix
      */
     checkForAndFixPmcProfileIssues(pmcProfile: IPmcData): void;
+    protected addMissingGunStandContainerImprovements(pmcProfile: IPmcData): void;
+    protected ensureGunStandLevelsMatch(pmcProfile: IPmcData): void;
+    protected addHideoutAreaStashes(pmcProfile: IPmcData): void;
+    protected addMissingHideoutWallAreas(pmcProfile: IPmcData): void;
+    protected adjustUnreasonableModFleaPrices(): void;
     /**
      * Add tag to profile to indicate when it was made
      * @param fullProfile
@@ -48,7 +71,6 @@ export declare class ProfileFixerService {
      */
     protected updateProfileQuestDataValues(pmcProfile: IPmcData): void;
     protected addMissingRepeatableQuestsProperty(pmcProfile: IPmcData): void;
-    protected addMissingWorkbenchWeaponSkills(pmcProfile: IPmcData): void;
     /**
      * Some profiles have hideout maxed and therefore no improvements
      * @param pmcProfile Profile to add improvement data to
@@ -76,7 +98,6 @@ export declare class ProfileFixerService {
      * @param pmcProfile
      */
     protected updateProfilePocketsToNewId(pmcProfile: IPmcData): void;
-    addMissingArmorRepairSkill(pmcProfile: IPmcData): void;
     /**
      * Iterate over players hideout areas and find what's build, look for missing bonuses those areas give and add them if missing
      * @param pmcProfile Profile to update
@@ -91,9 +112,10 @@ export declare class ProfileFixerService {
     protected getBonusFromProfile(profileBonuses: Bonus[], bonus: StageBonus): Bonus;
     /**
      * Checks profile inventiory for items that do not exist inside the items db
+     * @param sessionId Session id
      * @param pmcProfile Profile to check inventory of
      */
-    checkForOrphanedModdedItems(pmcProfile: IPmcData): void;
+    checkForOrphanedModdedItems(sessionId: string, fullProfile: IAkiProfile): void;
     /**
      * Add `Improvements` object to hideout if missing - added in eft 13.0.21469
      * @param pmcProfile profile to update
@@ -109,4 +131,25 @@ export declare class ProfileFixerService {
      * @param pmcProfile Profile to update
      */
     removeLegacyScavCaseProductionCrafts(pmcProfile: IPmcData): void;
+    /**
+     * 3.7.0 moved AIDs to be numeric, old profiles need to be migrated
+     * We store the old AID value in new field `sessionId`
+     * @param fullProfile Profile to update
+     */
+    fixIncorrectAidValue(fullProfile: IAkiProfile): void;
+    /**
+     * Bsg nested `stats` into a sub object called 'eft'
+     * @param fullProfile Profile to check for and migrate stats data
+     */
+    migrateStatsToNewStructure(fullProfile: IAkiProfile): void;
+    /**
+     * 26126 (7th August) requires bonuses to have an ID, these were not included in the default profile presets
+     * @param pmcProfile Profile to add missing IDs to
+     */
+    addMissingIdsToBonuses(pmcProfile: IPmcData): void;
+    /**
+     * At some point the property name was changed,migrate data across to new name
+     * @param pmcProfile Profile to migrate improvements in
+     */
+    protected migrateImprovements(pmcProfile: IPmcData): void;
 }

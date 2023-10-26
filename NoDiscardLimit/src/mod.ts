@@ -5,60 +5,41 @@ import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
-import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
+
 
 import config from "../config/config.json";
-import { ParentClasses } from "./enums.js";
 
 class DisableDiscardLimits implements IPostDBLoadMod {
   public postDBLoad(container: DependencyContainer): void {
     const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
     const configServer = container.resolve<ConfigServer>("ConfigServer");
-    const botConf = configServer.getConfig<IBotConfig>(ConfigTypes.BOT);
+    const pmcConfig = configServer.getConfig<IPmcConfig>(ConfigTypes.PMC);
     const { logInfo } = useLogger(container);
 
     const tables = databaseServer.getTables();
 
-    const allowedItemTypes: string[] = [
-      ParentClasses.THROW_WEAPON,
-      ParentClasses.AMMO,
-      ParentClasses.MEDICAL,
-      ParentClasses.MEDKIT,
-      ParentClasses.DRUGS,
-      ParentClasses.DRINK,
-      ParentClasses.FOOD,
-      ParentClasses.FOOD_DRINK,
-      ParentClasses.STIMULATOR,
-    ];
-    const pmcConfig = botConf.pmc;
-
+    /**
+     * Set the item generation weights for backpackLoot, vestLoot, and pocketLoot to zero to prevent extra loot items from spawning on the specified bot type
+     * @param botTypes 
+     */
     const emptyInventory = (botTypes: string[]) => {
       botTypes.forEach((type) => {
         logInfo(`Removing loot from ${type}`);
-        tables.bots.types[type].inventory.items.Pockets = [];
-        tables.bots.types[type].inventory.items.Pockets = [];
+        const backpackWeights = tables.bots.types[type].generation.items.backpackLoot.weights;
+        const vestWeights = tables.bots.types[type].generation.items.vestLoot.weights;
+        const pocketWeights = tables.bots.types[type].generation.items.pocketLoot.weights;
+        
+        Object.keys(backpackWeights).forEach(weight => backpackWeights[weight] = 0);
+        Object.keys(vestWeights).forEach(weight => vestWeights[weight] = 0);
+        Object.keys(pocketWeights).forEach(weight => pocketWeights[weight] = 0);
       });
     };
 
     if (!config.pmcSpawnWithLoot) {
       emptyInventory(["usec", "bear"]);
       // Do not allow weapons to spawn in PMC bags
-      pmcConfig.looseWeaponInBackpackLootMinMax.min = 0;
       pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
-      // Restrict the amount of food/drink items that a PMC can spawn with
-      tables.bots.types["usec"].generation.items.looseLoot.max = 4;
-      tables.bots.types["bear"].generation.items.looseLoot.max = 4;
-
-
-      //have to add all loot items we don't want to pmc blacklist because PMCs use "dynamic loot" pool
-      for (let item in tables.templates.items) {
-        const {_parent, _id} = tables.templates.items[item];
-        if (!allowedItemTypes.includes(_parent)) {
-          pmcConfig.pocketLoot.blacklist.push(_id);
-          pmcConfig.backpackLoot.blacklist.push(_id);
-          pmcConfig.vestLoot.blacklist.push(_id);
-        }
-      }
     }
 
     if (!config.scavSpawnWithLoot) {

@@ -1,3 +1,4 @@
+import { EquipmentBuildType } from "../../../models/enums/EquipmentBuildType";
 import { MemberCategory } from "../../../models/enums/MemberCategory";
 import { MessageType } from "../../enums/MessageType";
 import { IPmcData } from "../common/IPmcData";
@@ -5,8 +6,9 @@ import { Item } from "../common/tables/IItem";
 export interface IAkiProfile {
     info: Info;
     characters: Characters;
+    /** Clothing purchases */
     suits: string[];
-    weaponbuilds: WeaponBuild[];
+    userbuilds: IUserBuilds;
     dialogues: Record<string, Dialogue>;
     aki: Aki;
     vitality: Vitality;
@@ -21,6 +23,7 @@ export declare class TraderPurchaseData {
 }
 export interface Info {
     id: string;
+    aid: number;
     username: string;
     password: string;
     wipe: boolean;
@@ -30,11 +33,25 @@ export interface Characters {
     pmc: IPmcData;
     scav: IPmcData;
 }
-export interface WeaponBuild {
+export interface IUserBuilds {
+    weaponBuilds: IWeaponBuild[];
+    equipmentBuilds: IEquipmentBuild[];
+}
+export interface IWeaponBuild {
     id: string;
     name: string;
     root: string;
     items: Item[];
+    type: string;
+}
+export interface IEquipmentBuild {
+    id: string;
+    name: string;
+    root: string;
+    items: Item[];
+    type: string;
+    fastPanel: Record<string, string>;
+    buildType: EquipmentBuildType;
 }
 export interface Dialogue {
     attachmentsNew: number;
@@ -61,7 +78,7 @@ export interface DialogueInfo {
     _id: string;
     type: MessageType;
     pinned: boolean;
-    Users?: any[];
+    Users?: IUserDialogInfo[];
     message: MessagePreview;
 }
 export interface Message {
@@ -73,9 +90,9 @@ export interface Message {
     Member?: IUpdatableChatMember;
     templateId?: string;
     text?: string;
-    hasRewards: boolean;
+    hasRewards?: boolean;
     rewardCollected: boolean;
-    items: MessageItems;
+    items?: MessageItems;
     maxStorageTime?: number;
     systemData?: ISystemData;
     profileChangeEvents?: any[];
@@ -104,7 +121,7 @@ export interface IUpdatableChatMember {
     Nickname: string;
     Side: string;
     Level: number;
-    MemberCategory: string;
+    MemberCategory: MemberCategory;
     Ignored: boolean;
     Banned: boolean;
 }
@@ -115,12 +132,17 @@ export interface DateTime {
 export interface Aki {
     version: string;
     mods?: ModDetails[];
+    receivedGifts: ReceivedGift[];
 }
 export interface ModDetails {
     name: string;
     version: string;
     author: string;
     dateAdded: number;
+}
+export interface ReceivedGift {
+    giftId: string;
+    timestampAccepted: number;
 }
 export interface Vitality {
     health: Health;

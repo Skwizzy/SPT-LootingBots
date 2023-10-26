@@ -1,4 +1,5 @@
 import { ApplicationContext } from "../context/ApplicationContext";
+import { LootGenerator } from "../generators/LootGenerator";
 import { ProfileHelper } from "../helpers/ProfileHelper";
 import { TraderHelper } from "../helpers/TraderHelper";
 import { IPmcData } from "../models/eft/common/IPmcData";
@@ -9,19 +10,27 @@ import { IGetProfileRequestData } from "../models/eft/match/IGetProfileRequestDa
 import { IGetRaidConfigurationRequestData } from "../models/eft/match/IGetRaidConfigurationRequestData";
 import { IJoinMatchRequestData } from "../models/eft/match/IJoinMatchRequestData";
 import { IJoinMatchResult } from "../models/eft/match/IJoinMatchResult";
-import { IBotConfig } from "../models/spt/config/IBotConfig";
 import { IInRaidConfig } from "../models/spt/config/IInRaidConfig";
 import { IMatchConfig } from "../models/spt/config/IMatchConfig";
+import { IPmcConfig } from "../models/spt/config/IPmcConfig";
+import { ITraderConfig } from "../models/spt/config/ITraderConfig";
 import { ILogger } from "../models/spt/utils/ILogger";
 import { ConfigServer } from "../servers/ConfigServer";
 import { SaveServer } from "../servers/SaveServer";
 import { BotGenerationCacheService } from "../services/BotGenerationCacheService";
 import { BotLootCacheService } from "../services/BotLootCacheService";
+import { MailSendService } from "../services/MailSendService";
 import { MatchLocationService } from "../services/MatchLocationService";
 import { ProfileSnapshotService } from "../services/ProfileSnapshotService";
+import { HashUtil } from "../utils/HashUtil";
+import { RandomUtil } from "../utils/RandomUtil";
+import { TimeUtil } from "../utils/TimeUtil";
 export declare class MatchController {
     protected logger: ILogger;
     protected saveServer: SaveServer;
+    protected timeUtil: TimeUtil;
+    protected randomUtil: RandomUtil;
+    protected hashUtil: HashUtil;
     protected profileHelper: ProfileHelper;
     protected matchLocationService: MatchLocationService;
     protected traderHelper: TraderHelper;
@@ -29,22 +38,29 @@ export declare class MatchController {
     protected configServer: ConfigServer;
     protected profileSnapshotService: ProfileSnapshotService;
     protected botGenerationCacheService: BotGenerationCacheService;
+    protected mailSendService: MailSendService;
+    protected lootGenerator: LootGenerator;
     protected applicationContext: ApplicationContext;
     protected matchConfig: IMatchConfig;
     protected inraidConfig: IInRaidConfig;
-    protected botConfig: IBotConfig;
-    constructor(logger: ILogger, saveServer: SaveServer, profileHelper: ProfileHelper, matchLocationService: MatchLocationService, traderHelper: TraderHelper, botLootCacheService: BotLootCacheService, configServer: ConfigServer, profileSnapshotService: ProfileSnapshotService, botGenerationCacheService: BotGenerationCacheService, applicationContext: ApplicationContext);
+    protected traderConfig: ITraderConfig;
+    protected pmcConfig: IPmcConfig;
+    constructor(logger: ILogger, saveServer: SaveServer, timeUtil: TimeUtil, randomUtil: RandomUtil, hashUtil: HashUtil, profileHelper: ProfileHelper, matchLocationService: MatchLocationService, traderHelper: TraderHelper, botLootCacheService: BotLootCacheService, configServer: ConfigServer, profileSnapshotService: ProfileSnapshotService, botGenerationCacheService: BotGenerationCacheService, mailSendService: MailSendService, lootGenerator: LootGenerator, applicationContext: ApplicationContext);
     getEnabled(): boolean;
+    /** Handle raid/profile/list */
     getProfile(info: IGetProfileRequestData): IPmcData[];
+    /** Handle client/match/group/create */
     createGroup(sessionID: string, info: ICreateGroupRequestData): any;
+    /** Handle client/match/group/delete */
     deleteGroup(info: any): void;
-    joinMatch(info: IJoinMatchRequestData, sessionID: string): IJoinMatchResult[];
-    protected getMatch(location: string): any;
+    /** Handle match/group/start_game */
+    joinMatch(info: IJoinMatchRequestData, sessionId: string): IJoinMatchResult;
+    /** Handle client/match/group/status */
     getGroupStatus(info: IGetGroupStatusRequestData): any;
     /**
      * Handle /client/raid/configuration
-     * @param request
-     * @param sessionID
+     * @param request Raid config request
+     * @param sessionID Session id
      */
     startOfflineRaid(request: IGetRaidConfigurationRequestData, sessionID: string): void;
     /**
@@ -53,5 +69,33 @@ export declare class MatchController {
      * @returns bot difficulty
      */
     protected convertDifficultyDropdownIntoBotDifficulty(botDifficulty: string): string;
-    endOfflineRaid(info: IEndOfflineRaidRequestData, sessionID: string): void;
+    /** Handle client/match/offline/end */
+    endOfflineRaid(info: IEndOfflineRaidRequestData, sessionId: string): void;
+    /**
+     * Did player take a COOP extract
+     * @param extractName Name of extract player took
+     * @returns True if coop extract
+     */
+    protected extractWasViaCoop(extractName: string): boolean;
+    protected sendCoopTakenFenceMessage(sessionId: string): void;
+    /**
+     * Was extract by car
+     * @param extractName name of extract
+     * @returns true if car extract
+     */
+    protected extractWasViaCar(extractName: string): boolean;
+    /**
+     * Handle when a player extracts using a car - Add rep to fence
+     * @param extractName name of the extract used
+     * @param pmcData Player profile
+     * @param sessionId Session id
+     */
+    protected handleCarExtract(extractName: string, pmcData: IPmcData, sessionId: string): void;
+    /**
+     * Update players fence trader standing value in profile
+     * @param pmcData Player profile
+     * @param fenceId Id of fence trader
+     * @param extractName Name of extract used
+     */
+    protected updateFenceStandingInProfile(pmcData: IPmcData, fenceId: string, extractName: string): void;
 }

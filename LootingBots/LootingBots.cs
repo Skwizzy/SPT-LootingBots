@@ -13,7 +13,7 @@ using LootingBots.Brain;
 using DrakiaXYZ.BigBrain.Brains;
 using System.Collections.Generic;
 
-using HandbookClass = GClass2775;
+using HandbookClass = GClass2690;
 
 namespace LootingBots
 {
@@ -24,7 +24,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.1.3";
+        private const string MOD_VERSION = "1.1.4";
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
 
@@ -301,6 +301,7 @@ namespace LootingBots
                     "BossSanitar",
                     "CursAssault",
                     "PMC",
+                    "ArenaFighter",
                     "SectantWarrior"
                 }
             );
@@ -309,18 +310,10 @@ namespace LootingBots
                 new List<string>()
                 {
                     "Assault",
-                    "BossSanitar",
                     "CursAssault",
+                    "BossSanitar",
                     "BossKojaniy",
-                    "SectantPriest",
-                    "FollowerGluharScout",
-                    "FollowerGluharProtect",
-                    "FollowerGluharAssault",
                     "BossGluhar",
-                    "Fl_Zraychiy",
-                    "TagillaFollower",
-                    "FollowerSanitar",
-                    "FollowerBully",
                     "BirdEye",
                     "BigPipe",
                     "Knight",
@@ -328,19 +321,40 @@ namespace LootingBots
                     "Tagilla",
                     "Killa",
                     "BossSanitar",
-                    "BossBully"
+                    "BossBully",
+                    "BossBoar",
+                    "BoarSniper",
+
+                    "FollowerGluharScout",
+                    "FollowerGluharProtect",
+                    "FollowerGluharAssault",
+                    "Fl_Zraychiy",
+                    "TagillaFollower",
+                    "FollowerSanitar",
+                    "FollowerBully",
+                    "FlBoar"
                 },
                 2
             );
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "PMC", "ExUsec" },
+                new List<string>() { "PMC", "ExUsec", "ArenaFighter" },
                 3
             );
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
                 new List<string>() { "SectantWarrior" },
                 13
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "SectantPriest" },
+                12
+            );
+            BrainManager.AddCustomLayer(
+                typeof(LootingLayer),
+                new List<string>() { "Obdolbs" },
+                11
             );
         }
 

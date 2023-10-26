@@ -27,6 +27,7 @@ export declare class HealthHelper {
      * @param request Heal request
      * @param sessionID Session id
      * @param addEffects Should effects be added or removed (default - add)
+     * @param deleteExistingEffects Should all prior effects be removed before apply new ones
      */
     saveVitality(pmcData: IPmcData, request: ISyncHealthRequestData, sessionID: string, addEffects?: boolean, deleteExistingEffects?: boolean): void;
     /**
@@ -53,5 +54,7 @@ export declare class HealthHelper {
      * @param duration How long the effect has left in seconds (-1 by default, no duration).
      */
     protected addEffect(pmcData: IPmcData, effectBodyPart: string, effectType: string, duration?: number): void;
-    protected isEmpty(map: any): boolean;
+    protected isEmpty(map: Record<string, {
+        Time: number;
+    }>): boolean;
 }

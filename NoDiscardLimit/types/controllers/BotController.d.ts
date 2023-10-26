@@ -8,11 +8,13 @@ import { IBotBase } from "../models/eft/common/tables/IBotBase";
 import { IBotCore } from "../models/eft/common/tables/IBotCore";
 import { Difficulty } from "../models/eft/common/tables/IBotType";
 import { IBotConfig } from "../models/spt/config/IBotConfig";
+import { IPmcConfig } from "../models/spt/config/IPmcConfig";
 import { ILogger } from "../models/spt/utils/ILogger";
 import { ConfigServer } from "../servers/ConfigServer";
 import { DatabaseServer } from "../servers/DatabaseServer";
 import { BotGenerationCacheService } from "../services/BotGenerationCacheService";
 import { LocalisationService } from "../services/LocalisationService";
+import { MatchBotDetailsCacheService } from "../services/MatchBotDetailsCacheService";
 import { JsonUtil } from "../utils/JsonUtil";
 export declare class BotController {
     protected logger: ILogger;
@@ -21,14 +23,16 @@ export declare class BotController {
     protected botHelper: BotHelper;
     protected botDifficultyHelper: BotDifficultyHelper;
     protected botGenerationCacheService: BotGenerationCacheService;
+    protected matchBotDetailsCacheService: MatchBotDetailsCacheService;
     protected localisationService: LocalisationService;
     protected profileHelper: ProfileHelper;
     protected configServer: ConfigServer;
     protected applicationContext: ApplicationContext;
     protected jsonUtil: JsonUtil;
     protected botConfig: IBotConfig;
+    protected pmcConfig: IPmcConfig;
     static readonly pmcTypeLabel = "PMC";
-    constructor(logger: ILogger, databaseServer: DatabaseServer, botGenerator: BotGenerator, botHelper: BotHelper, botDifficultyHelper: BotDifficultyHelper, botGenerationCacheService: BotGenerationCacheService, localisationService: LocalisationService, profileHelper: ProfileHelper, configServer: ConfigServer, applicationContext: ApplicationContext, jsonUtil: JsonUtil);
+    constructor(logger: ILogger, databaseServer: DatabaseServer, botGenerator: BotGenerator, botHelper: BotHelper, botDifficultyHelper: BotDifficultyHelper, botGenerationCacheService: BotGenerationCacheService, matchBotDetailsCacheService: MatchBotDetailsCacheService, localisationService: LocalisationService, profileHelper: ProfileHelper, configServer: ConfigServer, applicationContext: ApplicationContext, jsonUtil: JsonUtil);
     /**
      * Return the number of bot loadout varieties to be generated
      * @param type bot Type we want the loadout gen count for
@@ -36,6 +40,7 @@ export declare class BotController {
      */
     getBotPresetGenerationLimit(type: string): number;
     /**
+     * Handle singleplayer/settings/bot/difficulty
      * Get the core.json difficulty settings from database\bots
      * @returns IBotCore
      */
@@ -67,5 +72,5 @@ export declare class BotController {
      * @returns cap number
      */
     getBotCap(): number;
-    getPmcBotTypes(): Record<string, Record<string, Record<string, number>>>;
+    getAiBotBrainTypes(): any;
 }

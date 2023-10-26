@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { ImageRouteService } from "../services/mod/image/ImageRouteService";
 import { HttpFileUtil } from "../utils/HttpFileUtil";
 import { VFS } from "../utils/VFS";

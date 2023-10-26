@@ -1,3 +1,4 @@
+import { Ixyz } from "../Ixyz";
 import { Item } from "./IItem";
 export interface ILootBase {
     staticAmmo: Record<string, IStaticAmmoDetails[]>;
@@ -10,40 +11,34 @@ export interface IStaticAmmoDetails {
 }
 export interface IStaticContainerDetails {
     staticWeapons: IStaticWeaponProps[];
-    staticContainers: IStaticContainerProps[];
+    staticContainers: IStaticContainerData[];
     staticForced: IStaticForcedProps[];
 }
-export interface IStaticWeaponProps {
+export interface IStaticContainerData {
+    probability: number;
+    template: IStaticContainerProps;
+}
+export interface IStaticPropsBase {
     Id: string;
-    IsStatic: boolean;
+    IsContainer: boolean;
     useGravity: boolean;
     randomRotation: boolean;
-    Position: Xyz;
-    Rotation: Xyz;
+    Position: Ixyz;
+    Rotation: Ixyz;
     IsGroupPosition: boolean;
+    IsAlwaysSpawn: boolean;
     GroupPositions: any[];
     Root: string;
+    Items: any[];
+}
+export interface IStaticWeaponProps extends IStaticPropsBase {
     Items: Item[];
 }
-export interface IStaticContainerProps {
-    Id: string;
-    IsStatic: boolean;
-    useGravity: boolean;
-    randomRotation: boolean;
-    Position: Xyz;
-    Rotation: Xyz;
-    IsGroupPosition: boolean;
-    GroupPositions: any[];
-    Root: any;
+export interface IStaticContainerProps extends IStaticPropsBase {
     Items: StaticItem[];
 }
-export interface Xyz {
-    x: number;
-    y: number;
-    z: number;
-}
 export interface StaticItem {
-    _id: any;
+    _id: string;
     _tpl: string;
 }
 export interface IStaticForcedProps {

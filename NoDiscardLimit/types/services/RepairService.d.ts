@@ -14,6 +14,7 @@ import { ILogger } from "../models/spt/utils/ILogger";
 import { ConfigServer } from "../servers/ConfigServer";
 import { DatabaseServer } from "../servers/DatabaseServer";
 import { RandomUtil } from "../utils/RandomUtil";
+import { LocalisationService } from "./LocalisationService";
 import { PaymentService } from "./PaymentService";
 export declare class RepairService {
     protected logger: ILogger;
@@ -25,9 +26,10 @@ export declare class RepairService {
     protected weightedRandomHelper: WeightedRandomHelper;
     protected paymentService: PaymentService;
     protected repairHelper: RepairHelper;
+    protected localisationService: LocalisationService;
     protected configServer: ConfigServer;
     protected repairConfig: IRepairConfig;
-    constructor(logger: ILogger, databaseServer: DatabaseServer, questHelper: QuestHelper, randomUtil: RandomUtil, itemHelper: ItemHelper, traderHelper: TraderHelper, weightedRandomHelper: WeightedRandomHelper, paymentService: PaymentService, repairHelper: RepairHelper, configServer: ConfigServer);
+    constructor(logger: ILogger, databaseServer: DatabaseServer, questHelper: QuestHelper, randomUtil: RandomUtil, itemHelper: ItemHelper, traderHelper: TraderHelper, weightedRandomHelper: WeightedRandomHelper, paymentService: PaymentService, repairHelper: RepairHelper, localisationService: LocalisationService, configServer: ConfigServer);
     /**
      * Use trader to repair an items durability
      * @param sessionID Session id
@@ -92,11 +94,11 @@ export declare class RepairService {
      */
     addBuffToItem(repairDetails: RepairDetails, pmcData: IPmcData): void;
     /**
-     * Add buff to item
+     * Add random buff to item
      * @param itemConfig weapon/armor config
      * @param repairDetails Details for item to repair
      */
-    protected addBuff(itemConfig: BonusSettings, repairDetails: RepairDetails): void;
+    addBuff(itemConfig: BonusSettings, item: Item): void;
     /**
      * Check if item should be buffed by checking the item type and relevant player skill level
      * @param repairDetails Item that was repaired

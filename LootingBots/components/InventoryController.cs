@@ -85,7 +85,6 @@ namespace LootingBots.Patch.Components
         private readonly InventoryControllerClass _botInventoryController;
         private readonly LootingBrain _lootingBrain;
         private readonly ItemAppraiser _itemAppraiser;
-        private readonly bool _isBoss;
 
         public BotStats Stats = new BotStats();
 
@@ -105,7 +104,6 @@ namespace LootingBots.Patch.Components
             {
                 _log = new BotLog(LootingBots.LootLog, botOwner);
                 _lootingBrain = lootingBrain;
-                _isBoss = BotTypeUtils.IsBoss(botOwner.Profile.Info.Settings.Role);
                 _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
@@ -272,7 +270,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
 
                     // Ignore magazines that a bot cannot actively use
-                    if (item is MagazineClass mag && !CanUseMag(mag))
+                    if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
                         continue;
@@ -464,7 +462,7 @@ namespace LootingBots.Patch.Components
                 return action;
             }
 
-            if (lootItem.Template is WeaponTemplate && !_isBoss)
+            if (lootItem.Template is WeaponTemplate && !BotTypeUtils.IsBoss(_botOwner.Profile.Info.Settings.Role))
             {
                 return GetWeaponEquipAction(lootItem as Weapon);
             }
@@ -508,9 +506,9 @@ namespace LootingBots.Patch.Components
             return action;
         }
 
-        public bool CanUseMag(MagazineClass mag)
+        public bool IsUsableMag(MagazineClass mag)
         {
-            return _botInventoryController.Inventory.Equipment
+            return mag != null && _botInventoryController.Inventory.Equipment
                     .GetSlotsByName(
                         new EquipmentSlot[]
                         {
@@ -742,7 +740,7 @@ namespace LootingBots.Patch.Components
             }
 
             // Bosses cannot swap gear as many bosses have custom logic tailored to their loadouts
-            if (_isBoss)
+            if (BotTypeUtils.IsBoss(_botOwner.Profile.Info.Settings.Role))
             {
                 return false;
             }
@@ -781,7 +779,6 @@ namespace LootingBots.Patch.Components
             ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
 
             bool foundBetterArmor = false;
-
             // If we are looting a helmet, check to see if it has a better armor class than what is equipped
             if (lootArmor != null && lootHelmet != null)
             {
@@ -790,7 +787,6 @@ namespace LootingBots.Patch.Components
                 {
                     return lootArmor != null;
                 }
-
                 foundBetterArmor = equippedArmor.ArmorClass <= lootArmor.ArmorClass;
             }
             else if (lootArmor != null)
@@ -875,11 +871,12 @@ namespace LootingBots.Patch.Components
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
-            bool allowedToPickup = isPMC
+            bool pickupNotRestricted = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
-
-            return allowedToPickup && IsValuableEnough(CurrentItemPrice);
+            
+            // All usable mags should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
+            return  IsUsableMag(lootItem as MagazineClass) || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
         }
 
         /**

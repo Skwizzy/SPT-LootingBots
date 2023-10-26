@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { Serializer } from "../../di/Serializer";
 import { ImageRouter } from "../ImageRouter";
 export declare class ImageSerializer extends Serializer {

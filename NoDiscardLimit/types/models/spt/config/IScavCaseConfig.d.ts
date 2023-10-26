@@ -7,6 +7,9 @@ export interface IScavCaseConfig extends IBaseConfig {
     ammoRewards: AmmoRewards;
     rewardItemParentBlacklist: string[];
     rewardItemBlacklist: string[];
+    allowMultipleMoneyRewardsPerRarity: boolean;
+    allowMultipleAmmoRewardsPerRarity: boolean;
+    allowBossItemsAsRewards: boolean;
 }
 export interface MoneyRewards {
     moneyRewardChancePercent: number;

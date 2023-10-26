@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import fs from "fs";
+import fs from "node:fs";
 import winston from "winston";
 import { Daum } from "../../models/eft/itemEvent/IItemEventRouterRequest";
 import { LogBackgroundColor } from "../../models/spt/logging/LogBackgroundColor";

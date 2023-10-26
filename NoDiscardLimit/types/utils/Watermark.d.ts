@@ -4,12 +4,10 @@ import { ConfigServer } from "../servers/ConfigServer";
 import { LocalisationService } from "../services/LocalisationService";
 export declare class WatermarkLocale {
     protected localisationService: LocalisationService;
+    protected description: string[];
+    protected warning: string[];
+    protected modding: string[];
     constructor(localisationService: LocalisationService);
-    protected watermark: {
-        description: string[];
-        warning: string[];
-        modding: string[];
-    };
     getDescription(): string[];
     getWarning(): string[];
     getModding(): string[];
@@ -31,16 +29,17 @@ export declare class Watermark {
      */
     getVersionTag(withEftVersion?: boolean): string;
     /**
+     * Handle singleplayer/settings/version
      * Get text shown in game on screen, can't be translated as it breaks bsgs client when certian characters are used
      * @returns string
      */
     getInGameVersionLabel(): string;
     /** Set window title */
-    setTitle(): void;
+    protected setTitle(): void;
     /** Reset console cursor to top */
-    resetCursor(): void;
+    protected resetCursor(): void;
     /** Draw the watermark */
-    draw(): void;
+    protected draw(): void;
     /** Caculate text length */
     protected textLength(s: string): number;
 }
