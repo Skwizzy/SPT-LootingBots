@@ -270,7 +270,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
 
                     // Ignore magazines that a bot cannot actively use
-                    if (item is MagazineClass mag && !CanUseMag(mag))
+                    if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
                         _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
                         continue;
@@ -506,9 +506,9 @@ namespace LootingBots.Patch.Components
             return action;
         }
 
-        public bool CanUseMag(MagazineClass mag)
+        public bool IsUsableMag(MagazineClass mag)
         {
-            return _botInventoryController.Inventory.Equipment
+            return mag != null && _botInventoryController.Inventory.Equipment
                     .GetSlotsByName(
                         new EquipmentSlot[]
                         {
@@ -871,11 +871,12 @@ namespace LootingBots.Patch.Components
         {
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
-            bool allowedToPickup = isPMC
+            bool pickupNotRestricted = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
-
-            return allowedToPickup && IsValuableEnough(CurrentItemPrice);
+            
+            // All usable mags should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
+            return  IsUsableMag(lootItem as MagazineClass) || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
         }
 
         /**
