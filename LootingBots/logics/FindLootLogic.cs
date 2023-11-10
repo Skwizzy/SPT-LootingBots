@@ -1,5 +1,3 @@
-using System.Text;
-
 using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
@@ -9,6 +7,7 @@ using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
 
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace LootingBots.Brain.Logics
 {
@@ -35,6 +34,13 @@ namespace LootingBots.Brain.Logics
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
             _lootingBrain = botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
+        }
+
+        public enum LootType
+        {
+            Corpse = 0,
+            Container = 1,
+            Item = 2
         }
 
         public override void Update()
@@ -108,8 +114,27 @@ namespace LootingBots.Brain.Logics
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
+                    Vector3 position =
+                        BotOwner.Position
+                        - (
+                            container?.transform.position
+                            ?? lootItem?.transform.position
+                            ?? corpse.GetPlayer.Transform.position
+                        );
+                    Vector3 center = collider.bounds.center;
+                    // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
+                    center.y = collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
+
                     // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
-                    bool isInRange = IsLootInRange(container, lootItem, corpse, out float dist);
+                    LootType lootType =
+                        container != null
+                            ? LootType.Container
+                            : lootItem != null
+                                ? LootType.Item
+                                : LootType.Corpse;
+
+                    Vector3 destination = GetDestination(center);
+                    bool isInRange = IsLootInRange(lootType, destination, out float dist);
 
                     // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
                     if (isInRange && (shortestDist == -1f || dist < shortestDist))
@@ -134,11 +159,7 @@ namespace LootingBots.Brain.Logics
                         }
 
                         shortestDist = dist;
-
-                        _lootingBrain.LootObjectCenter = collider.bounds.center;
-                        // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                        _lootingBrain.LootObjectCenter.y =
-                            collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
+                        _lootingBrain.Destination = destination;
                     }
                 }
             }
@@ -168,25 +189,53 @@ namespace LootingBots.Brain.Logics
         /**
         * Checks to see if any of the found lootable items are within their detection range specified in the mod settings.
         */
-        public bool IsLootInRange(
-            LootableContainer container,
-            LootItem lootItem,
-            BotOwner corpse,
-            out float dist
-        )
+        public bool IsLootInRange(LootType lootType, Vector3 destination, out float dist)
         {
-            Vector3 vector =
-                BotOwner.Position
-                - (
-                    container?.transform.position
-                    ?? lootItem?.transform.position
-                    ?? corpse.GetPlayer.Transform.position
-                );
-            dist = vector.sqrMagnitude;
+            bool isContainer = lootType == LootType.Container;
+            bool isItem = lootType == LootType.Item;
+            bool isCorpse = lootType == LootType.Corpse;
 
-            return (container != null && DetectContainerDistance >= dist)
-                || (lootItem != null && DetectItemDistance >= dist)
-                || (corpse != null && DetectCorpseDistance >= dist);
+            if (destination == Vector3.zero)
+            {
+                dist = -1f;
+                _log.LogDebug($"Unable to snap loot position to NavMesh. Ignoring");
+                return false;
+            }
+
+            dist = BotOwner.Mover.ComputePathLengthToPoint(destination);
+
+            return (isContainer && DetectContainerDistance >= dist)
+                || (isItem && DetectItemDistance >= dist)
+                || (isCorpse && DetectCorpseDistance >= dist);
+        }
+
+        Vector3 GetDestination(Vector3 center)
+        {
+            // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
+            Vector3 pointNearbyContainer = NavMesh.SamplePosition(
+                center,
+                out NavMeshHit navMeshAlignedPoint,
+                1f,
+                NavMesh.AllAreas
+            )
+                ? navMeshAlignedPoint.position
+                : Vector3.zero;
+
+            // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
+            // Add a small amount of padding by pushing the point away from the nearbyPoint
+            Vector3 padding = center - pointNearbyContainer;
+            padding.y = 0;
+            padding.Normalize();
+
+            // Make sure the point is still snapped to the NavMesh after its been pushed
+            return NavMesh.SamplePosition(
+                center - padding,
+                out navMeshAlignedPoint,
+                1f,
+                navMeshAlignedPoint.mask
+            )
+                ? navMeshAlignedPoint.position
+                : pointNearbyContainer;
         }
     }
 }

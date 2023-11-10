@@ -46,8 +46,8 @@ namespace LootingBots.Patch.Components
         // Current corpse that the bot will try to loot
         public BotOwner ActiveCorpse;
 
-        // Center of the loot object's collider used to help in navigation
-        public Vector3 LootObjectCenter;
+        // Final destination of the bot when moving to loot something
+        public Vector3 Destination;
 
         // Collider.transform.position for the active lootable. Used in LOS checks to make sure bots dont loot through walls
         public Vector3 LootObjectPosition;
