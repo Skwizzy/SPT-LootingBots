@@ -17,7 +17,7 @@ namespace LootingBots.Patch.Components
         LootingBrain _lootingBrain;
         BotOwner _botOwner;
         BotLog _log;
-    
+
         private float DetectCorpseDistance
         {
             get { return LootingBots.DetectCorpseDistance.Value; }
@@ -130,7 +130,6 @@ namespace LootingBots.Patch.Components
                     // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
                     center.y = collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
 
-                    // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
                     LootType lootType =
                         container != null
                             ? LootType.Container
@@ -138,13 +137,11 @@ namespace LootingBots.Patch.Components
                                 ? LootType.Item
                                 : LootType.Corpse;
 
+                    // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
                     Vector3 destination = GetDestination(center);
-                    // yield return null;
-
-                    bool isInRange = IsLootInRange(lootType, destination, out float dist);
 
                     // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
-                    if (isInRange)
+                    if (IsLootInRange(lootType, destination, out float dist))
                     {
                         if (canLootContainer)
                         {
@@ -181,7 +178,7 @@ namespace LootingBots.Patch.Components
 
                 yield return null;
             }
-        
+
             IsScanRunning = false;
         }
 
@@ -201,7 +198,6 @@ namespace LootingBots.Patch.Components
             }
 
             dist = _botOwner.Mover.ComputePathLengthToPoint(destination);
-            _log.LogDebug(dist);
             return (isContainer && dist <= DetectContainerDistance)
                 || (isItem && dist <= DetectItemDistance)
                 || (isCorpse && dist <= DetectCorpseDistance);

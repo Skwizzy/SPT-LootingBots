@@ -94,8 +94,6 @@ namespace LootingBots.Patch.Components
 
         public float DistanceToLoot = -1f;
 
-        // Amount of time in seconds to wait after looting successfully
-        public float WaitAfterLootTimer;
         private BotLog _log;
 
         private const int LootingStartDelay = 3000;
@@ -277,10 +275,6 @@ namespace LootingBots.Patch.Components
             UpdateGridStats();
             BotOwner.AIData.CalcPower();
             LootTaskRunning = false;
-            if (lootingSuccessful)
-            {
-                IncrementLootTimer();
-            }
         }
 
         public void UpdateGridStats()
@@ -317,15 +311,6 @@ namespace LootingBots.Patch.Components
             Cleanup();
         }
 
-        /**
-        * Increment the delay timer used to delay the next loot scan after an object has been looted
-        */
-        public void IncrementLootTimer(float time = -1f)
-        {
-            // Increment loot wait timer
-            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value;
-            WaitAfterLootTimer = Time.time + timer;
-        }
 
         /**
         * Adds a loot id to the list of loot items to ignore for a specific bot
