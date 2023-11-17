@@ -34,7 +34,7 @@ namespace LootingBots
         public static ConfigEntry<BotType> LooseItemLootingEnabled;
         public static ConfigEntry<float> InitialStartTimer;
 
-        public static ConfigEntry<float> TimeToWaitBetweenLoot;
+        public static ConfigEntry<float> LootScanInterval;
         public static ConfigEntry<float> DetectItemDistance;
         public static ConfigEntry<float> DetectContainerDistance;
         public static ConfigEntry<float> DetectCorpseDistance;
@@ -154,6 +154,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
+            LootScanInterval = Config.Bind(
+                "Loot Finder (Timing)",
+                "Loot Scan Interval",
+                6f,
+                new ConfigDescription(
+                    "The amount of seconds the bot will wait until triggering another loot scan",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 2 }
+                )
+            );
             TransactionDelay = Config.Bind(
                 "Loot Finder (Timing)",
                 "Transaction delay (ms)",
@@ -161,19 +171,10 @@ namespace LootingBots
                 new ConfigDescription(
                     "Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.",
                     null,
-                    new ConfigurationManagerAttributes { Order = 2 }
-                )
-            );
-            TimeToWaitBetweenLoot = Config.Bind(
-                "Loot Finder (Timing)",
-                "Delay between looting",
-                15f,
-                new ConfigDescription(
-                    "The amount of seconds the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse",
-                    null,
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
+
         }
 
         public void LootSettings()

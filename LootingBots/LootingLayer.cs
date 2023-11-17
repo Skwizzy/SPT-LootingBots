@@ -22,7 +22,7 @@ namespace LootingBots.Brain
 
         private bool IsScheduledScan
         {
-            get { return _scanTimer < Time.time && _lootingBrain.WaitAfterLootTimer < Time.time; }
+            get { return _scanTimer < Time.time; }
         }
 
         readonly BotLog _log;
@@ -49,7 +49,10 @@ namespace LootingBots.Brain
         public override bool IsActive()
         {
             bool isBotActive = BotOwner.BotState == EBotState.Active;
+            bool isNotHealing =
+                !BotOwner.Medecine.FirstAid.Have2Do && !BotOwner.Medecine.SurgicalKit.HaveWork;
             return isBotActive
+                && isNotHealing
                 && _lootingBrain.IsBrainEnabled
                 && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
@@ -87,8 +90,6 @@ namespace LootingBots.Brain
         {
             Type currentActionType = CurrentAction?.Type;
 
-            bool notLooting = !_lootingBrain.IsBotLooting;
-
             if (currentActionType == typeof(FindLootLogic))
             {
                 bool lootScanDone = !_lootFinder.IsScanRunning;
@@ -101,6 +102,8 @@ namespace LootingBots.Brain
                 return lootScanDone;
             }
 
+            bool notLooting = !_lootingBrain.IsBotLooting;
+
             if (currentActionType == typeof(LootingLogic) && notLooting)
             {
                 // Reset scan timer once looting has completed
@@ -112,7 +115,7 @@ namespace LootingBots.Brain
 
         void ResetScanTimer()
         {
-            _scanTimer = Time.time + 6f;
+            _scanTimer = Time.time + LootingBots.LootScanInterval.Value;
         }
 
         public override void BuildDebugText(StringBuilder debugPanel)
