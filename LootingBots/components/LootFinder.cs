@@ -17,7 +17,7 @@ namespace LootingBots.Patch.Components
         LootingBrain _lootingBrain;
         BotOwner _botOwner;
         BotLog _log;
-
+    
         private float DetectCorpseDistance
         {
             get { return LootingBots.DetectCorpseDistance.Value; }
@@ -38,6 +38,8 @@ namespace LootingBots.Patch.Components
             Item = 2
         }
 
+        public bool IsScanRunning = false;
+
         public void Init(BotOwner botOwner)
         {
             _botOwner = botOwner;
@@ -45,13 +47,14 @@ namespace LootingBots.Patch.Components
             _log = new BotLog(LootingBots.LootLog, _botOwner);
         }
 
-        public void Start()
+        public void BeginSearch()
         {
             StartCoroutine(FindLootable());
         }
 
         public IEnumerator FindLootable()
         {
+            IsScanRunning = true;
             // Use the largest detection radius specified in the settings as the main Sphere radius
             float detectionRadius = Mathf.Max(
                 DetectItemDistance,
@@ -178,6 +181,8 @@ namespace LootingBots.Patch.Components
 
                 yield return null;
             }
+        
+            IsScanRunning = false;
         }
 
         /**
