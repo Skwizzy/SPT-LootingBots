@@ -58,6 +58,21 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+        public bool IsBrainEnabled
+        {
+            get
+            {
+                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    );
+            }
+        }
 
         public BotStats Stats
         {
@@ -101,13 +116,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                WildSpawnType botType = BotOwner.Profile.Info.Settings.Role;
-                bool isLootFinderEnabled =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(botType)
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(botType)
-                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(botType);
-
-                if (isLootFinderEnabled && BotOwner.BotState == EBotState.Active)
+                if (IsBrainEnabled && BotOwner.BotState == EBotState.Active)
                 {
                     if (InventoryController.ShouldSort)
                     {

@@ -26,7 +26,10 @@ namespace LootingBots.Brain
             : base(botOwner, priority)
         {
             LootingBrain lootingBrain = botOwner.GetPlayer.gameObject.AddComponent<LootingBrain>();
+            LootFinder lootFinder = botOwner.GetPlayer.gameObject.AddComponent<LootFinder>();
             lootingBrain.Init(botOwner);
+            lootFinder.Init(botOwner);
+
             _scanTimer = Time.time + LootingBots.InitialStartTimer.Value;
             _lootingBrain = lootingBrain;
         }
@@ -39,7 +42,11 @@ namespace LootingBots.Brain
         public override bool IsActive()
         {
             bool isBotActive = BotOwner.BotState == EBotState.Active;
-            return isBotActive && (IsScheduledScan || _lootingBrain.IsBotLooting);
+            bool hasEnoughSpace = _lootingBrain.Stats.AvailableGridSpaces > 2;
+            return isBotActive
+                && _lootingBrain.IsBrainEnabled
+                && hasEnoughSpace
+                && (IsScheduledScan || _lootingBrain.IsBotLooting);
         }
 
         public override void Start()
@@ -52,6 +59,7 @@ namespace LootingBots.Brain
         public override void Stop()
         {
             _lootingBrain.DisableTransactions();
+            _lootingBrain.UpdateGridStats();
             base.Stop();
         }
 

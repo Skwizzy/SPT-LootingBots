@@ -56,7 +56,7 @@ namespace LootingBots.Patch.Components
         public void StatsDebugPanel(StringBuilder debugPanel)
         {
             Color freeSpaceColor =
-                AvailableGridSpaces == 0
+                AvailableGridSpaces <= 2
                     ? Color.red
                     : AvailableGridSpaces < TotalGridSpaces / 2
                         ? Color.yellow
