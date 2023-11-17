@@ -157,7 +157,7 @@ namespace LootingBots
             LootScanInterval = Config.Bind(
                 "Loot Finder (Timing)",
                 "Loot Scan Interval",
-                6f,
+                10f,
                 new ConfigDescription(
                     "The amount of seconds the bot will wait until triggering another loot scan",
                     null,
