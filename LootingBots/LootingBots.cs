@@ -48,8 +48,12 @@ namespace LootingBots
         public static ConfigEntry<int> TransactionDelay;
         public static ConfigEntry<bool> ValueFromMods;
         public static ConfigEntry<bool> CanStripAttachments;
-        public static ConfigEntry<float> PMCLootThreshold;
-        public static ConfigEntry<float> ScavLootThreshold;
+
+        public static ConfigEntry<float> PMCMinLootThreshold;
+        public static ConfigEntry<float> PMCMaxLootThreshold;
+        public static ConfigEntry<float> ScavMinLootThreshold;
+        public static ConfigEntry<float> ScavMaxLootThreshold;
+
         public static ConfigEntry<EquipmentType> PMCGearToEquip;
         public static ConfigEntry<EquipmentType> PMCGearToPickup;
         public static ConfigEntry<EquipmentType> ScavGearToEquip;
@@ -174,7 +178,6 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 1 }
                 )
             );
-
         }
 
         public void LootSettings()
@@ -186,7 +189,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started",
                     null,
-                    new ConfigurationManagerAttributes { Order = 10 }
+                    new ConfigurationManagerAttributes { Order = 11 }
                 )
             );
             ValueFromMods = Config.Bind(
@@ -196,7 +199,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check",
                     null,
-                    new ConfigurationManagerAttributes { Order = 9 }
+                    new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
             CanStripAttachments = Config.Bind(
@@ -206,17 +209,27 @@ namespace LootingBots
                 new ConfigDescription(
                     "Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory",
                     null,
+                    new ConfigurationManagerAttributes { Order = 9 }
+                )
+            );
+            PMCMinLootThreshold = Config.Bind(
+                "Loot Settings",
+                "PMC: Min loot value threshold",
+                12000f,
+                new ConfigDescription(
+                    "PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold",
+                    null,
                     new ConfigurationManagerAttributes { Order = 8 }
                 )
             );
-            PMCLootThreshold = Config.Bind(
+            PMCMaxLootThreshold = Config.Bind(
                 "Loot Settings",
-                "PMC: Loot value threshold",
-                12000f,
+                "PMC: Max loot value threshold",
+                0f,
                 new ConfigDescription(
-                    "PMC bots will only loot items that exceed the specified value in roubles",
+                    "PMC bots will NOT loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold",
                     null,
-                    new ConfigurationManagerAttributes { Order = 6 }
+                    new ConfigurationManagerAttributes { Order = 7 }
                 )
             );
             PMCGearToEquip = Config.Bind(
@@ -226,7 +239,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "The equipment a PMC bot is able to equip during raid",
                     null,
-                    new ConfigurationManagerAttributes { Order = 5 }
+                    new ConfigurationManagerAttributes { Order = 6 }
                 )
             );
             PMCGearToPickup = Config.Bind(
@@ -236,15 +249,25 @@ namespace LootingBots
                 new ConfigDescription(
                     "The equipment a PMC bot is able to place in their backpack/rig",
                     null,
+                    new ConfigurationManagerAttributes { Order = 5 }
+                )
+            );
+            ScavMinLootThreshold = Config.Bind(
+                "Loot Settings",
+                "Scav: Min loot value threshold",
+                5000f,
+                new ConfigDescription(
+                    "All non-PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold",
+                    null,
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
-            ScavLootThreshold = Config.Bind(
+            ScavMaxLootThreshold = Config.Bind(
                 "Loot Settings",
-                "Scav: Loot value threshold",
-                5000f,
+                "Scav: Max loot value threshold",
+                0f,
                 new ConfigDescription(
-                    "All non-PMC bots will only loot items that exceed the specified value in roubles.",
+                    "All non-PMC bots will NOT loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }
                 )
@@ -325,7 +348,6 @@ namespace LootingBots
                     "BossBully",
                     "BossBoar",
                     "BoarSniper",
-
                     "FollowerGluharScout",
                     "FollowerGluharProtect",
                     "FollowerGluharAssault",
@@ -352,11 +374,7 @@ namespace LootingBots
                 new List<string>() { "SectantPriest" },
                 12
             );
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                new List<string>() { "Obdolbs" },
-                11
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), new List<string>() { "Obdolbs" }, 11);
         }
 
         public void Update()

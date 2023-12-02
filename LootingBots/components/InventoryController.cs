@@ -462,7 +462,10 @@ namespace LootingBots.Patch.Components
                 return action;
             }
 
-            if (lootItem.Template is WeaponTemplate && !BotTypeUtils.IsBoss(_botOwner.Profile.Info.Settings.Role))
+            if (
+                lootItem.Template is WeaponTemplate
+                && !BotTypeUtils.IsBoss(_botOwner.Profile.Info.Settings.Role)
+            )
             {
                 return GetWeaponEquipAction(lootItem as Weapon);
             }
@@ -508,7 +511,8 @@ namespace LootingBots.Patch.Components
 
         public bool IsUsableMag(MagazineClass mag)
         {
-            return mag != null && _botInventoryController.Inventory.Equipment
+            return mag != null
+                && _botInventoryController.Inventory.Equipment
                     .GetSlotsByName(
                         new EquipmentSlot[]
                         {
@@ -852,8 +856,15 @@ namespace LootingBots.Patch.Components
             bool isPMC = BotTypeUtils.IsPMC(botType);
 
             // If the bot is a PMC, compare the price against the PMC loot threshold. For all other bot types use the scav threshold
-            return isPMC && itemPrice >= LootingBots.PMCLootThreshold.Value
-                || !isPMC && itemPrice >= LootingBots.ScavLootThreshold.Value;
+            float min = (
+                isPMC ? LootingBots.PMCMinLootThreshold : LootingBots.ScavMinLootThreshold
+            ).Value;
+            float max = (
+                isPMC ? LootingBots.PMCMaxLootThreshold : LootingBots.ScavMaxLootThreshold
+            ).Value;
+
+            // If max is set to 0, do not check agains max threshold
+            return itemPrice >= min && (max == 0f || itemPrice <= max);
         }
 
         public bool AllowedToEquip(Item lootItem)
@@ -874,9 +885,10 @@ namespace LootingBots.Patch.Components
             bool pickupNotRestricted = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
-            
+
             // All usable mags should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
-            return  IsUsableMag(lootItem as MagazineClass) || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
+            return IsUsableMag(lootItem as MagazineClass)
+                || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
         }
 
         /**
