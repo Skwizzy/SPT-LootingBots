@@ -885,9 +885,11 @@ namespace LootingBots.Patch.Components
             bool pickupNotRestricted = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
+            bool isMoney = lootItem.Template is MoneyClass;
 
-            // All usable mags should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
+            // All usable mags and money should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
             return IsUsableMag(lootItem as MagazineClass)
+                || isMoney
                 || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
         }
 
