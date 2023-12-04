@@ -59,7 +59,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check.
 - `Allow weapon attachment stripping` - Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory
 - `PMC: Min loot value threshold` - PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold
-- `PMC: Max loot value threshold` - PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold
+- `PMC: Max loot value threshold` - PMC bots will NOT loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold
 - `PMC: Allowed gear to equip` - The equipment a PMC bot is able to equip during raid
 - `PMC: Allowed gear in bags` - The equipment a PMC bot is able to place in their backpack/rig
 - `Scav: Min loot value threshold` - All non-PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold
