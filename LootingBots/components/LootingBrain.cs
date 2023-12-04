@@ -46,8 +46,8 @@ namespace LootingBots.Patch.Components
         // Current corpse that the bot will try to loot
         public BotOwner ActiveCorpse;
 
-        // Center of the loot object's collider used to help in navigation
-        public Vector3 LootObjectCenter;
+        // Final destination of the bot when moving to loot something
+        public Vector3 Destination;
 
         // Collider.transform.position for the active lootable. Used in LOS checks to make sure bots dont loot through walls
         public Vector3 LootObjectPosition;
@@ -58,6 +58,21 @@ namespace LootingBots.Patch.Components
         // Object ids that were not able to be reached even though a valid path exists. Is cleared every 2 mins by default
         public List<string> NonNavigableLootIds;
 
+        public bool IsBrainEnabled
+        {
+            get
+            {
+                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    )
+                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
+                        BotOwner.Profile.Info.Settings.Role
+                    );
+            }
+        }
 
         public BotStats Stats
         {
@@ -79,8 +94,6 @@ namespace LootingBots.Patch.Components
 
         public float DistanceToLoot = -1f;
 
-        // Amount of time in seconds to wait after looting successfully
-        public float WaitAfterLootTimer;
         private BotLog _log;
 
         private const int LootingStartDelay = 3000;
@@ -101,13 +114,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                WildSpawnType botType = BotOwner.Profile.Info.Settings.Role;
-                bool isLootFinderEnabled =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(botType)
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(botType)
-                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(botType);
-
-                if (isLootFinderEnabled && BotOwner.BotState == EBotState.Active)
+                if (IsBrainEnabled && BotOwner.BotState == EBotState.Active)
                 {
                     if (InventoryController.ShouldSort)
                     {
@@ -268,10 +275,6 @@ namespace LootingBots.Patch.Components
             UpdateGridStats();
             BotOwner.AIData.CalcPower();
             LootTaskRunning = false;
-            if (lootingSuccessful)
-            {
-                IncrementLootTimer();
-            }
         }
 
         public void UpdateGridStats()
@@ -308,15 +311,6 @@ namespace LootingBots.Patch.Components
             Cleanup();
         }
 
-        /**
-        * Increment the delay timer used to delay the next loot scan after an object has been looted
-        */
-        public void IncrementLootTimer(float time = -1f)
-        {
-            // Increment loot wait timer
-            float timer = time != -1f ? time : LootingBots.TimeToWaitBetweenLoot.Value;
-            WaitAfterLootTimer = Time.time + timer;
-        }
 
         /**
         * Adds a loot id to the list of loot items to ignore for a specific bot

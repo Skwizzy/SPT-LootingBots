@@ -1,5 +1,5 @@
-[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.4-aki-3.7.1)
-[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.4-aki-3.7.1-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.4-aki-3.7.1-beta)
+[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.5-aki-3.7.1)
+[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.1.5-aki-3.7.1-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.5-aki-3.7.1-beta)
 
 
 # SPT-LootingBots
@@ -19,7 +19,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   
 ### Modded behavior:
   - New bot brain layer added for looting that replaces the base game logic responsible for "looting"
-  - New looting layer will activate every 6 seconds during a patrol causing the bots to scan for a nearby lootable item, container, or corpse (based on a configurable distance)
+  - New looting layer will activate every 10 seconds (by default) during a patrol causing the bots to scan for a nearby lootable item, container, or corpse (based on a configurable distance)
   - Once a lootable object has been found, bots will attempt to navigate to the object and commence looting
   - Bots will attempt to loot everything from a corpse and a container
   - If a bot cannot equip a piece of gear, they will attempt to place it in their inventory 
@@ -52,16 +52,18 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 **Loot Finder (Timing)**
 - `Delay after spawn` - Amount of seconds a bot will wait to start their first loot scan after spawning into raid.
 - `Transaction delay (ms)` - Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.
-- `Delay between looting` - The amount of seconds the bot will wait after looting an container/item/corpse before trying to find the next nearest item/container/corpse
+- `Loot scan interval` - The amount of seconds the bot will wait until triggering another loot scan
 
 **Loot Settings**
 - `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
 - `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check.
 - `Allow weapon attachment stripping` - Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory
-- `PMC: Loot value threshold` - PMC bots will only loot items that exceed the specified value in roubles
+- `PMC: Min value threshold` - PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold
+- `PMC: Max value threshold` - PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold
 - `PMC: Allowed gear to equip` - The equipment a PMC bot is able to equip during raid
 - `PMC: Allowed gear in bags` - The equipment a PMC bot is able to place in their backpack/rig
-- `Scav: Loot value threshold` - All non-PMC bots will only loot items that exceed the specified value in roubles.
+- `Scav: Min value threshold` - All non-PMC bots will only loot items that exceed the specified value in roubles. When set to 0, bots will ignore the minimum value threshold
+- `Scav: Max value threshold` - All non-PMC bots will NOT loot items that exceed the specified value in roubles. When set to 0, bots will ignore the maximum value threshold
 - `Scav: Allowed gear to equip` - The equipment a non-PMC bot is able to equip during raid
 - `Scav: Allowed gear in bags` - The equipment a non-PMC bot is able to place in their backpack/rig
 - `Log Levels` - Enable different levels of log messages to show in the logs

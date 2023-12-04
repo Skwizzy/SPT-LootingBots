@@ -62,7 +62,7 @@ namespace LootingBots.Patch.Util
             return equipmentType.HasFlag(EquipmentType.Helmet);
         }
 
-        // GClasses based off GClass2578.FindSlotToPickUp
+        // GClasses based off GClass2558.FindSlotToPickUp
         public static bool IsItemEligible(this EquipmentType allowedGear, Item item)
         {
             if (IsArmorVest(item))
