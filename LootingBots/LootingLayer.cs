@@ -145,7 +145,7 @@ namespace LootingBots.Brain
 
             if (!IsScheduledScan)
             {
-                _scanTimer = Time.time - 0.001f;
+                _scanTimer = Time.time - 1f;
                 _log.LogInfo("Forcing loot scan due to an external command");
 
                 return;
