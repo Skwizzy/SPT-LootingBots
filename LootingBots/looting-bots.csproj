@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4623cfd4-155e-40b9-a6ff-b07401f66cb9}</ProjectGuid>
+    <ProjectGuid>{4623CFD4-155E-40B9-A6FF-B07401F66CB9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>skwizzy.LootingBots</RootNamespace>
@@ -41,6 +41,9 @@
     <OutputPath>bin\x64\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\3.7.1\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Aki.Common">
       <HintPath>..\..\..\3.7.1\EscapeFromTarkov_Data\Managed\Aki.Common.dll</HintPath>
     </Reference>
@@ -77,9 +80,10 @@
     <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.7.1\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
     <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.7.1\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
   </ItemGroup>
-  
   <ItemGroup>
+    <Compile Include="External.cs" />
     <Compile Include="LootingBots.cs" />
+    <Compile Include="LootingBotsInterop.cs" />
     <Compile Include="LootingLayer.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="utils\*.cs" />
@@ -87,7 +91,6 @@
     <Compile Include="components\*.cs" />
     <Compile Include="logics\*.cs" />
   </ItemGroup>
-
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>FOR /F %25%25x IN ('tasklist /NH /FI "IMAGENAME eq EscapeFromTarkov.exe"') DO IF %25%25x == EscapeFromTarkov.exe (
