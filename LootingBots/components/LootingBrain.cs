@@ -94,6 +94,10 @@ namespace LootingBots.Patch.Components
 
         public float DistanceToLoot = -1f;
 
+        public bool ExternalLootScanRequest = false;
+
+        public float ExternalLootScanRequestExpiration = 0;
+
         private BotLog _log;
 
         private const int LootingStartDelay = 3000;

@@ -48,6 +48,8 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
+            CheckForExternalCommand();
+
             bool isBotActive = BotOwner.BotState == EBotState.Active;
             bool isNotHealing =
                 !BotOwner.Medecine.FirstAid.Have2Do && !BotOwner.Medecine.SurgicalKit.HaveWork;
@@ -116,6 +118,38 @@ namespace LootingBots.Brain
         void ResetScanTimer()
         {
             _scanTimer = Time.time + LootingBots.LootScanInterval.Value;
+        }
+
+        void CheckForExternalCommand()
+        {
+            if (!_lootingBrain.ExternalLootScanRequest)
+            {
+                return;
+            }
+
+            if (_lootingBrain.ExternalLootScanRequestExpiration < Time.time)
+            {
+                _log.LogInfo("Cannot force loot scan; external command expired");
+
+                _lootingBrain.ExternalLootScanRequest = false;
+                return;
+            }
+
+            if (_lootFinder.IsScanRunning || _lootingBrain.IsBotLooting)
+            {
+                _log.LogInfo("Cannot force loot scan due to an external command; bot is already looting");
+
+                _lootingBrain.ExternalLootScanRequest = false;
+                return;
+            }
+
+            if (!IsScheduledScan)
+            {
+                _scanTimer = Time.time - 0.001f;
+                _log.LogInfo("Forcing loot scan due to an external command");
+
+                return;
+            }
         }
 
         public override void BuildDebugText(StringBuilder debugPanel)

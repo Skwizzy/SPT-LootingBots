@@ -27,6 +27,7 @@ namespace LootingBots.Brain.Logics
             if (_lootingBrain.Stats.AvailableGridSpaces > LootUtils.RESERVED_SLOT_COUNT && !_lootFinder.IsScanRunning)
             {
                 _lootFinder.BeginSearch();
+                _lootingBrain.ExternalLootScanRequest = false;
             }
         }
 
