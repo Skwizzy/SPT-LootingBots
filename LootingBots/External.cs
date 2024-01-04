@@ -21,7 +21,21 @@ namespace LootingBots
             }
 
             lootingBrain.ExternalLootScanRequest = true;
-            lootingBrain.ExternalLootScanRequestExpiration = Time.time + duration;
+            lootingBrain.ExternalRequestExpiration = Time.time + duration;
+
+            return true;
+        }
+
+        public static bool PreventBotFromLooting(BotOwner bot, float duration)
+        {
+            LootingBrain lootingBrain = bot.GetPlayer.gameObject.GetComponent<LootingBrain>();
+            if (lootingBrain == null)
+            {
+                return false;
+            }
+
+            lootingBrain.ExternalLootScanInhibit = true;
+            lootingBrain.ExternalRequestExpiration = Time.time + duration;
 
             return true;
         }
