@@ -122,26 +122,25 @@ namespace LootingBots.Brain
 
         void CheckForExternalCommand()
         {
-            if (!_lootingBrain.ExternalLootScanRequest && !_lootingBrain.ExternalLootScanInhibit)
+            if (_lootingBrain.CurrentExternalCommand == ExternalCommand.None)
             {
                 return;
             }
 
-            if (_lootingBrain.ExternalRequestExpiration < Time.time)
+            if (_lootingBrain.ExternalCommandExpiration < Time.time)
             {
                 _log.LogInfo("External command expired");
 
-                _lootingBrain.ExternalLootScanRequest = false;
-                _lootingBrain.ExternalLootScanInhibit = false;
+                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
                 return;
             }
 
-            if (_lootingBrain.ExternalLootScanInhibit)
+            if (_lootingBrain.CurrentExternalCommand == ExternalCommand.PreventLootScan)
             {
-                _scanTimer = Math.Max(_scanTimer, _lootingBrain.ExternalRequestExpiration);
+                _scanTimer = Math.Max(_scanTimer, _lootingBrain.ExternalCommandExpiration);
                 _log.LogInfo("Increasing delay before next loot scan due to an external command");
 
-                _lootingBrain.ExternalLootScanInhibit = false;
+                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
                 return;
             }
 
@@ -149,8 +148,7 @@ namespace LootingBots.Brain
             {
                 _log.LogInfo("Cannot process external command; bot is already looting");
 
-                _lootingBrain.ExternalLootScanRequest = false;
-                _lootingBrain.ExternalLootScanInhibit = false;
+                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
                 return;
             }
 

@@ -94,9 +94,8 @@ namespace LootingBots.Patch.Components
 
         public float DistanceToLoot = -1f;
 
-        public bool ExternalLootScanInhibit = false;
-        public bool ExternalLootScanRequest = false;
-        public float ExternalRequestExpiration = 0;
+        public ExternalCommand CurrentExternalCommand = ExternalCommand.None;
+        public float ExternalCommandExpiration = 0;
 
         private BotLog _log;
 

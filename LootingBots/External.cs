@@ -10,6 +10,13 @@ using UnityEngine;
 
 namespace LootingBots
 {
+    public enum ExternalCommand
+    {
+        None = 0,
+        ForceLootScan = 1,
+        PreventLootScan = 2,
+    }
+
     public static class External
     {
         public static bool ForceBotToLootNow(BotOwner bot, float duration)
@@ -20,8 +27,8 @@ namespace LootingBots
                 return false;
             }
 
-            lootingBrain.ExternalLootScanRequest = true;
-            lootingBrain.ExternalRequestExpiration = Time.time + duration;
+            lootingBrain.CurrentExternalCommand = ExternalCommand.ForceLootScan;
+            lootingBrain.ExternalCommandExpiration = Time.time + duration;
 
             return true;
         }
@@ -34,8 +41,8 @@ namespace LootingBots
                 return false;
             }
 
-            lootingBrain.ExternalLootScanInhibit = true;
-            lootingBrain.ExternalRequestExpiration = Time.time + duration;
+            lootingBrain.CurrentExternalCommand = ExternalCommand.PreventLootScan;
+            lootingBrain.ExternalCommandExpiration = Time.time + duration;
 
             return true;
         }
