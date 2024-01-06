@@ -94,7 +94,7 @@ namespace LootingBots.Brain
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                bool lootScanDone = !_lootFinder.IsScanRunning;
+                bool lootScanDone = !_lootFinder.IsScanRunning && (_lootingBrain.CurrentExternalCommand != ExternalCommand.ForceLootScan);
                 // Reset scan timer once scan is complete
                 if (lootScanDone)
                 {
@@ -104,7 +104,7 @@ namespace LootingBots.Brain
                 return lootScanDone;
             }
 
-            bool notLooting = !_lootingBrain.IsBotLooting;
+            bool notLooting = !_lootingBrain.IsBotLooting && (_lootingBrain.CurrentExternalCommand != ExternalCommand.ForceLootScan);
 
             if (currentActionType == typeof(LootingLogic) && notLooting)
             {
