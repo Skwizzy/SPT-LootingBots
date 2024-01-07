@@ -1,20 +1,32 @@
 ﻿using EFT;
+
 using LootingBots.Patch.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using UnityEngine;
 
 namespace LootingBots
 {
-    public enum ExternalCommand
+    public enum ExternalCommandType
     {
-        None = 0,
-        ForceLootScan = 1,
-        PreventLootScan = 2,
+        None,
+        ForceLootScan,
+        PreventLootScan,
+    }
+
+    public class ExternalCommand
+    {
+        public ExternalCommandType CommandType { get; private set; } = ExternalCommandType.None;
+        public float Duration { get; private set; } = 0;
+        public float Expiration { get; private set; } = 0;
+
+        public ExternalCommand() { }
+
+        public ExternalCommand(ExternalCommandType _type, float _duration)
+        {
+            CommandType = _type;
+            Duration = _duration;
+            Expiration = Time.time + _duration;
+        }
     }
 
     public static class External
@@ -27,9 +39,7 @@ namespace LootingBots
                 return false;
             }
 
-            lootingBrain.CurrentExternalCommand = ExternalCommand.ForceLootScan;
-            lootingBrain.ExternalCommandExpiration = Time.time + duration;
-
+            lootingBrain.CurrentExternalCommand = new ExternalCommand(ExternalCommandType.ForceLootScan, duration);
             return true;
         }
 
@@ -41,9 +51,7 @@ namespace LootingBots
                 return false;
             }
 
-            lootingBrain.CurrentExternalCommand = ExternalCommand.PreventLootScan;
-            lootingBrain.ExternalCommandExpiration = Time.time + duration;
-
+            lootingBrain.CurrentExternalCommand = new ExternalCommand(ExternalCommandType.PreventLootScan, duration);
             return true;
         }
     }

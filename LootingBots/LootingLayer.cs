@@ -48,7 +48,7 @@ namespace LootingBots.Brain
 
         public override bool IsActive()
         {
-            CheckForExternalCommand();
+            ProcessExternalCommand();
 
             bool isBotActive = BotOwner.BotState == EBotState.Active;
             bool isNotHealing =
@@ -91,12 +91,13 @@ namespace LootingBots.Brain
         public override bool IsCurrentActionEnding()
         {
             Type currentActionType = CurrentAction?.Type;
+            bool shouldForceLootScan = _lootingBrain.CurrentExternalCommand?.CommandType == ExternalCommandType.ForceLootScan;
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                bool lootScanDone = !_lootFinder.IsScanRunning && (_lootingBrain.CurrentExternalCommand != ExternalCommand.ForceLootScan);
+                bool lootScanDone = !_lootFinder.IsScanRunning;
                 // Reset scan timer once scan is complete
-                if (lootScanDone)
+                if (lootScanDone && !shouldForceLootScan)
                 {
                     ResetScanTimer();
                 }
@@ -104,9 +105,9 @@ namespace LootingBots.Brain
                 return lootScanDone;
             }
 
-            bool notLooting = !_lootingBrain.IsBotLooting && (_lootingBrain.CurrentExternalCommand != ExternalCommand.ForceLootScan);
+            bool notLooting = !_lootingBrain.IsBotLooting;
 
-            if (currentActionType == typeof(LootingLogic) && notLooting)
+            if (currentActionType == typeof(LootingLogic) && notLooting && !shouldForceLootScan)
             {
                 // Reset scan timer once looting has completed
                 ResetScanTimer();
@@ -120,45 +121,53 @@ namespace LootingBots.Brain
             _scanTimer = Time.time + LootingBots.LootScanInterval.Value;
         }
 
-        void CheckForExternalCommand()
+        void ProcessExternalCommand()
         {
-            if (_lootingBrain.CurrentExternalCommand == ExternalCommand.None)
+            // Check if an external command exists
+            if (_lootingBrain.CurrentExternalCommand == null)
             {
                 return;
             }
 
-            if (_lootingBrain.ExternalCommandExpiration < Time.time)
+            // Check if the external command has expired. If so, clear it.
+            if (_lootingBrain.CurrentExternalCommand.Expiration < Time.time)
             {
                 _log.LogInfo("External command expired");
 
-                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
+                _lootingBrain.CurrentExternalCommand = null;
                 return;
             }
 
-            if (_lootingBrain.CurrentExternalCommand == ExternalCommand.PreventLootScan)
+            // Process the external command
+            switch(_lootingBrain.CurrentExternalCommand.CommandType)
             {
-                _scanTimer = Math.Max(_scanTimer, _lootingBrain.ExternalCommandExpiration);
-                _log.LogInfo("Increasing delay before next loot scan due to an external command");
+                case ExternalCommandType.PreventLootScan:
+                    _scanTimer = Math.Max(_scanTimer, _lootingBrain.CurrentExternalCommand.Expiration);
+                    _log.LogInfo("Increasing delay before next loot scan due to an external command");
 
-                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
-                return;
+                    break;
+
+                case ExternalCommandType.ForceLootScan:
+                    if (_lootFinder.IsScanRunning || _lootingBrain.IsBotLooting)
+                    {
+                        _log.LogInfo("Cannot process external command; bot is already looting");
+                        break;
+                    }
+
+                    // Until the external command expires, keep reseting the loot-scan timer until the bot starts scanning for loot
+                    if (!IsScheduledScan)
+                    {
+                        _scanTimer = Time.time - 1f;
+                        _log.LogInfo("Forcing loot scan due to an external command");
+
+                        return;
+                    }
+
+                    break;
             }
 
-            if (_lootFinder.IsScanRunning || _lootingBrain.IsBotLooting)
-            {
-                _log.LogInfo("Cannot process external command; bot is already looting");
-
-                _lootingBrain.CurrentExternalCommand = ExternalCommand.None;
-                return;
-            }
-
-            if (!IsScheduledScan)
-            {
-                _scanTimer = Time.time - 1f;
-                _log.LogInfo("Forcing loot scan due to an external command");
-
-                return;
-            }
+            // Clear the external command
+            _lootingBrain.CurrentExternalCommand = null;
         }
 
         public override void BuildDebugText(StringBuilder debugPanel)
