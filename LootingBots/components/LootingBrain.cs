@@ -94,6 +94,8 @@ namespace LootingBots.Patch.Components
 
         public float DistanceToLoot = -1f;
 
+        public ExternalCommand CurrentExternalCommand = null;
+
         private BotLog _log;
 
         private const int LootingStartDelay = 3000;
