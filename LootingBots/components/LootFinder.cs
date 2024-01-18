@@ -81,6 +81,8 @@ namespace LootingBots.Patch.Components
                 }
             );
 
+            int rangeCalculations = 0;
+
             // For each object detected, check to see if it is a lootable container and then calculate its distance from the player
             foreach (Collider collider in colliderList)
             {
@@ -174,6 +176,16 @@ namespace LootingBots.Patch.Components
                             break;
                         }
                     }
+                    else if (dist != -1)
+                    {
+                        rangeCalculations++;
+                    }
+
+                    if (rangeCalculations == 3)
+                    {
+                        _log.LogDebug("No loot in range");
+                        break;
+                    }
                 }
 
                 yield return null;
@@ -205,7 +217,7 @@ namespace LootingBots.Patch.Components
 
         Vector3 GetDestination(Vector3 center)
         {
-            // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
+                        // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
             Vector3 pointNearbyContainer = NavMesh.SamplePosition(
                 center,
                 out NavMeshHit navMeshAlignedPoint,
@@ -215,7 +227,7 @@ namespace LootingBots.Patch.Components
                 ? navMeshAlignedPoint.position
                 : Vector3.zero;
 
-            // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
+                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
             // Add a small amount of padding by pushing the point away from the nearbyPoint
             Vector3 padding = center - pointNearbyContainer;
             padding.y = 0;
