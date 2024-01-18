@@ -217,7 +217,7 @@ namespace LootingBots.Patch.Components
 
         Vector3 GetDestination(Vector3 center)
         {
-                        // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
+            // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
             Vector3 pointNearbyContainer = NavMesh.SamplePosition(
                 center,
                 out NavMeshHit navMeshAlignedPoint,
@@ -227,14 +227,14 @@ namespace LootingBots.Patch.Components
                 ? navMeshAlignedPoint.position
                 : Vector3.zero;
 
-                        // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
+            // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
             // Add a small amount of padding by pushing the point away from the nearbyPoint
             Vector3 padding = center - pointNearbyContainer;
             padding.y = 0;
             padding.Normalize();
 
             // Make sure the point is still snapped to the NavMesh after its been pushed
-            return NavMesh.SamplePosition(
+            Vector3 destination = NavMesh.SamplePosition(
                 center - padding,
                 out navMeshAlignedPoint,
                 1f,
@@ -242,6 +242,15 @@ namespace LootingBots.Patch.Components
             )
                 ? navMeshAlignedPoint.position
                 : pointNearbyContainer;
+
+            if (LootingBots.DebugLootNavigation.Value)
+            {
+                GameObjectHelper.DrawSphere(center, 0.5f, Color.red);
+                GameObjectHelper.DrawSphere(pointNearbyContainer, 0.5f, Color.green);
+                GameObjectHelper.DrawSphere(destination, 0.5f, Color.blue);
+            }
+
+            return destination;
         }
     }
 }
