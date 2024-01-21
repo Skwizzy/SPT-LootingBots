@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
+using EFT;
 
 namespace LootingBots.Patch.Util
 {
@@ -7,28 +10,38 @@ namespace LootingBots.Patch.Util
     // dont try and path to the same lootable
     public static class ActiveLootCache
     {
-        public static Dictionary<string, string> ActiveLoot = new Dictionary<string, string>();
+        public static string PlayerLootId;
+
+        public static Dictionary<string, BotOwner> ActiveLoot = new Dictionary<string, BotOwner>();
 
         public static void Reset()
         {
-            ActiveLoot = new Dictionary<string, string>();
+            ActiveLoot = new Dictionary<string, BotOwner>();
         }
 
-        public static void CacheActiveLootId(string containerId, string botId)
+        public static void CacheActiveLootId(string containerId, BotOwner botOwner)
         {
-            ActiveLoot.Add(containerId, botId);
+            ActiveLoot.Add(containerId, botOwner);
         }
 
-        public static bool IsLootInUse(string containerId)
+        public static bool IsLootInUse(string lootId)
         {
-            return ActiveLoot.TryGetValue(containerId, out string _);
+            return lootId == PlayerLootId || ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 
-        public static void Cleanup(string lootId)
+        public static void Cleanup(BotOwner botOwner)
         {
             try
             {
-                ActiveLoot.Remove(lootId);
+                // Look through the entries in the disctionary and remove any that match the specified bot owner
+                foreach (
+                    var item in ActiveLoot
+                        .Where(keyValue => keyValue.Value.name == botOwner.name)
+                        .ToList()
+                )
+                {
+                    ActiveLoot.Remove(item.Key);
+                }
             }
             catch (Exception e)
             {

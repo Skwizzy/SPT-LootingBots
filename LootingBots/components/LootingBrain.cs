@@ -292,7 +292,7 @@ namespace LootingBots.Patch.Components
             bool alreadyTried =
                 NonNavigableLootIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
-            return alreadyTried || ActiveLootCache.IsLootInUse(lootId);
+            return lootId == null || alreadyTried || ActiveLootCache.IsLootInUse(lootId);
         }
 
         /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */
@@ -312,7 +312,6 @@ namespace LootingBots.Patch.Components
             NonNavigableLootIds.Add(lootId);
             Cleanup();
         }
-
 
         /**
         * Adds a loot id to the list of loot items to ignore for a specific bot
@@ -368,11 +367,11 @@ namespace LootingBots.Patch.Components
             if (ActiveContainer != null)
             {
                 LootableContainer container = ActiveContainer;
-                ActiveLootCache.Cleanup(container.Id);
+                ActiveLootCache.Cleanup(BotOwner);
 
                 if (ignore)
                 {
-                    IgnoreLoot(container.Id);
+                    IgnoreLoot(container.ItemOwner.RootItem.Id);
                 }
 
                 ActiveContainer = null;
@@ -387,7 +386,7 @@ namespace LootingBots.Patch.Components
             Item item = movedItem ?? ActiveItem.ItemOwner?.RootItem;
             if (item != null)
             {
-                ActiveLootCache.Cleanup(item.Id);
+                ActiveLootCache.Cleanup(BotOwner);
 
                 if (ignore)
                 {
@@ -405,13 +404,12 @@ namespace LootingBots.Patch.Components
         {
             if (ActiveCorpse != null)
             {
-                BotOwner corpse = ActiveCorpse;
-                string name = corpse.name;
-                ActiveLootCache.Cleanup(name);
+                LootItem corpseObject = ActiveCorpse.GetComponentInParent<LootItem>();
+                ActiveLootCache.Cleanup(BotOwner);
 
                 if (ignore)
                 {
-                    IgnoreLoot(name);
+                    IgnoreLoot(corpseObject.ItemOwner.RootItem.Id);
                 }
 
                 ActiveCorpse = null;
