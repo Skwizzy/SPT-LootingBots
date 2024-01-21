@@ -328,9 +328,10 @@ namespace LootingBots.Patch.Components
                             }
                         }
                     }
-                    else
+
+                    // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
+                    if (item is SearchableItemClass)
                     {
-                        // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
                         bool success = await LootNestedItems(item);
 
                         if (!success)
@@ -338,17 +339,14 @@ namespace LootingBots.Patch.Components
                             UpdateKnownItems();
                             return success;
                         }
+                    }
 
-                        // Check to see if we can pick up the item
-                        if (
-                            AllowedToPickup(item)
-                            && await _transactionController.TryPickupItem(item)
-                        )
-                        {
-                            Stats.AddNetValue(CurrentItemPrice);
-                            UpdateGridStats();
-                            continue;
-                        }
+                    // Check to see if we can pick up the item
+                    if (AllowedToPickup(item) && await _transactionController.TryPickupItem(item))
+                    {
+                        Stats.AddNetValue(CurrentItemPrice);
+                        UpdateGridStats();
+                        continue;
                     }
                 }
                 else
@@ -815,28 +813,23 @@ namespace LootingBots.Patch.Components
                 return false;
             }
 
-            Item[] nestedItems = parentItem.GetAllItems().ToArray();
-            if (nestedItems.Length > 1)
-            {
-                // Filter out the parent item from the list, filter out any items that are children of another container like a magazine, backpack, rig
-                Item[] containerItems = nestedItems
-                    .Where(
-                        nestedItem =>
-                            nestedItem.Id != parentItem.Id
-                            && nestedItem.Id == nestedItem.GetRootItem().Id
-                            && !nestedItem.QuestItem
-                            && !LootUtils.IsSingleUseKey(nestedItem)
-                    )
-                    .ToArray();
+            Item[] items = parentItem
+                .GetFirstLevelItems()
+                .ToArray()
+                .Where(
+                    // Filter out the parent item from the list, quest items, and single use keys
+                    nestedItem =>
+                        nestedItem.Id != parentItem.Id
+                        && !nestedItem.QuestItem
+                        && !LootUtils.IsSingleUseKey(nestedItem)
+                )
+                .ToArray();
 
-                if (containerItems.Length > 0)
-                {
-                    _log.LogDebug(
-                        $"Looting {containerItems.Length} items from {parentItem.Name.Localized()}"
-                    );
-                    await TransactionController.SimulatePlayerDelay(1000);
-                    return await TryAddItemsToBot(containerItems);
-                }
+            if (items.Length > 0)
+            {
+                _log.LogDebug($"Looting {items.Length} items from {parentItem.Name.Localized()}");
+                await TransactionController.SimulatePlayerDelay(1000);
+                return await TryAddItemsToBot(items);
             }
             else
             {
