@@ -128,12 +128,12 @@ namespace LootingBots
             );
             LootingLogLevels = Config.Bind(
                 "Loot Finder",
-                "Log Levels",
+                "Debug: Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
                     "Enable different levels of log messages to show in the logs",
                     null,
-                    new ConfigurationManagerAttributes { Order = 0 }
+                    new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
                 )
             );
             DebugLootNavigation = Config.Bind(
@@ -143,7 +143,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
-                    new ConfigurationManagerAttributes { Order = -1 }
+                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
                 )
             );
 
@@ -295,12 +295,12 @@ namespace LootingBots
 
             ItemAppraiserLogLevels = Config.Bind(
                 "Loot Settings",
-                "Log Levels",
+                "Debug: Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
                     "Enables logs for the item apprasier that calcualtes the weapon values",
                     null,
-                    new ConfigurationManagerAttributes { Order = 0 }
+                    new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
                 )
             );
         }
