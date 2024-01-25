@@ -75,11 +75,13 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix(IItemOwner loot, Callback callback, ref Player __instance)
         {
-            // If the item we are looting is marked as active by a bot, cleanup its looting brain to stop it from looting the same object
-            if (ActiveLootCache.ActiveLoot.TryGetValue(loot.RootItem.Id, out BotOwner botOwner))
+            
+            // If the item we are looting is marked as active by a friendly bot, cleanup its looting brain to stop it from looting the same object
+            if (ActiveLootCache.ActiveLoot.TryGetValue(loot.RootItem.Id, out BotOwner botOwner) && !botOwner.BotsGroup.IsPlayerEnemy(__instance))
             {
+                LootingBots.LootLog.LogError("Cleanup on bot brain");
                 LootingBrain brain = botOwner.GetComponent<LootingBrain>();
-                brain?.Cleanup();
+                brain?.DisableTransactions();
             }
 
             ActiveLootCache.PlayerLootId = loot.RootItem.Id;

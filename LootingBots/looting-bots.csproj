@@ -78,6 +78,7 @@
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.7.1\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
     <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.7.1\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
+    <Reference Include="DissonanceVoip" HintPath="..\..\..\3.7.1\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll" Private="False" />
     <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.7.1\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>

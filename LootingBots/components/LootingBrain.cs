@@ -101,6 +101,7 @@ namespace LootingBots.Patch.Components
             InventoryController = new InventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
+            ActiveLootCache.Init();
         }
 
         /*
@@ -286,7 +287,7 @@ namespace LootingBots.Patch.Components
             bool alreadyTried =
                 NonNavigableLootIds.Contains(lootId) || IgnoredLootIds.Contains(lootId);
 
-            return lootId == null || alreadyTried || ActiveLootCache.IsLootInUse(lootId);
+            return lootId == null || alreadyTried || ActiveLootCache.IsLootInUse(lootId, BotOwner);
         }
 
         /** Check if the item being looted meets the loot value threshold specified in the mod settings. PMC bots use the PMC loot threshold, all other bots such as scavs, bosses, and raiders will use the scav threshold */

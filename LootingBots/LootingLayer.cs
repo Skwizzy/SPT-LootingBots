@@ -91,7 +91,9 @@ namespace LootingBots.Brain
         public override bool IsCurrentActionEnding()
         {
             Type currentActionType = CurrentAction?.Type;
-            bool shouldForceLootScan = _lootingBrain.CurrentExternalCommand?.CommandType == ExternalCommandType.ForceLootScan;
+            bool shouldForceLootScan =
+                _lootingBrain.CurrentExternalCommand?.CommandType
+                == ExternalCommandType.ForceLootScan;
 
             if (currentActionType == typeof(FindLootLogic))
             {
@@ -139,11 +141,16 @@ namespace LootingBots.Brain
             }
 
             // Process the external command
-            switch(_lootingBrain.CurrentExternalCommand.CommandType)
+            switch (_lootingBrain.CurrentExternalCommand.CommandType)
             {
                 case ExternalCommandType.PreventLootScan:
-                    _scanTimer = Math.Max(_scanTimer, _lootingBrain.CurrentExternalCommand.Expiration);
-                    _log.LogInfo("Increasing delay before next loot scan due to an external command");
+                    _scanTimer = Math.Max(
+                        _scanTimer,
+                        _lootingBrain.CurrentExternalCommand.Expiration
+                    );
+                    _log.LogInfo(
+                        "Increasing delay before next loot scan due to an external command"
+                    );
 
                     break;
 
