@@ -62,15 +62,9 @@ namespace LootingBots.Patch.Components
         {
             get
             {
-                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                        BotOwner.Profile.Info.Settings.Role
-                    )
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                        BotOwner.Profile.Info.Settings.Role
-                    )
-                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
-                        BotOwner.Profile.Info.Settings.Role
-                    );
+                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(BotOwner)
+                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(BotOwner)
+                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(BotOwner);
             }
         }
 

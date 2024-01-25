@@ -26,7 +26,8 @@ namespace LootingBots
         private const string MOD_NAME = "LootingBots";
         private const string MOD_VERSION = "1.2.0";
 
-        public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.Raider;
+        public const BotType SettingsDefaults =
+            BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
