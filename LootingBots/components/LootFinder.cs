@@ -194,8 +194,14 @@ namespace LootingBots.Patch.Components
             bool isItem = lootType == LootType.Item;
             bool isCorpse = lootType == LootType.Corpse;
 
-            if (destination == Vector3.zero)
+            if (destination == Vector3.zero || _botOwner?.Mover == null)
             {
+                if (_botOwner?.Mover == null)
+                {
+                    _log.LogWarning(
+                        "botOwner.BotMover is null! Cannot perform path distance calculations"
+                    );
+                }
                 dist = -1f;
                 return false;
             }
