@@ -5,11 +5,7 @@ using EFT;
 using HarmonyLib;
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LootingBots
 {
@@ -61,22 +57,22 @@ namespace LootingBots
             }
 
             // If we found the External class, at least some of the methods are (probably) available
-            return (_LootingBotsExternalType != null);
+            return _LootingBotsExternalType != null;
         }
 
         /**
          * Force a bot to search for loot immediately if Looting Bots is loaded. Return true if successful.
          */
-        public static bool TryForceBotToLootNow(BotOwner botOwner, float duration)
+        public static bool TryForceBotToScanLoot(BotOwner botOwner)
         {
             if (!Init()) return false;
             if (_ForceBotToLootNowMethod == null) return false;
 
-            return (bool)_ForceBotToLootNowMethod.Invoke(null, new object[] { botOwner, duration });
+            return (bool)_ForceBotToLootNowMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
-         * Prevent a bot from searching for loot (until the scan timer expires) if Looting Bots is loaded. Return true if successful.
+         * Stops a bot from looting and searching for loot (until the scan timer expires) if Looting Bots is loaded. Return true if successful.
          */
         public static bool TryPreventBotFromLooting(BotOwner botOwner, float duration)
         {

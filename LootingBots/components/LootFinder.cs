@@ -18,7 +18,13 @@ namespace LootingBots.Patch.Components
         LootingBrain _lootingBrain;
         BotOwner _botOwner;
         BotLog _log;
+        public float ScanTimer;
 
+        public bool IsScheduledScan
+        {
+            get { return ScanTimer < Time.time; }
+        }
+        
         private float DetectCorpseDistance
         {
             get { return LootingBots.DetectCorpseDistance.Value; }
@@ -43,9 +49,15 @@ namespace LootingBots.Patch.Components
 
         public void Init(BotOwner botOwner)
         {
+            ScanTimer = Time.time + LootingBots.InitialStartTimer.Value;
             _botOwner = botOwner;
             _lootingBrain = _botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
             _log = new BotLog(LootingBots.LootLog, _botOwner);
+        }
+
+        public void ResetScanTimer()
+        {
+            ScanTimer = Time.time + LootingBots.LootScanInterval.Value;
         }
 
         public void BeginSearch()
