@@ -51,7 +51,7 @@ namespace LootingBots
                 // Only try to get the methods if we have the type
                 if (_LootingBotsExternalType != null)
                 {
-                    _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "TryForceBotToScanLoot");
+                    _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "ForceBotToScanLoot");
                     _PreventBotFromLootingMethod = AccessTools.Method(_LootingBotsExternalType, "PreventBotFromLooting");
                 }
             }
