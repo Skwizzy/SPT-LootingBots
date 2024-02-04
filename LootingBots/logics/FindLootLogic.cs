@@ -27,12 +27,6 @@ namespace LootingBots.Brain.Logics
             if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
             {
                 _lootFinder.BeginSearch();
-                
-                // If applicable, reset the external command now that the bot is searching for loot
-                if (_lootingBrain.CurrentExternalCommand?.CommandType == ExternalCommandType.ForceLootScan)
-                {
-                    _lootingBrain.CurrentExternalCommand = null;
-                }
             }
         }
 

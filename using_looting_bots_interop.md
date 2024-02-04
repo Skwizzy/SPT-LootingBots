@@ -43,7 +43,6 @@ public static bool TryForceBotToLootNow(BotOwner botOwner)
 **Params**
 ```c#
 BotOwner botOwner // BotOwner instance of the bot we want to manipulate
-float duration // Amount of seconds the command will exist in the bot's brain before expiring
 ```
 
 **Example**
@@ -68,6 +67,13 @@ Returns `true` if command was issued successfully.
 ```c#
 public static bool TryPreventBotFromLooting(BotOwner botOwner, float duration)
 ```
+
+**Params**
+```c#
+BotOwner botOwner // BotOwner instance of the bot we want to manipulate
+float duration // Amount of seconds that must elapse before the bot will be allowed to loot again
+```
+
 **Example**
 ```c#
 // Before using, we should always make sure interop has been intialized (see Init())
