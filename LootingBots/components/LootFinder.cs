@@ -25,7 +25,7 @@ namespace LootingBots.Patch.Components
         {
             get { return ScanTimer < Time.time; }
         }
-        
+
         private float DetectCorpseDistance
         {
             get { return LootingBots.DetectCorpseDistance.Value; }
@@ -59,7 +59,8 @@ namespace LootingBots.Patch.Components
         public void ResetScanTimer()
         {
             // If the loot finder is locked, do not reset it
-            if (!LockUntilNextScan) {
+            if (!LockUntilNextScan)
+            {
                 ScanTimer = Time.time + LootingBots.LootScanInterval.Value;
             }
         }
@@ -130,8 +131,11 @@ namespace LootingBots.Patch.Components
                     LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_botOwner)
                     && !(lootItem is Corpse) // Item is not a corpse
                     && !rootItem.QuestItem // Item is not a quest item
-                    && _lootingBrain.IsValuableEnough(rootItem) // Item meets value threshold
-                    && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize(); // Bot has enough space to pickup
+                    && (
+                        lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
+                        || _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
+                            && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize()
+                    );
 
                 bool canLootCorpse =
                     LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_botOwner)
