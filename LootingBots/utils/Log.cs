@@ -35,7 +35,7 @@ namespace LootingBots.Patch.Util
         /// <summary>
         ///     All log levels.
         /// </summary>
-        All = Error | Warning | Debug
+        All = Error | Warning | Info | Debug
     }
 
     public class BotLog
