@@ -19,6 +19,7 @@ namespace LootingBots.Patch.Components
         BotOwner _botOwner;
         BotLog _log;
         public float ScanTimer;
+        public bool LockUntilNextScan;
 
         public bool IsScheduledScan
         {
@@ -57,12 +58,16 @@ namespace LootingBots.Patch.Components
 
         public void ResetScanTimer()
         {
-            ScanTimer = Time.time + LootingBots.LootScanInterval.Value;
+            // If the loot finder is locked, do not reset it
+            if (!LockUntilNextScan) {
+                ScanTimer = Time.time + LootingBots.LootScanInterval.Value;
+            }
         }
 
         public void BeginSearch()
         {
             StartCoroutine(FindLootable());
+            LockUntilNextScan = false;
         }
 
         public IEnumerator FindLootable()

@@ -77,15 +77,12 @@ namespace LootingBots.Brain
         public override bool IsCurrentActionEnding()
         {
             Type currentActionType = CurrentAction?.Type;
-            bool shouldForceLootScan =
-                _lootingBrain.CurrentExternalCommand?.CommandType
-                == ExternalCommandType.ForceLootScan;
 
             if (currentActionType == typeof(FindLootLogic))
             {
                 bool lootScanDone = !_lootFinder.IsScanRunning;
                 // Reset scan timer once scan is complete
-                if (lootScanDone && !shouldForceLootScan)
+                if (lootScanDone)
                 {
                     _lootFinder.ResetScanTimer();
                 }
@@ -95,7 +92,7 @@ namespace LootingBots.Brain
 
             bool notLooting = !_lootingBrain.IsBotLooting;
 
-            if (currentActionType == typeof(LootingLogic) && notLooting && !shouldForceLootScan)
+            if (currentActionType == typeof(LootingLogic) && notLooting)
             {
                 // Reset scan timer once looting has completed
                 _lootFinder.ResetScanTimer();

@@ -21,7 +21,7 @@ namespace LootingBots
 
         public ExternalCommand() { }
 
-        public ExternalCommand(ExternalCommandType _type, float _duration)
+        public ExternalCommand(ExternalCommandType _type, float _duration = 0)
         {
             CommandType = _type;
             Duration = _duration;
@@ -35,13 +35,14 @@ namespace LootingBots
         public static bool ForceBotToScanLoot(BotOwner bot)
         {
             LootFinder lootFinder = bot.GetPlayer.gameObject.GetComponent<LootFinder>();
+            
             if (lootFinder == null)
             {
                 return false;
             }
 
             lootFinder.ScanTimer = Time.time - 1f;
-
+            lootFinder.LockUntilNextScan = true;
             return true;
         }
 
@@ -55,8 +56,9 @@ namespace LootingBots
                 return false;
             }
 
-            lootingBrain.DisableTransactions();
             lootFinder.ScanTimer = Time.time + duration;
+            lootFinder.LockUntilNextScan = true;
+            lootingBrain.DisableTransactions();
             return true;
         }
     }

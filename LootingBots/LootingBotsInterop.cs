@@ -16,7 +16,7 @@ namespace LootingBots
 
         private static bool _IsLootingBotsLoaded;
         private static Type _LootingBotsExternalType;
-        private static MethodInfo _ForceBotToLootNowMethod;
+        private static MethodInfo _ForceBotToScanLootMethod;
         private static MethodInfo _PreventBotFromLootingMethod;
 
         /**
@@ -51,7 +51,7 @@ namespace LootingBots
                 // Only try to get the methods if we have the type
                 if (_LootingBotsExternalType != null)
                 {
-                    _ForceBotToLootNowMethod = AccessTools.Method(_LootingBotsExternalType, "ForceBotToLootNow");
+                    _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "TryForceBotToScanLoot");
                     _PreventBotFromLootingMethod = AccessTools.Method(_LootingBotsExternalType, "PreventBotFromLooting");
                 }
             }
@@ -66,9 +66,9 @@ namespace LootingBots
         public static bool TryForceBotToScanLoot(BotOwner botOwner)
         {
             if (!Init()) return false;
-            if (_ForceBotToLootNowMethod == null) return false;
+            if (_ForceBotToScanLootMethod == null) return false;
 
-            return (bool)_ForceBotToLootNowMethod.Invoke(null, new object[] { botOwner });
+            return (bool)_ForceBotToScanLootMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
