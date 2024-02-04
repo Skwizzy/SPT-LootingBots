@@ -123,7 +123,11 @@ namespace LootingBots.Brain
             }
 
             debugPanel.AppendLine(
-                _lootingBrain.LootTaskRunning ? "Looting in progress..." : "",
+                _lootingBrain.LootTaskRunning
+                    ? "Looting in progress..."
+                    : _lootFinder.IsScanRunning
+                        ? "Scan in progress..."
+                        : "",
                 Color.green
             );
             debugPanel.AppendLabeledValue(

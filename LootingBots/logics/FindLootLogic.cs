@@ -23,8 +23,8 @@ namespace LootingBots.Brain.Logics
 
         public override void Update()
         {
-            // If the bot has more than the reserved amount of slots needed for ammo, trigger a loot scan
-            if (_lootingBrain.Stats.AvailableGridSpaces > LootUtils.RESERVED_SLOT_COUNT && !_lootFinder.IsScanRunning)
+            // Trigger a scan if one is not running already
+            if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
             {
                 _lootFinder.BeginSearch();
                 

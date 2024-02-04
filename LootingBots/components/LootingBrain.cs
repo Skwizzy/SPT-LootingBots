@@ -83,6 +83,12 @@ namespace LootingBots.Patch.Components
             get { return LootTaskRunning || HasActiveLootable; }
         }
 
+        public bool HasFreeSpace 
+        {
+            get { return Stats.AvailableGridSpaces > LootUtils.RESERVED_SLOT_COUNT; }
+        }
+
+
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
 
