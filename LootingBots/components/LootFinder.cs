@@ -133,8 +133,10 @@ namespace LootingBots.Patch.Components
                     && !rootItem.QuestItem // Item is not a quest item
                     && (
                         lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
-                        || _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
+                        || (
+                            _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
                             && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize()
+                        )
                     );
 
                 bool canLootCorpse =
