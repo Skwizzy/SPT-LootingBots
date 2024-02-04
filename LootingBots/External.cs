@@ -7,29 +7,6 @@ using UnityEngine;
 
 namespace LootingBots
 {
-    public enum ExternalCommandType
-    {
-        None,
-        ForceLootScan,
-        PreventLootScan,
-    }
-
-    public class ExternalCommand
-    {
-        public ExternalCommandType CommandType { get; private set; } = ExternalCommandType.None;
-        public float Duration { get; private set; } = 0;
-        public float Expiration { get; private set; } = 0;
-
-        public ExternalCommand() { }
-
-        public ExternalCommand(ExternalCommandType _type, float _duration = 0)
-        {
-            CommandType = _type;
-            Duration = _duration;
-            Expiration = Time.time + _duration;
-        }
-    }
-
     public static class External
     {
         /** Forces a bot to scan for loot as soon as they are able to. */
@@ -45,7 +22,7 @@ namespace LootingBots
 
             BotLog log = new BotLog(LootingBots.LootLog, bot);
 
-            if (lootingBrain.HasFreeSpace)
+            if (!lootingBrain.HasFreeSpace)
             {
                 log.LogWarning("Forcing a scan but bot does not have enough free space");
             }
