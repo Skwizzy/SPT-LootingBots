@@ -258,14 +258,19 @@ namespace LootingBots.Patch.Components
         {
             foreach (Item item in items)
             {
-                if (_transactionController.IsLootingInterrupted())
-                {
-                    UpdateKnownItems();
-                    return false;
-                }
-
                 if (item != null && item.Name != null)
                 {
+                    if (LootingBots.UseExamineTime.Value)
+                    {
+                        await SimulateExamineTime(item);
+                    }
+
+                    if (_transactionController.IsLootingInterrupted())
+                    {
+                        UpdateKnownItems();
+                        return false;
+                    }
+
                     CurrentItemPrice = _itemAppraiser.GetItemPrice(item);
                     _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
 
@@ -359,6 +364,15 @@ namespace LootingBots.Patch.Components
             UpdateKnownItems();
 
             return true;
+        }
+
+        /** Use the ExamineTime of an object and the AttentionExamineValue of the bot to calculate the delay for discovering an item while looting */
+        public Task SimulateExamineTime(Item item)
+        {
+            // Taken from GClass2665 constructor
+            return TransactionController.SimulatePlayerDelay(
+                item.ExamineTime * 1000f / (1f + _botOwner.Profile.Skills.AttentionExamineValue)
+            );
         }
 
         /**
@@ -828,7 +842,7 @@ namespace LootingBots.Patch.Components
             if (items.Length > 0)
             {
                 _log.LogDebug($"Looting {items.Length} items from {parentItem.Name.Localized()}");
-                await TransactionController.SimulatePlayerDelay(1000);
+                await TransactionController.SimulatePlayerDelay(LootingBrain.LootingStartDelay);
                 return await TryAddItemsToBot(items);
             }
             else

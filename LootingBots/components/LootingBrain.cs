@@ -91,12 +91,12 @@ namespace LootingBots.Patch.Components
 
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
-
         public float DistanceToLoot = -1f;
+        // Delay simulating the time it takes for the UI to open and start searching a container
+        public const int LootingStartDelay = 2500;
 
         private BotLog _log;
 
-        private const int LootingStartDelay = 3000;
 
         public void Init(BotOwner botOwner)
         {

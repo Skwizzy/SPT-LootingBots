@@ -47,6 +47,7 @@ namespace LootingBots
         // Loot Settings
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<int> TransactionDelay;
+        public static ConfigEntry<bool> UseExamineTime;
         public static ConfigEntry<bool> ValueFromMods;
         public static ConfigEntry<bool> CanStripAttachments;
 
@@ -171,12 +172,22 @@ namespace LootingBots
             );
             TransactionDelay = Config.Bind(
                 "Loot Finder (Timing)",
-                "Transaction delay (ms)",
+                "Delay after taking item (ms)",
                 500,
                 new ConfigDescription(
-                    "Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.",
+                    "Amount of milliseconds a bot will wait after taking an item into their inventory before attempting to loot another item. Simulates the amount of time it takes for a player to look through loot decide to take something.",
                     null,
                     new ConfigurationManagerAttributes { Order = 1 }
+                )
+            );
+            UseExamineTime = Config.Bind(
+                "Loot Finder (Timing)",
+                "Enable examine time",
+                true,
+                new ConfigDescription(
+                    "Adds a delay before looting an item to simulate the time it takes for a bot to \"uncover (examine)\" an item when searching containers, items and corpses. The delay is calculated using the ExamineTime of an object and the AttentionExamineTime of the bot.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 0 }
                 )
             );
         }
