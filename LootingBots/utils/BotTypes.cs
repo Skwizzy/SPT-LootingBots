@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 using EFT;
 
@@ -10,13 +11,14 @@ namespace LootingBots.Patch.Util
     {
         Scav = 1,
         Pmc = 2,
-        Raider = 4,
-        Cultist = 8,
-        Boss = 16,
-        Follower = 32,
-        Bloodhound = 64,
+        PlayerScav = 4,
+        Raider = 8,
+        Cultist = 16,
+        Boss = 32,
+        Follower = 64,
+        Bloodhound = 128,
 
-        All = Scav | Pmc | Raider | Cultist | Boss | Follower | Bloodhound
+        All = Scav | Pmc | PlayerScav | Raider | Cultist | Boss | Follower | Bloodhound
     }
 
     public static class BotTypeUtils
@@ -29,6 +31,11 @@ namespace LootingBots.Patch.Util
         public static bool HasPmc(this BotType botType)
         {
             return botType.HasFlag(BotType.Pmc);
+        }
+
+        public static bool HasPlayerScav(this BotType botType)
+        {
+            return botType.HasFlag(BotType.PlayerScav);
         }
 
         public static bool HasRaider(this BotType botType)
@@ -54,6 +61,19 @@ namespace LootingBots.Patch.Util
         public static bool HasBloodhound(this BotType botType)
         {
             return botType.HasFlag(BotType.Bloodhound);
+        }
+
+        public static bool IsBotEnabled(this BotType enabledTypes, BotOwner botOwner) {
+            WildSpawnType role = botOwner.Profile.Info.Settings.Role;
+
+            string pattern = ".+[(].+[)]";
+            Regex regex = new Regex(pattern);
+            if (regex.Matches(botOwner.Profile.Nickname).Count > 0)
+            {
+                return enabledTypes.HasPlayerScav();
+            }
+
+            return IsBotEnabled(enabledTypes, role);
         }
 
         public static bool IsBotEnabled(this BotType enabledTypes, WildSpawnType botType)

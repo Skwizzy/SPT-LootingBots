@@ -329,13 +329,10 @@ namespace LootingBots.Patch.Components
                     new Callback(
                         async (IResult result) =>
                         {
-                            if (result.Succeed)
+                            if (result.Succeed && swapAction.Callback != null)
                             {
-                                if (swapAction.Callback != null)
-                                {
-                                    await SimulatePlayerDelay();
-                                    await swapAction.Callback();
-                                }
+                                await SimulatePlayerDelay();
+                                await swapAction.Callback();
                             }
 
                             promise.TrySetResult(result);
@@ -378,14 +375,14 @@ namespace LootingBots.Patch.Components
             return !Enabled;
         }
 
-        public static Task SimulatePlayerDelay(int delay = -1)
+        public static Task SimulatePlayerDelay(float delay = -1f)
         {
             if (delay == -1)
             {
                 delay = LootingBots.TransactionDelay.Value;
             }
 
-            return Task.Delay(delay);
+            return Task.Delay(TimeSpan.FromMilliseconds(delay));
         }
     }
 }

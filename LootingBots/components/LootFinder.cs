@@ -4,6 +4,7 @@ using System.Linq;
 
 using EFT;
 using EFT.Interactive;
+using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
@@ -17,6 +18,13 @@ namespace LootingBots.Patch.Components
         LootingBrain _lootingBrain;
         BotOwner _botOwner;
         BotLog _log;
+        public float ScanTimer;
+        public bool LockUntilNextScan;
+
+        public bool IsScheduledScan
+        {
+            get { return ScanTimer < Time.time; }
+        }
 
         private float DetectCorpseDistance
         {
@@ -42,14 +50,25 @@ namespace LootingBots.Patch.Components
 
         public void Init(BotOwner botOwner)
         {
+            ScanTimer = Time.time + LootingBots.InitialStartTimer.Value;
             _botOwner = botOwner;
             _lootingBrain = _botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
             _log = new BotLog(LootingBots.LootLog, _botOwner);
         }
 
+        public void ResetScanTimer()
+        {
+            // If the loot finder is locked, do not reset it
+            if (!LockUntilNextScan)
+            {
+                ScanTimer = Time.time + LootingBots.LootScanInterval.Value;
+            }
+        }
+
         public void BeginSearch()
         {
             StartCoroutine(FindLootable());
+            LockUntilNextScan = false;
         }
 
         public IEnumerator FindLootable()
@@ -81,7 +100,9 @@ namespace LootingBots.Patch.Components
                 }
             );
 
-            // For each object detected, check to see if it is a lootable container and then calculate its distance from the player
+            int rangeCalculations = 0;
+
+            // For each object detected, check to see if it is loot and then calculate its distance from the player
             foreach (Collider collider in colliderList)
             {
                 if (collider == null)
@@ -93,36 +114,35 @@ namespace LootingBots.Patch.Components
                     collider.gameObject.GetComponentInParent<LootableContainer>();
                 LootItem lootItem = collider.gameObject.GetComponentInParent<LootItem>();
                 BotOwner corpse = collider.gameObject.GetComponentInParent<BotOwner>();
+                Item rootItem = container?.ItemOwner?.RootItem ?? lootItem?.ItemOwner?.RootItem;
+                // If object has been ignored, skip to the next object detected
+                if (_lootingBrain.IsLootIgnored(rootItem?.Id))
+                {
+                    continue;
+                }
 
                 bool canLootContainer =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                        _botOwner.Profile.Info.Settings.Role
-                    )
+                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_botOwner)
                     && container != null // Container exists
-                    && !_lootingBrain.IsLootIgnored(container.Id) // Container is not ignored
                     && container.isActiveAndEnabled // Container is marked as active and enabled
                     && container.DoorState != EDoorState.Locked; // Container is not locked
 
                 bool canLootItem =
-                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                        _botOwner.Profile.Info.Settings.Role
-                    )
-                    && lootItem != null
+                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_botOwner)
                     && !(lootItem is Corpse) // Item is not a corpse
-                    && lootItem?.ItemOwner?.RootItem != null // Item exists
-                    && !lootItem.ItemOwner.RootItem.QuestItem // Item is not a quest item
-                    && _lootingBrain.IsValuableEnough(lootItem.ItemOwner.RootItem) // Item meets value threshold
-                    && _lootingBrain.Stats.AvailableGridSpaces
-                        > lootItem.ItemOwner.RootItem.GetItemSize() // Bot has enough space to pickup
-                    && !_lootingBrain.IsLootIgnored(lootItem.ItemOwner.RootItem.Id); // Item not ignored
+                    && !rootItem.QuestItem // Item is not a quest item
+                    && (
+                        lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
+                        || (
+                            _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
+                            && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize()
+                        )
+                    );
 
                 bool canLootCorpse =
-                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
-                        _botOwner.Profile.Info.Settings.Role
-                    )
+                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_botOwner)
                     && corpse != null // Corpse exists
-                    && corpse.GetPlayer != null // Corpse is a bot corpse and not a static "Dead scav" corpse
-                    && !_lootingBrain.IsLootIgnored(corpse.name); // Corpse is not ignored
+                    && corpse.GetPlayer != null; // Corpse is a bot corpse and not a static "Dead scav" corpse
 
                 if (canLootContainer || canLootItem || canLootCorpse)
                 {
@@ -143,11 +163,12 @@ namespace LootingBots.Patch.Components
                     // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
                     if (IsLootInRange(lootType, destination, out float dist))
                     {
+                        ActiveLootCache.CacheActiveLootId(rootItem.Id, _botOwner);
+
                         if (canLootContainer)
                         {
                             _lootingBrain.ActiveContainer = container;
                             _lootingBrain.LootObjectPosition = container.transform.position;
-                            ActiveLootCache.CacheActiveLootId(container.Id, _botOwner.name);
                             _lootingBrain.DistanceToLoot = dist;
                             _lootingBrain.Destination = destination;
                             break;
@@ -156,7 +177,6 @@ namespace LootingBots.Patch.Components
                         {
                             _lootingBrain.ActiveCorpse = corpse;
                             _lootingBrain.LootObjectPosition = corpse.Transform.position;
-                            ActiveLootCache.CacheActiveLootId(corpse.name, _botOwner.name);
                             _lootingBrain.DistanceToLoot = dist;
                             _lootingBrain.Destination = destination;
                             break;
@@ -165,14 +185,20 @@ namespace LootingBots.Patch.Components
                         {
                             _lootingBrain.ActiveItem = lootItem;
                             _lootingBrain.LootObjectPosition = lootItem.transform.position;
-                            ActiveLootCache.CacheActiveLootId(
-                                lootItem.ItemOwner.RootItem.Id,
-                                _botOwner.name
-                            );
                             _lootingBrain.DistanceToLoot = dist;
                             _lootingBrain.Destination = destination;
                             break;
                         }
+                    }
+                    else if (dist != -1)
+                    {
+                        rangeCalculations++;
+                    }
+
+                    if (rangeCalculations == 3)
+                    {
+                        _log.LogDebug("No loot in range");
+                        break;
                     }
                 }
 
@@ -191,8 +217,14 @@ namespace LootingBots.Patch.Components
             bool isItem = lootType == LootType.Item;
             bool isCorpse = lootType == LootType.Corpse;
 
-            if (destination == Vector3.zero)
+            if (destination == Vector3.zero || _botOwner?.Mover == null)
             {
+                if (_botOwner?.Mover == null)
+                {
+                    _log.LogWarning(
+                        "botOwner.BotMover is null! Cannot perform path distance calculations"
+                    );
+                }
                 dist = -1f;
                 return false;
             }
@@ -222,7 +254,7 @@ namespace LootingBots.Patch.Components
             padding.Normalize();
 
             // Make sure the point is still snapped to the NavMesh after its been pushed
-            return NavMesh.SamplePosition(
+            Vector3 destination = NavMesh.SamplePosition(
                 center - padding,
                 out navMeshAlignedPoint,
                 1f,
@@ -230,6 +262,15 @@ namespace LootingBots.Patch.Components
             )
                 ? navMeshAlignedPoint.position
                 : pointNearbyContainer;
+
+            if (LootingBots.DebugLootNavigation.Value)
+            {
+                GameObjectHelper.DrawSphere(center, 0.5f, Color.red);
+                GameObjectHelper.DrawSphere(pointNearbyContainer, 0.5f, Color.green);
+                GameObjectHelper.DrawSphere(destination, 0.5f, Color.blue);
+            }
+
+            return destination;
         }
     }
 }
