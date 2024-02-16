@@ -44,6 +44,23 @@ namespace LootingBots.Patch.Util
         private readonly BotOwner _botOwner;
         private readonly string _botString;
 
+        public bool DebugEnabled
+        {
+            get { return _log.DebugEnabled; }
+        }
+        public bool WarningEnabled
+        {
+            get { return _log.WarningEnabled; }
+        }
+        public bool InfoEnabled
+        {
+            get { return _log.InfoEnabled; }
+        }
+        public bool ErrorEnabled
+        {
+            get { return _log.ErrorEnabled; }
+        }
+
         public BotLog(Log log, BotOwner botOwner)
         {
             _log = log;
@@ -91,41 +108,41 @@ namespace LootingBots.Patch.Util
             LogLevels = logLevels;
         }
 
-        public bool IsDebug()
+        public bool DebugEnabled
         {
-            return LogLevels.Value.HasDebug();
+            get { return LogLevels.Value.HasDebug(); }
+        }
+        public bool WarningEnabled
+        {
+            get { return LogLevels.Value.HasWarning(); }
+        }
+        public bool InfoEnabled
+        {
+            get { return LogLevels.Value.HasInfo(); }
+        }
+        public bool ErrorEnabled
+        {
+            get { return LogLevels.Value.HasError(); }
         }
 
         public void LogDebug(object data)
         {
-            if (LogLevels.Value.HasDebug())
-            {
-                Logger.LogDebug(data);
-            }
+            Logger.LogDebug(data);
         }
 
         public void LogInfo(object data)
         {
-            if (LogLevels.Value.HasInfo())
-            {
-                Logger.LogInfo(data);
-            }
+            Logger.LogInfo(data);
         }
 
         public void LogWarning(object data)
         {
-            if (LogLevels.Value.HasWarning())
-            {
-                Logger.LogWarning(data);
-            }
+            Logger.LogWarning(data);
         }
 
         public void LogError(object data)
         {
-            if (LogLevels.Value.HasError())
-            {
-                Logger.LogError(data);
-            }
+            Logger.LogError(data);
         }
     }
 

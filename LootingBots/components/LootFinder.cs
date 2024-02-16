@@ -122,13 +122,13 @@ namespace LootingBots.Patch.Components
                 }
 
                 bool canLootContainer =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && container != null // Container exists
                     && container.isActiveAndEnabled // Container is marked as active and enabled
                     && container.DoorState != EDoorState.Locked; // Container is not locked
 
                 bool canLootItem =
-                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && !(lootItem is Corpse) // Item is not a corpse
                     && !rootItem.QuestItem // Item is not a quest item
                     && (
@@ -140,7 +140,7 @@ namespace LootingBots.Patch.Components
                     );
 
                 bool canLootCorpse =
-                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && corpse != null // Corpse exists
                     && corpse.GetPlayer != null; // Corpse is a bot corpse and not a static "Dead scav" corpse
 
@@ -197,7 +197,9 @@ namespace LootingBots.Patch.Components
 
                     if (rangeCalculations == 3)
                     {
-                        _log.LogDebug("No loot in range");
+                        if (_log.DebugEnabled)
+                            _log.LogDebug("No loot in range");
+
                         break;
                     }
                 }
@@ -219,7 +221,7 @@ namespace LootingBots.Patch.Components
 
             if (destination == Vector3.zero || _botOwner?.Mover == null)
             {
-                if (_botOwner?.Mover == null)
+                if (_botOwner?.Mover == null && _log.WarningEnabled)
                 {
                     _log.LogWarning(
                         "botOwner.BotMover is null! Cannot perform path distance calculations"

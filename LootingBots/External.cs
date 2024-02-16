@@ -24,9 +24,10 @@ namespace LootingBots
 
             if (!lootingBrain.HasFreeSpace)
             {
-                log.LogWarning("Forcing a scan but bot does not have enough free space");
+                if (log.WarningEnabled)
+                    log.LogWarning("Forcing a scan but bot does not have enough free space");
             }
-            else
+            else if (log.DebugEnabled)
             {
                 log.LogDebug("Forcing a loot scan");
             }
@@ -47,7 +48,9 @@ namespace LootingBots
             }
 
             BotLog log = new BotLog(LootingBots.LootLog, bot);
-            log.LogDebug($"Preventing a bot from looting for the next {duration} seconds");
+
+            if (log.DebugEnabled)
+                log.LogDebug($"Preventing a bot from looting for the next {duration} seconds");
 
             lootFinder.ScanTimer = Time.time + duration;
             lootFinder.LockUntilNextScan = true;
