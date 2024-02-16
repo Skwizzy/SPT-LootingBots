@@ -120,15 +120,15 @@ namespace LootingBots.Patch.Components
                 {
                     continue;
                 }
-
+                
                 bool canLootContainer =
-                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && container != null // Container exists
                     && container.isActiveAndEnabled // Container is marked as active and enabled
                     && container.DoorState != EDoorState.Locked; // Container is not locked
 
                 bool canLootItem =
-                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && !(lootItem is Corpse) // Item is not a corpse
                     && !rootItem.QuestItem // Item is not a quest item
                     && (
@@ -140,7 +140,7 @@ namespace LootingBots.Patch.Components
                     );
 
                 bool canLootCorpse =
-                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_botOwner)
+                    LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && corpse != null // Corpse exists
                     && corpse.GetPlayer != null; // Corpse is a bot corpse and not a static "Dead scav" corpse
 
