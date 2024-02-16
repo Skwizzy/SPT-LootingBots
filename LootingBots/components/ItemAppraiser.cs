@@ -16,7 +16,7 @@ namespace LootingBots.Patch.Components
     public class ItemAppraiser
     {
         public Log Log;
-        public Dictionary<string, EFT.HandBook.HandbookData> HandbookData;
+        public Dictionary<string, HandbookData> HandbookData;
         public Dictionary<string, float> MarketData;
 
         public bool MarketInitialized = false;
@@ -40,7 +40,9 @@ namespace LootingBots.Patch.Components
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary((item) => item.Id);
+                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary(
+                    (item) => item.Id
+                );
             }
         }
 
@@ -62,24 +64,29 @@ namespace LootingBots.Patch.Components
                     : GetItemHandbookPrice(lootItem);
             }
 
-            Log.LogDebug($"ItemAppraiser data is null");
+            if (Log.DebugEnabled)
+                Log.LogDebug($"ItemAppraiser data is null");
 
             return 0;
         }
-        
+
         /**
         * Get the price of a weapon from the sum of its attachments mods, using the default handbook prices to appraise each mod.
         */
         public float GetWeaponHandbookPrice(Weapon lootWeapon)
         {
-            Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            if (Log.DebugEnabled)
+                Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+
             float finalPrice = lootWeapon.Mods.Aggregate(
                 0f,
                 (price, mod) => price += GetItemHandbookPrice(mod)
             );
-            Log.LogDebug(
-                $"Final price of attachments: {finalPrice} compared to full item {GetItemHandbookPrice(lootWeapon)}"
-            );
+
+            if (Log.DebugEnabled)
+                Log.LogDebug(
+                    $"Final price of attachments: {finalPrice} compared to full item {GetItemHandbookPrice(lootWeapon)}"
+                );
 
             return finalPrice;
         }
@@ -89,7 +96,10 @@ namespace LootingBots.Patch.Components
         {
             HandbookData.TryGetValue(lootItem.TemplateId, out HandbookData value);
             float price = value?.Price ?? 0;
-            Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
+
+            if (Log.DebugEnabled)
+                Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
+
             return price;
         }
 
@@ -98,14 +108,18 @@ namespace LootingBots.Patch.Components
         */
         public float GetWeaponMarketPrice(Weapon lootWeapon)
         {
-            Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            if (Log.DebugEnabled)
+                Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+
             float finalPrice = lootWeapon.Mods.Aggregate(
                 0f,
                 (price, mod) => price += GetItemMarketPrice(mod)
             );
-            Log.LogDebug(
-                $"Final price of attachments: {finalPrice} compared to item template {GetItemMarketPrice(lootWeapon)}"
-            );
+
+            if (Log.DebugEnabled)
+                Log.LogDebug(
+                    $"Final price of attachments: {finalPrice} compared to item template {GetItemMarketPrice(lootWeapon)}"
+                );
 
             return finalPrice;
         }
@@ -114,7 +128,9 @@ namespace LootingBots.Patch.Components
         public float GetItemMarketPrice(Item lootItem)
         {
             float price = MarketData[lootItem.TemplateId];
-            Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
+
+            if (Log.DebugEnabled)
+                Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
 
             return price;
         }

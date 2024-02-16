@@ -120,7 +120,7 @@ namespace LootingBots.Patch.Components
                 {
                     continue;
                 }
-                
+
                 bool canLootContainer =
                     LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_lootingBrain)
                     && container != null // Container exists
@@ -197,7 +197,9 @@ namespace LootingBots.Patch.Components
 
                     if (rangeCalculations == 3)
                     {
-                        _log.LogDebug("No loot in range");
+                        if (_log.DebugEnabled)
+                            _log.LogDebug("No loot in range");
+
                         break;
                     }
                 }
@@ -219,7 +221,7 @@ namespace LootingBots.Patch.Components
 
             if (destination == Vector3.zero || _botOwner?.Mover == null)
             {
-                if (_botOwner?.Mover == null)
+                if (_botOwner?.Mover == null && _log.WarningEnabled)
                 {
                     _log.LogWarning(
                         "botOwner.BotMover is null! Cannot perform path distance calculations"

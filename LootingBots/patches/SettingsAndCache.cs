@@ -37,7 +37,9 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix()
         {
-            LootingBots.LootLog.LogDebug($"Resetting Loot Cache");
+            if (LootingBots.LootLog.DebugEnabled)
+                LootingBots.LootLog.LogDebug($"Resetting Loot Cache");
+
             ActiveLootCache.Reset();
         }
     }
@@ -56,7 +58,9 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix()
         {
-            LootingBots.LootLog.LogWarning($"Clearing any active player loot");
+            if (LootingBots.LootLog.WarningEnabled)
+                LootingBots.LootLog.LogWarning($"Clearing any active player loot");
+
             ActiveLootCache.PlayerLootId = "";
         }
     }
@@ -75,11 +79,15 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix(IItemOwner loot, Callback callback, ref Player __instance)
         {
-            
             // If the item we are looting is marked as active by a friendly bot, cleanup its looting brain to stop it from looting the same object
-            if (ActiveLootCache.ActiveLoot.TryGetValue(loot.RootItem.Id, out BotOwner botOwner) && !botOwner.BotsGroup.IsPlayerEnemy(__instance))
+            if (
+                ActiveLootCache.ActiveLoot.TryGetValue(loot.RootItem.Id, out BotOwner botOwner)
+                && !botOwner.BotsGroup.IsPlayerEnemy(__instance)
+            )
             {
-                LootingBots.LootLog.LogError("Cleanup on bot brain");
+                if (LootingBots.LootLog.WarningEnabled)
+                    LootingBots.LootLog.LogWarning("Cleanup on bot brain");
+
                 LootingBrain brain = botOwner.GetComponent<LootingBrain>();
                 brain?.DisableTransactions();
             }

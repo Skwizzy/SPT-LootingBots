@@ -94,7 +94,8 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                _log.LogError(e);
+                if (_log.ErrorEnabled)
+                    _log.LogError(e);
             }
         }
 
@@ -106,15 +107,16 @@ namespace LootingBots.Brain.Logics
         {
             Vector3 rayDirection = _lootingBrain.LootObjectPosition - _destination;
 
-            if (Physics.Raycast(_destination, rayDirection, out RaycastHit hit))
+            if (
+                Physics.Raycast(_destination, rayDirection, out RaycastHit hit)
+                && hit.collider.gameObject.layer == LootUtils.LowPolyMask
+            )
             {
-                if (hit.collider.gameObject.layer == LootUtils.LowPolyMask)
-                {
+                if (_log.ErrorEnabled)
                     _log.LogError(
                         $"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}"
                     );
-                    return false;
-                }
+                return false;
             }
 
             return true;
@@ -162,20 +164,20 @@ namespace LootingBots.Brain.Logics
                             true
                         );
                         // Log every 5 movement attempts to reduce noise
-                        if (_navigationAttempts % 5 == 1)
+                        if (_navigationAttempts % 5 == 1 && _log.DebugEnabled)
                         {
                             _log.LogDebug(
                                 $"[Attempt: {_navigationAttempts}] Moving to {lootableName} status: {pathStatus}"
                             );
                         }
 
-                        if (pathStatus != NavMeshPathStatus.PathComplete)
+                        if (pathStatus != NavMeshPathStatus.PathComplete && _log.WarningEnabled)
                         {
                             _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
                             canMove = false;
                         }
                     }
-                    else
+                    else if (_log.WarningEnabled)
                     {
                         _log.LogWarning($"Have no LOS. Ignoring {lootableName}");
                         canMove = false;
@@ -185,9 +187,12 @@ namespace LootingBots.Brain.Logics
                 {
                     if (isBotStuck)
                     {
-                        _log.LogError($"Has been stuck trying to reach: {lootableName}. Ignoring");
+                        if (_log.ErrorEnabled)
+                            _log.LogError(
+                                $"Has been stuck trying to reach: {lootableName}. Ignoring"
+                            );
                     }
-                    else
+                    else if (_log.ErrorEnabled)
                     {
                         _log.LogError(
                             $"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
@@ -198,7 +203,8 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                _log.LogError(e);
+                if (_log.ErrorEnabled)
+                    _log.LogError(e);
             }
 
             return canMove;
@@ -243,9 +249,10 @@ namespace LootingBots.Brain.Logics
 
             if (isStuck)
             {
-                _log.LogDebug(
-                    $"[Stuck: {_stuckCount}] Disance moved since check: {changeInDist}. Dist from loot: {dist}"
-                );
+                if (_log.DebugEnabled)
+                    _log.LogDebug(
+                        $"[Stuck: {_stuckCount}] Disance moved since check: {changeInDist}. Dist from loot: {dist}"
+                    );
 
                 // Bot is stuck, update stuck count
                 _stuckCount++;

@@ -86,20 +86,19 @@ namespace LootingBots.Patch.Components
             get { return LootTaskRunning || HasActiveLootable; }
         }
 
-        public bool HasFreeSpace 
+        public bool HasFreeSpace
         {
             get { return Stats.AvailableGridSpaces > LootUtils.RESERVED_SLOT_COUNT; }
         }
 
-
         // Boolean showing when the looting coroutine is running
         public bool LootTaskRunning = false;
         public float DistanceToLoot = -1f;
+
         // Delay simulating the time it takes for the UI to open and start searching a container
         public const int LootingStartDelay = 2500;
 
         private BotLog _log;
-
 
         public void Init(BotOwner botOwner)
         {
@@ -108,7 +107,7 @@ namespace LootingBots.Patch.Components
             InventoryController = new InventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
-            IsPlayerScav = botOwner.Profile.Nickname.Contains(" ("); 
+            IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
             ActiveLootCache.Init();
         }
 
@@ -139,7 +138,8 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                _log.LogError(e);
+                if (_log.ErrorEnabled)
+                    _log.LogError(e);
             }
         }
 
@@ -173,7 +173,9 @@ namespace LootingBots.Patch.Components
                 watch.Start();
 
                 LootTaskRunning = true;
-                _log.LogWarning($"Trying to loot corpse");
+
+                if (_log.InfoEnabled)
+                    _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
                 Player corpsePlayer = ActiveCorpse.GetPlayer;
@@ -210,9 +212,11 @@ namespace LootingBots.Patch.Components
                 OnLootTaskEnd(lootTask.Result);
 
                 watch.Stop();
-                _log.LogDebug(
-                    $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
-                );
+
+                if (_log.DebugEnabled)
+                    _log.LogDebug(
+                        $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
+                    );
             }
         }
 
@@ -226,7 +230,9 @@ namespace LootingBots.Patch.Components
             LootTaskRunning = true;
 
             Item item = ActiveContainer.ItemOwner.Items.ToArray()[0];
-            _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
+
+            if (_log.DebugEnabled)
+                _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
             bool didOpen = false;
             // If a container was closed, open it before looting
@@ -255,9 +261,11 @@ namespace LootingBots.Patch.Components
             OnLootTaskEnd(lootTask.Result);
 
             watch.Stop();
-            _log.LogDebug(
-                $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
-            );
+
+            if (_log.DebugEnabled)
+                _log.LogDebug(
+                    $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
+                );
         }
 
         /**
@@ -271,7 +279,9 @@ namespace LootingBots.Patch.Components
 
                 Item item = ActiveItem.ItemOwner.RootItem;
 
-                _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
+                if (_log.DebugEnabled)
+                    _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
+
                 BotOwner.GetPlayer.UpdateInteractionCast();
                 Task<bool> lootTask = InventoryController.TryAddItemsToBot(new Item[] { item });
 
@@ -283,7 +293,9 @@ namespace LootingBots.Patch.Components
                 // Need to manually cleanup item because the ItemOwner on the original object changes. Only ignore if looting was not interrupted
                 CleanupItem(lootTask.Result, item);
                 OnLootTaskEnd(lootTask.Result);
-                _log.LogDebug($"Net Worth: {Stats.NetLootValue}");
+
+                if (_log.DebugEnabled)
+                    _log.LogDebug($"Net Worth: {Stats.NetLootValue}");
             }
         }
 
