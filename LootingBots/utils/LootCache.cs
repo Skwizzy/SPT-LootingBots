@@ -20,8 +20,10 @@ namespace LootingBots.Patch.Util
 
         public static Dictionary<string, BotOwner> ActiveLoot = new Dictionary<string, BotOwner>();
 
-        public static void Init() {
-            if (!MainPlayer) {
+        public static void Init()
+        {
+            if (!MainPlayer)
+            {
                 MainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
             }
         }
@@ -35,13 +37,17 @@ namespace LootingBots.Patch.Util
 
         public static void CacheActiveLootId(string containerId, BotOwner botOwner)
         {
-            ActiveLoot.Add(containerId, botOwner);
+            if (!String.IsNullOrEmpty(botOwner.name))
+            {
+                ActiveLoot.Add(containerId, botOwner);
+            }
         }
 
         public static bool IsLootInUse(string lootId, BotOwner botOwner)
         {
             bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(MainPlayer);
-            return (isFriendly && lootId == PlayerLootId) || ActiveLoot.TryGetValue(lootId, out BotOwner _);
+            return (isFriendly && lootId == PlayerLootId)
+                || ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 
         public static void Cleanup(BotOwner botOwner)
