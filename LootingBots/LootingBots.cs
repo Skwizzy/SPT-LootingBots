@@ -13,18 +13,16 @@ using LootingBots.Brain;
 using DrakiaXYZ.BigBrain.Brains;
 using System.Collections.Generic;
 
-using HandbookClass = GClass2691;
-
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "0.1.4")]
+    [BepInDependency("xyz.drakia.bigbrain", "0.4.0")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.2.1";
+        private const string MOD_VERSION = "1.2.2";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;

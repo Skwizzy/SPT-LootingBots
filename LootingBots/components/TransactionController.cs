@@ -9,10 +9,9 @@ using EFT.InventoryLogic;
 
 using LootingBots.Patch.Util;
 
-using InventoryControllerResultStruct = GStruct374;
-using InventoryHelperClass = GClass2585;
-using GridClassEx = GClass2321;
-using GridCacheClass = GClass1281;
+using InventoryControllerResultStruct = GStruct413;
+using GridClassEx = GClass2502;
+using GridCacheClass = GClass1390;
 
 namespace LootingBots.Patch.Components
 {
@@ -98,7 +97,7 @@ namespace LootingBots.Patch.Components
                 Item ammoToAdd =
                     weapon.GetCurrentMagazine()?.FirstRealAmmo()
                     ?? Singleton<ItemFactory>.Instance.CreateItem(
-                        new MongoID(false),
+                        MongoID.Generate(),
                         weapon.CurrentAmmoTemplate._id,
                         null
                     );
@@ -268,7 +267,7 @@ namespace LootingBots.Patch.Components
                         $"Moving item to: {moveAction?.Place?.Container?.ID?.Localized()}"
                     );
 
-                var value = InventoryHelperClass.Move(
+                var value = InteractionsHandlerClass.Move(
                     moveAction.ToMove,
                     moveAction.Place,
                     _inventoryController,

@@ -9,14 +9,15 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
-using GridClass = GClass2318;
-using GridClassEx = GClass2321;
-using GridManagerClass = GClass2619;
-using SortResultStruct = GStruct375<GClass2619>;
-using GridItemClass =  GClass2326;
-using ItemAddressExClass = GClass2580;
-using SortErrorClass = GClass3029;
-using GridCacheClass = GClass1281;
+// Found in InteractionHsHandlerClass.Sort
+using GridClassEx = GClass2502;
+// Found in GClass2502.SetSearched
+using GridCacheClass = GClass1390;
+using GridManagerClass = GClass2808;
+using SortResultStruct = GStruct414<GClass2808>;
+using GridItemClass = GClass2507;
+using ItemAddressExClass = GClass2769;
+using SortErrorClass = GClass3302;
 
 namespace LootingBots.Patch.Util
 {
@@ -31,10 +32,10 @@ namespace LootingBots.Patch.Util
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
         {
-            GridClass[] grids = container.Grids;
+            StashGridClass[] grids = container.Grids;
             int gridSize = 0;
 
-            foreach (GridClass grid in grids)
+            foreach (StashGridClass grid in grids)
             {
                 gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
             }
@@ -57,7 +58,7 @@ namespace LootingBots.Patch.Util
         }
 
         /**
-        * Reference fn: GClass2584.Sort
+        * Reference fn: InteractionHsHandlerClass.Sort
         * Sorts the items in a container and places them in grid spaces that match their exact size before moving on to a bigger slot size. This helps make more room in the container for items to be placed in
         */
         public static SortResultStruct SortContainer(
@@ -137,7 +138,7 @@ namespace LootingBots.Patch.Util
         }
 
         // Sort grids in the container from smallest to largest
-        public static GridClass[] SortGrids(GridClass[] grids)
+        public static StashGridClass[] SortGrids(StashGridClass[] grids)
         {
             // Sort grids in the container from smallest to largest
             var containerGrids = grids.ToList();
@@ -155,14 +156,14 @@ namespace LootingBots.Patch.Util
         /**
         * Calculates the amount of empty grid slots in the container
         */
-        public static int GetAvailableGridSlots(GridClass[] grids)
+        public static int GetAvailableGridSlots(StashGridClass[] grids)
         {
             if (grids == null)
             {
-                grids = new GridClass[] { };
+                grids = new StashGridClass[] { };
             }
 
-            List<GridClass> gridList = grids.ToList();
+            List<StashGridClass> gridList = grids.ToList();
             return gridList.Aggregate(
                 0,
                 (freeSpaces, grid) =>
@@ -178,9 +179,9 @@ namespace LootingBots.Patch.Util
         /**
         * Returns an array of available grid slots, omitting 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
         */
-        public static GridClass[] Reserve2x1Slot(GridClass[] grids)
+        public static StashGridClass[] Reserve2x1Slot(StashGridClass[] grids)
         {
-            List<GridClass> gridList = grids.ToList();
+            List<StashGridClass> gridList = grids.ToList();
             foreach (var grid in gridList)
             {
                 int gridSize = grid.GridHeight.Value * grid.GridWidth.Value;
@@ -199,7 +200,7 @@ namespace LootingBots.Patch.Util
         }
 
         /** Return the amount of spaces taken up by all the items in a given grid slot */
-        public static int GetSizeOfContainedItems(this GridClass grid)
+        public static int GetSizeOfContainedItems(this StashGridClass grid)
         {
             return grid.Items.Aggregate(0, (sum, item2) => sum + item2.GetItemSize());
         }
@@ -215,7 +216,7 @@ namespace LootingBots.Patch.Util
         public static ItemAddressExClass FindGridToPickUp(
             this InventoryControllerClass controller,
             Item item,
-            IEnumerable<GridClass> grids = null
+            IEnumerable<StashGridClass> grids = null
         )
         {
             var prioritzedGrids =
@@ -233,7 +234,7 @@ namespace LootingBots.Patch.Util
         }
 
         // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
-        public static IEnumerable<GridClass> GetPrioritizedGridsForLoot(
+        public static IEnumerable<StashGridClass> GetPrioritizedGridsForLoot(
             this EquipmentClass equipment,
             Item item
         )
@@ -247,18 +248,19 @@ namespace LootingBots.Patch.Util
             SearchableItemClass secureContainer = (SearchableItemClass)
                 equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
 
-            GridClass[] tacVestGrids = new GridClass[0];
+            StashGridClass[] tacVestGrids = new StashGridClass[0];
             if (tacVest != null)
             {
                 var sortedGrids = SortGrids(tacVest.Grids);
                 tacVestGrids = Reserve2x1Slot(sortedGrids);
             }
 
-            GridClass[] backpackGrids =
-                (backpack != null) ? SortGrids(backpack.Grids) : new GridClass[0];
-            GridClass[] pocketGrids = (pockets != null) ? pockets.Grids : new GridClass[0];
-            GridClass[] secureContainerGrids =
-                (secureContainer != null) ? secureContainer.Grids : new GridClass[0];
+            StashGridClass[] backpackGrids =
+                (backpack != null) ? SortGrids(backpack.Grids) : new StashGridClass[0];
+            StashGridClass[] pocketGrids =
+                (pockets != null) ? pockets.Grids : new StashGridClass[0];
+            StashGridClass[] secureContainerGrids =
+                (secureContainer != null) ? secureContainer.Grids : new StashGridClass[0];
 
             if (item is BulletClass || item is MagazineClass)
             {

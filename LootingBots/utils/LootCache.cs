@@ -37,7 +37,7 @@ namespace LootingBots.Patch.Util
 
         public static void CacheActiveLootId(string containerId, BotOwner botOwner)
         {
-            if (!String.IsNullOrEmpty(botOwner.name))
+            if (!string.IsNullOrEmpty(botOwner.name))
             {
                 ActiveLoot.Add(containerId, botOwner);
             }
