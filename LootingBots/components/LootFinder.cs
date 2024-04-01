@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,7 +106,7 @@ namespace LootingBots.Patch.Components
             // For each object detected, check to see if it is loot and then calculate its distance from the player
             foreach (Collider collider in colliderList)
             {
-                if (collider == null)
+                if (collider == null || String.IsNullOrEmpty(_botOwner.name))
                 {
                     continue;
                 }

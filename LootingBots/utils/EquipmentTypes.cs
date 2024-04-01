@@ -2,12 +2,11 @@ using System;
 
 using EFT.InventoryLogic;
 
-using BodyArmorClass = GClass2449;
-using HeadArmorClass = GClass2448;
-using FaceCoveringClass = GClass2447;
-using BackpackItemClass = GClass2496;
-using TacticalRigItemClass = GClass2497;
-
+using FaceCoveringClass = GClass2635;
+using HeadArmorClass = GClass2636;
+using BodyArmorClass = GClass2637;
+using BackpackItemClass = GClass2684;
+using TacticalRigItemClass = GClass2685;
 
 namespace LootingBots.Patch.Util
 {
@@ -122,7 +121,8 @@ namespace LootingBots.Patch.Util
             return item is BodyArmorClass;
         }
 
-        public static bool IsFaceCovering(Item item) {
+        public static bool IsFaceCovering(Item item)
+        {
             return item is FaceCoveringClass;
         }
     }

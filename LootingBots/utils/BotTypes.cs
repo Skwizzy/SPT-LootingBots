@@ -64,7 +64,8 @@ namespace LootingBots.Patch.Util
             return botType.HasFlag(BotType.Bloodhound);
         }
 
-        public static bool IsBotEnabled(this BotType enabledTypes, LootingBrain brain) {
+        public static bool IsBotEnabled(this BotType enabledTypes, LootingBrain brain)
+        {
             if (brain.IsPlayerScav)
             {
                 return enabledTypes.HasPlayerScav();
@@ -80,10 +81,10 @@ namespace LootingBots.Patch.Util
                 return enabledTypes.HasPmc();
             }
 
-            if (IsBoss(botType)) {
+            if (IsBoss(botType))
+            {
                 return enabledTypes.HasBoss();
             }
-
 
             switch (botType)
             {

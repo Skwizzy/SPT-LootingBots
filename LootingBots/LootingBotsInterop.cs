@@ -28,7 +28,9 @@ namespace LootingBots
             if (!_LootingBotsLoadedChecked)
             {
                 _LootingBotsLoadedChecked = true;
-                _IsLootingBotsLoaded = Chainloader.PluginInfos.ContainsKey("me.skwizzy.lootingbots");
+                _IsLootingBotsLoaded = Chainloader.PluginInfos.ContainsKey(
+                    "me.skwizzy.lootingbots"
+                );
             }
 
             return _IsLootingBotsLoaded;
@@ -39,20 +41,29 @@ namespace LootingBots
          */
         public static bool Init()
         {
-            if (!IsLootingBotsLoaded()) return false;
+            if (!IsLootingBotsLoaded())
+                return false;
 
             // Only check for the External class once
             if (!_LootingBotsInteropInited)
             {
                 _LootingBotsInteropInited = true;
 
-                _LootingBotsExternalType = Type.GetType("LootingBots.External, skwizzy.LootingBots");
+                _LootingBotsExternalType = Type.GetType(
+                    "LootingBots.External, skwizzy.LootingBots"
+                );
 
                 // Only try to get the methods if we have the type
                 if (_LootingBotsExternalType != null)
                 {
-                    _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "ForceBotToScanLoot");
-                    _PreventBotFromLootingMethod = AccessTools.Method(_LootingBotsExternalType, "PreventBotFromLooting");
+                    _ForceBotToScanLootMethod = AccessTools.Method(
+                        _LootingBotsExternalType,
+                        "ForceBotToScanLoot"
+                    );
+                    _PreventBotFromLootingMethod = AccessTools.Method(
+                        _LootingBotsExternalType,
+                        "PreventBotFromLooting"
+                    );
                 }
             }
 
@@ -65,8 +76,10 @@ namespace LootingBots
          */
         public static bool TryForceBotToScanLoot(BotOwner botOwner)
         {
-            if (!Init()) return false;
-            if (_ForceBotToScanLootMethod == null) return false;
+            if (!Init())
+                return false;
+            if (_ForceBotToScanLootMethod == null)
+                return false;
 
             return (bool)_ForceBotToScanLootMethod.Invoke(null, new object[] { botOwner });
         }
@@ -76,10 +89,13 @@ namespace LootingBots
          */
         public static bool TryPreventBotFromLooting(BotOwner botOwner, float duration)
         {
-            if (!Init()) return false;
-            if (_PreventBotFromLootingMethod == null) return false;
+            if (!Init())
+                return false;
+            if (_PreventBotFromLootingMethod == null)
+                return false;
 
-            return (bool)_PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
+            return (bool)
+                _PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
         }
     }
 }
