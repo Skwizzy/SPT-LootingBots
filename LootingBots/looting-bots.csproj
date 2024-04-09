@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -52,7 +52,7 @@
       <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Aki.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="aki_PrePatch">
-      <HintPath>..\..\..\BepInEx\Patchers\aki_PrePatch.dll</HintPath>
+      <HintPath>..\..\..\3.8.0\BepInEx\patchers\aki_PrePatch.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -63,10 +63,6 @@
     </Reference>
     <Reference Include="Comfort">
       <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
-    </Reference>
-    <Reference Include="DrakiaXYZ-BigBrain, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\BepInEx\Plugins\DrakiaXYZ-BigBrain.dll</HintPath>
     </Reference>
     <Reference Include="ItemComponent.Types" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll" Private="False" />
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -83,6 +79,7 @@
     <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
     <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
     <Reference Include="DissonanceVoip" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll" Private="False" />
+    <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.8.0\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="External.cs" />
@@ -104,6 +101,8 @@ ping -n  2 127.0.0.1 &gt;NUL
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>
+      copy "$(TargetPath)" "C:\SPT\3.8.0\BepInEx\plugins\skwizzy.LootingBots.dll"
+      copy "$(TargetPath)" "C:\SPT\My_Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
     </PostBuildEvent>
   </PropertyGroup>
 </Project>
