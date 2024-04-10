@@ -1,5 +1,5 @@
 [![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.5-aki-3.7.1)
-[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.2.0-aki-3.7.6-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.2.0-aki-3.7.6-beta)
+[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.2.2-aki-3.7.6-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.2.2-aki-3.7.6-beta)
 
 
 # SPT-LootingBots
@@ -7,7 +7,7 @@
 This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
 
 ## Dependencies
-**SPT-BigBrain ^0.2.0**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases/tag/0.2.0
+**SPT-BigBrain**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases
 
 ## Behavior
 
@@ -22,6 +22,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
   - New looting layer will activate every 10 seconds (by default) during a patrol causing the bots to scan for a nearby lootable item, container, or corpse (based on a configurable distance)
   - Once a lootable object has been found, bots will attempt to navigate to the object and commence looting
   - Bots will attempt to loot everything from a corpse and a container
+  - Bots will examine each item for about 1 second before looting it (simulates discovering items when searcing containers/corpses)
   - If a bot cannot equip a piece of gear, they will attempt to place it in their inventory 
   - Not all loot is navigable, relies heavily on the availablity of a nearby NavMesh that bots can use to navigate
     - If loot is behind a door, bots will open the door if unlocked 
@@ -51,7 +52,8 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 
 **Loot Finder (Timing)**
 - `Delay after spawn` - Amount of seconds a bot will wait to start their first loot scan after spawning into raid.
-- `Transaction delay (ms)` - Amount of milliseconds a bot will wait after a looting transaction has occured before attempting another transaction. Simulates the amount of time it takes for a player to look through loot and equip things.
+- `Delay after taking item (ms)` - Amount of milliseconds a bot will wait after taking an item into their inventory before attempting to loot another item. Simulates the amount of time it takes for a player to look through loot decide to take something.
+- `Enable examine time` - Adds a delay before looting an item to simulate the time it takes for a bot to \"uncover (examine)\" an item when searching containers, items and corpses. The delay is calculated using the ExamineTime of an object and the AttentionExamineTime of the bot.
 - `Loot scan interval` - The amount of seconds the bot will wait until triggering another loot scan
 
 **Loot Settings**
