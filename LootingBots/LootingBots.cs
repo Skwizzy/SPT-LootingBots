@@ -35,8 +35,11 @@ namespace LootingBots
 
         public static ConfigEntry<float> LootScanInterval;
         public static ConfigEntry<float> DetectItemDistance;
+        public static ConfigEntry<bool> DetectItemNeedsSight;
         public static ConfigEntry<float> DetectContainerDistance;
+        public static ConfigEntry<bool> DetectContainerNeedsSight;
         public static ConfigEntry<float> DetectCorpseDistance;
+        public static ConfigEntry<bool> DetectCorpseNeedsSight;
 
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
@@ -75,7 +78,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
-
+            DetectCorpseNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable Corpse Line of Sight Checks",
+                false,
+                new ConfigDescription(
+                    "Raycasts to check if a bot can see loot before they go for it",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1 }
+                )
+            );
             DetectCorpseDistance = Config.Bind(
                 "Loot Finder",
                 "Detect corpse distance",
@@ -86,6 +98,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 8 }
                 )
             );
+
             ContainerLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable container looting",
@@ -94,6 +107,16 @@ namespace LootingBots
                     "Enables container looting for the selected bot types",
                     null,
                     new ConfigurationManagerAttributes { Order = 7 }
+                )
+            );
+            DetectContainerNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable Container Line of Sight Checks",
+                false,
+                new ConfigDescription(
+                    "Raycasts to check if a bot can see loot before they go for it",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1 }
                 )
             );
             DetectContainerDistance = Config.Bind(
@@ -106,6 +129,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 6 }
                 )
             );
+
             LooseItemLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable loose item looting",
@@ -114,6 +138,16 @@ namespace LootingBots
                     "Enables loose item looting for the selected bot types",
                     null,
                     new ConfigurationManagerAttributes { Order = 5 }
+                )
+            );
+            DetectItemNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable Item Line of Sight Checks",
+                false,
+                new ConfigDescription(
+                    "Raycasts to check if a bot can see loot before they go for it",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1 }
                 )
             );
             DetectItemDistance = Config.Bind(
@@ -126,6 +160,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 4 }
                 )
             );
+
             LootingLogLevels = Config.Bind(
                 "Loot Finder",
                 "Debug: Log Levels",
