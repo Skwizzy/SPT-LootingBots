@@ -80,7 +80,7 @@ namespace LootingBots
             );
             DetectCorpseNeedsSight = Config.Bind(
                 "Loot Finder",
-                "Enable Corpse Line of Sight Check",
+                "Enable corpse line of sight check",
                 false,
                 new ConfigDescription(
                     "When scanning for loot, corpses will be ignored if they are not visible by the bot",
@@ -111,7 +111,7 @@ namespace LootingBots
             );
             DetectContainerNeedsSight = Config.Bind(
                 "Loot Finder",
-                "Enable Container Line of Sight Check",
+                "Enable container line of sight check",
                 false,
                 new ConfigDescription(
                     "When scanning for loot, containers will be ignored if they are not visible by the bot",
@@ -142,7 +142,7 @@ namespace LootingBots
             );
             DetectItemNeedsSight = Config.Bind(
                 "Loot Finder",
-                "Enable Item Line of Sight Checks",
+                "Enable item line of sight check",
                 false,
                 new ConfigDescription(
                     "When scanning for loot, loose items will be ignored if they are not visible by the bot",
