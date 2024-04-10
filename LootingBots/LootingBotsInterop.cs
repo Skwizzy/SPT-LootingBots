@@ -1,6 +1,7 @@
 ﻿using BepInEx.Bootstrap;
 
 using EFT;
+using EFT.Interactive;
 
 using HarmonyLib;
 
@@ -18,6 +19,9 @@ namespace LootingBots
         private static Type _LootingBotsExternalType;
         private static MethodInfo _ForceBotToScanLootMethod;
         private static MethodInfo _PreventBotFromLootingMethod;
+        private static MethodInfo _CheckIfInventoryFullMethod;
+        private static MethodInfo _GetNetLootValueMethod;
+        private static MethodInfo _GetItemPriceMethod;
 
         /**
          * Return true if Looting Bots is loaded in the client
@@ -64,6 +68,18 @@ namespace LootingBots
                         _LootingBotsExternalType,
                         "PreventBotFromLooting"
                     );
+                    _CheckIfInventoryFullMethod = AccessTools.Method(
+                        _LootingBotsExternalType,
+                        "CheckIfInventoryFull"
+                    );
+                    _GetNetLootValueMethod = AccessTools.Method(
+                        _LootingBotsExternalType,
+                        "GetNetLootValue"
+                    );
+                    _GetItemPriceMethod = AccessTools.Method(
+                        _LootingBotsExternalType,
+                        "GetItemPrice"
+                    );
                 }
             }
 
@@ -96,6 +112,48 @@ namespace LootingBots
 
             return (bool)
                 _PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
+        }
+
+        /**
+         * Checks if a bot's inventory is full or not
+         */
+        public static bool CheckIfInventoryFull(BotOwner botOwner)
+        {
+            if (!Init())
+                return false;
+            if (_CheckIfInventoryFullMethod == null)
+                return false;
+
+            return (bool)
+                _CheckIfInventoryFullMethod.Invoke(null, new object[] { botOwner });
+        }
+
+        /**
+         * Gets the total value looted by a bot in this raid
+         */
+        public static float GetNetLootValue(BotOwner botOwner)
+        {
+            if (!Init())
+                return 0f;
+            if (_GetNetLootValueMethod == null)
+                return 0f;
+
+            return (float)
+                _GetNetLootValueMethod.Invoke(null, new object[] { botOwner });
+        }
+
+        /**
+         * Checks the price of a loot item using LB ItemAppraiser
+         */
+        public static float GetItemPrice(LootItem item)
+        {
+            if (!Init())
+                return 0f;
+            if (_GetItemPriceMethod == null)
+                return 0f;
+
+            return (float)
+                _GetItemPriceMethod.Invoke(null, new object[] { item });
         }
     }
 }
