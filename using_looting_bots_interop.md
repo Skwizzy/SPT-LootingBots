@@ -88,6 +88,82 @@ if (LootingBots.LootingBotsInterop.TryPreventBotFromLooting(botOwner, 30f))
 }
 ```
 ___
+### CheckIfInventoryFull
+Returns `true` if a bot's inventory has been flagged as full by the LootingBrain (less than 2 available grid slots)
+
+```c#
+public static bool CheckIfInventoryFull(BotOwner botOwner)
+```
+
+**Params**
+```c#
+BotOwner botOwner // BotOwner instance of the bot to check
+```
+
+**Example**
+```c#
+// Before using, we should always make sure interop has been intialized (see Init())
+if (!canUseLootingBotsInterop) {
+    return false;
+}
+
+
+if (LootingBots.LootingBotsInterop.CheckIfInventoryFull(botOwner)) {
+    // Custom Logic to execute if inventory is full
+}
+```
+___
+### GetNetLootValue
+Returns a `float` representing the net loot value of all the items looted by a bot during the raid
+
+```c#
+public static float GetNetLootValue(BotOwner botOwner)
+```
+
+**Params**
+```c#
+BotOwner botOwner // BotOwner instance of the bot to check
+```
+
+**Example**
+```c#
+// Before using, we should always make sure interop has been intialized (see Init())
+if (!canUseLootingBotsInterop) {
+    return false;
+}
+
+float totalValueLooted = LootingBots.LootingBotsInterop.GetNetLootValue(botOwner);
+if (totalValueLooted > 10000f) {
+    // Some special logic if bot has looted over a certain value
+}
+```
+
+___
+### GetItemPrice
+Uses the LootingBots ItemAppraiser to find the value of the item as a `float`. Depeding on the F12 settings, this will either use the handbook or the flea market
+
+```c#
+public static float GetItemPrice(LootItem item)
+```
+
+**Params**
+```c#
+LootItem item // LootItem instance of the item that we want to appraise
+```
+
+**Example**
+```c#
+// Before using, we should always make sure interop has been intialized (see Init())
+if (!canUseLootingBotsInterop) {
+    return false;
+}
+
+float itemPrice = LootingBots.LootingBotsInterop.GetItemPrice(botOwner);
+if (itemPrice > 10000f) {
+    // Some special logic if an item exceeds a specific value
+}
+```
+___
 ### IsLootingBotsLoaded
 Return `true` if LootingBots plugin has been detected in the client. Used internally by the `Init()` method
 
