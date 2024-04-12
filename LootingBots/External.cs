@@ -1,4 +1,6 @@
-﻿using EFT;
+﻿using System;
+
+using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 
@@ -14,7 +16,7 @@ namespace LootingBots
         /** Forces a bot to scan for loot as soon as they are able to. */
         public static bool ForceBotToScanLoot(BotOwner bot)
         {
-            if (GetComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
+            if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
                 BotLog log = new BotLog(LootingBots.LootLog, bot);
 
@@ -38,7 +40,7 @@ namespace LootingBots
         /** Stops a bot from looting if it is currently looting something and prevents loot scans for the amount of seconds specified by duration */
         public static bool PreventBotFromLooting(BotOwner bot, float duration)
         {
-            if (GetComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
+            if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
                 BotLog log = new BotLog(LootingBots.LootLog, bot);
 
@@ -58,12 +60,14 @@ namespace LootingBots
          */
         public static bool CheckIfInventoryFull(BotOwner bot)
         {
-            if (GetComponents(bot, out LootingBrain lootingBrain))
+            if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
                 BotLog log = new BotLog(LootingBots.LootLog, bot);
 
                 if (log.DebugEnabled)
-                    log.LogDebug($"Checking if {bot.name} has Free Space in their inventory. Result: {lootingBrain.HasFreeSpace}");
+                    log.LogDebug(
+                        $"Checking if {bot.name} has Free Space in their inventory. Result: {lootingBrain.HasFreeSpace}"
+                    );
 
                 return !lootingBrain.HasFreeSpace;
             }
@@ -75,12 +79,14 @@ namespace LootingBots
          */
         public static float GetNetLootValue(BotOwner bot)
         {
-            if (GetComponents(bot, out LootingBrain lootingBrain))
+            if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
                 BotLog log = new BotLog(LootingBots.LootLog, bot);
 
                 if (log.DebugEnabled)
-                    log.LogDebug($"Getting Net Loot Value for {bot.name} which is {lootingBrain.Stats.NetLootValue}");
+                    log.LogDebug(
+                        $"Getting Net Loot Value for {bot.name} which is {lootingBrain.Stats.NetLootValue}"
+                    );
 
                 return lootingBrain.Stats.NetLootValue;
             }
@@ -92,20 +98,32 @@ namespace LootingBots
          */
         public static float GetItemPrice(Item item)
         {
-            return LootingBots.ItemAppraiser != null ? LootingBots.ItemAppraiser.GetItemPrice(item) : 0;
+            return LootingBots.ItemAppraiser != null
+                ? LootingBots.ItemAppraiser.GetItemPrice(item)
+                : 0;
         }
 
-        private static bool GetComponents(BotOwner bot, out LootingBrain lootingBrain, out LootFinder lootFinder)
+        private static bool GetAllComponents(
+            BotOwner bot,
+            out LootingBrain lootingBrain,
+            out LootFinder lootFinder
+        )
         {
-            lootingBrain = bot.GetPlayer.gameObject.GetComponent<LootingBrain>();
-            lootFinder = bot.GetPlayer.gameObject.GetComponent<LootFinder>();
-            return lootingBrain != null && lootFinder != null;
+            bool hasLootFinder = GetLootFinder(bot, out lootFinder);
+            bool hasLootingBrain = GetLootingBrain(bot, out lootingBrain);
+            return hasLootingBrain && hasLootFinder;
         }
 
-        private static bool GetComponents(BotOwner bot, out LootingBrain lootingBrain)
+        private static bool GetLootingBrain(BotOwner bot, out LootingBrain lootingBrain)
         {
             lootingBrain = bot.GetPlayer.gameObject.GetComponent<LootingBrain>();
             return lootingBrain != null;
+        }
+
+        private static bool GetLootFinder(BotOwner bot, out LootFinder lootFinder)
+        {
+            lootFinder = bot.GetPlayer.gameObject.GetComponent<LootFinder>();
+            return lootFinder != null;
         }
     }
 }
