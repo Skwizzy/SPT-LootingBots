@@ -1,5 +1,5 @@
 [![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.1.5-aki-3.7.1)
-[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.2.2-aki-3.7.6-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.2.2-aki-3.7.6-beta)
+[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.3.2-aki-3.8.0-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.3.2-aki-3.8.0-beta)
 
 
 # SPT-LootingBots
@@ -42,10 +42,13 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 ## Mod Settings (F12)
 **Loot Finder**
 - `Enable corpse looting` - Enables corpse looting for the selected bot types
+- `Enable corpse line of sight check` - When scanning for loot, corpses will be ignored if they are not visible by the bot
 - `Detect corpse distance` - Distance (in meters) a bot is able to detect a corpse
 - `Enable container looting` - Enables container looting for the selected bot types
+- `Enable container line of sight check` - When scanning for loot, containers will be ignored if they are not visible by the bot
 - `Detect container distance` - Distance (in meters) a bot is able to detect a container
 - `Enable loose item looting` - Enables loose item looting for the selected bot types
+- `Enable item line of sight check` - When scanning for loot, loose items will be ignored if they are not visible by the bot
 - `Detect item distance` - Distance (in meters) a bot is able to detect an item
 - `Log Levels` - Enable different levels of log messages to show in the logs
 - `Debug: Show navigation points` - Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).
