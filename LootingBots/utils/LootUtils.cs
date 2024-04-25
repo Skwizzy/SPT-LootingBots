@@ -224,7 +224,7 @@ namespace LootingBots.Patch.Util
             // Use the item's template id to search for the same item in the inventory
             var mergeTarget = controller.Inventory
                 .GetAllItemByTemplate(item.TemplateId)
-                .First(
+                .FirstOrDefault(
                     (foundItem) =>
                     {
                         // We dont want bots to stack loot in their secure containers
