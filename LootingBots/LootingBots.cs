@@ -22,7 +22,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.3.0";
+        private const string MOD_VERSION = "1.3.1";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -35,8 +35,11 @@ namespace LootingBots
 
         public static ConfigEntry<float> LootScanInterval;
         public static ConfigEntry<float> DetectItemDistance;
+        public static ConfigEntry<bool> DetectItemNeedsSight;
         public static ConfigEntry<float> DetectContainerDistance;
+        public static ConfigEntry<bool> DetectContainerNeedsSight;
         public static ConfigEntry<float> DetectCorpseDistance;
+        public static ConfigEntry<bool> DetectCorpseNeedsSight;
 
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
@@ -75,7 +78,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 10 }
                 )
             );
-
+            DetectCorpseNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable corpse line of sight check",
+                false,
+                new ConfigDescription(
+                    "When scanning for loot, corpses will be ignored if they are not visible by the bot",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 9 }
+                )
+            );
             DetectCorpseDistance = Config.Bind(
                 "Loot Finder",
                 "Detect corpse distance",
@@ -86,6 +98,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 8 }
                 )
             );
+
             ContainerLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable container looting",
@@ -96,6 +109,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 7 }
                 )
             );
+            DetectContainerNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable container line of sight check",
+                false,
+                new ConfigDescription(
+                    "When scanning for loot, containers will be ignored if they are not visible by the bot",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 6 }
+                )
+            );
             DetectContainerDistance = Config.Bind(
                 "Loot Finder",
                 "Detect container distance",
@@ -103,9 +126,10 @@ namespace LootingBots
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
                     null,
-                    new ConfigurationManagerAttributes { Order = 6 }
+                    new ConfigurationManagerAttributes { Order = 5 }
                 )
             );
+
             LooseItemLootingEnabled = Config.Bind(
                 "Loot Finder",
                 "Enable loose item looting",
@@ -113,7 +137,17 @@ namespace LootingBots
                 new ConfigDescription(
                     "Enables loose item looting for the selected bot types",
                     null,
-                    new ConfigurationManagerAttributes { Order = 5 }
+                    new ConfigurationManagerAttributes { Order = 4 }
+                )
+            );
+            DetectItemNeedsSight = Config.Bind(
+                "Loot Finder",
+                "Enable item line of sight check",
+                false,
+                new ConfigDescription(
+                    "When scanning for loot, loose items will be ignored if they are not visible by the bot",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }
                 )
             );
             DetectItemDistance = Config.Bind(
@@ -123,9 +157,10 @@ namespace LootingBots
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect an item",
                     null,
-                    new ConfigurationManagerAttributes { Order = 4 }
+                    new ConfigurationManagerAttributes { Order = 2 }
                 )
             );
+
             LootingLogLevels = Config.Bind(
                 "Loot Finder",
                 "Debug: Log Levels",

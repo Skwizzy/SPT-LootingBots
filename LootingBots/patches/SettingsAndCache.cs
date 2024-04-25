@@ -18,6 +18,7 @@ namespace LootingBots.Patch
         public void Enable()
         {
             new CleanCacheOnRaidEnd().Enable();
+            new ClearCacheOnDeath().Enable();
             new EnableWeaponSwitching().Enable();
             new InteractPatch().Enable();
             new InventoryClosePatch().Enable();
@@ -38,7 +39,7 @@ namespace LootingBots.Patch
         private static void PatchPrefix()
         {
             if (LootingBots.LootLog.DebugEnabled)
-                LootingBots.LootLog.LogDebug($"Resetting Loot Cache");
+                LootingBots.LootLog.LogDebug("Resetting Loot Cache");
 
             ActiveLootCache.Reset();
         }
@@ -58,8 +59,8 @@ namespace LootingBots.Patch
         [PatchPrefix]
         private static void PatchPrefix()
         {
-            if (LootingBots.LootLog.WarningEnabled)
-                LootingBots.LootLog.LogWarning($"Clearing any active player loot");
+            if (LootingBots.LootLog.DebugEnabled)
+                LootingBots.LootLog.LogDebug("Clearing any active player loot");
 
             ActiveLootCache.PlayerLootId = "";
         }
@@ -85,14 +86,36 @@ namespace LootingBots.Patch
                 && !botOwner.BotsGroup.IsPlayerEnemy(__instance)
             )
             {
-                if (LootingBots.LootLog.WarningEnabled)
-                    LootingBots.LootLog.LogWarning("Cleanup on bot brain");
+                if (LootingBots.LootLog.DebugEnabled)
+                    LootingBots.LootLog.LogDebug("Cleanup on bot brain");
 
                 LootingBrain brain = botOwner.GetComponent<LootingBrain>();
                 brain?.DisableTransactions();
             }
 
             ActiveLootCache.PlayerLootId = loot.RootItem.Id;
+        }
+    }
+
+    
+    /** Patch to mark any lootable interacted with by the player as active loot. Any bot that is currently pathing to that lootable should have their looting brain reset and will ignore the lootable until the player stops looting */
+    public class ClearCacheOnDeath : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(BotOwner).GetMethod(
+                "Dispose",
+                BindingFlags.Public | BindingFlags.Instance
+            );
+        }
+
+        [PatchPrefix]
+        private static void PatchPrefix(ref BotOwner __instance)
+        {
+            if (LootingBots.LootLog.DebugEnabled)
+                LootingBots.LootLog.LogDebug("Cleanup on ActiveLootCache");
+    
+            ActiveLootCache.Cleanup(__instance);
         }
     }
 
