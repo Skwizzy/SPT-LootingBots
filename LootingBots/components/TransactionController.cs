@@ -64,18 +64,21 @@ namespace LootingBots.Patch.Components
         {
             public Item ToMove;
             public ItemAddress Place;
+            public Item ToItem;
             public ActionCallback Callback;
             public ActionCallback OnComplete;
 
             public MoveAction(
                 Item toMove = null,
                 ItemAddress place = null,
+                Item toItem = null,
                 ActionCallback callback = null,
                 ActionCallback onComplete = null
             )
             {
                 ToMove = toMove;
                 Place = place;
+                ToItem = toItem;
                 Callback = callback;
                 OnComplete = onComplete;
             }
@@ -218,11 +221,25 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                var ableToPickUp = _inventoryController.FindGridToPickUp(item);
+                // Check to see if this is an item that we can merge with another item in the inventory
+                var mergeableItem = _inventoryController.FindItemToMerge(item);
+
+                if (mergeableItem != null)
+                {
+                    if (_log.WarningEnabled)
+                        _log.LogWarning(
+                            $"Merging: {item.Name.Localized()} [with: {mergeableItem.Name.Localized()}]"
+                        );
+
+                    return await MergeItem(new MoveAction(item, null, mergeableItem));
+                }
+
+                // Otherwise, find an empty grid slot to put the item in
+                var gridAddress = _inventoryController.FindGridToPickUp(item);
 
                 if (
-                    ableToPickUp != null
-                    && !ableToPickUp
+                    gridAddress != null
+                    && !gridAddress
                         .GetRootItem()
                         .Parent.Container.ID.ToLower()
                         .Equals("securedcontainer")
@@ -230,10 +247,10 @@ namespace LootingBots.Patch.Components
                 {
                     if (_log.WarningEnabled)
                         _log.LogWarning(
-                            $"Picking up: {item.Name.Localized()} [place: {ableToPickUp.GetRootItem().Name.Localized()}]"
+                            $"Picking up: {item.Name.Localized()} [place: {gridAddress.GetRootItem().Name.Localized()}]"
                         );
 
-                    return await MoveItem(new MoveAction(item, ableToPickUp));
+                    return await MoveItem(new MoveAction(item, gridAddress));
                 }
 
                 if (_log.DebugEnabled)
@@ -263,9 +280,11 @@ namespace LootingBots.Patch.Components
                 }
 
                 if (_log.DebugEnabled)
+                {
                     _log.LogDebug(
                         $"Moving item to: {moveAction?.Place?.Container?.ID?.Localized()}"
                     );
+                }
 
                 var value = InteractionsHandlerClass.Move(
                     moveAction.ToMove,
@@ -277,9 +296,87 @@ namespace LootingBots.Patch.Components
                 if (value.Failed)
                 {
                     if (_log.ErrorEnabled)
+                    {
                         _log.LogError(
                             $"Failed to move {moveAction.ToMove.Name.Localized()} to {moveAction.Place.Container.ID.Localized()}"
                         );
+                    }
+                    return false;
+                }
+
+                if (moveAction.Callback == null)
+                {
+                    await SimulatePlayerDelay();
+                    await _inventoryController.TryRunNetworkTransaction(value, null);
+                }
+                else
+                {
+                    TaskCompletionSource<IResult> promise = new TaskCompletionSource<IResult>();
+
+                    await _inventoryController.TryRunNetworkTransaction(
+                        value,
+                        new Callback(
+                            async (IResult result) =>
+                            {
+                                if (result.Succeed)
+                                {
+                                    await SimulatePlayerDelay();
+                                    await moveAction.Callback();
+                                }
+                                promise.TrySetResult(result);
+                            }
+                        )
+                    );
+
+                    await promise.Task;
+                }
+                if (moveAction.OnComplete != null)
+                {
+                    await SimulatePlayerDelay();
+                    await moveAction.OnComplete();
+                }
+            }
+            catch (Exception e)
+            {
+                if (_log.ErrorEnabled)
+                    _log.LogError(e);
+            }
+
+            return true;
+        }
+
+        /** Attempts to merge an item stack with another specified item stack. Supports executing a callback */
+        public async Task<bool> MergeItem(MoveAction moveAction)
+        {
+            try
+            {
+                if (IsLootingInterrupted())
+                {
+                    return false;
+                }
+
+                if (_log.DebugEnabled)
+                {
+                    _log.LogDebug(
+                        $"Merging {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})"
+                    );
+                }
+
+                var value = InteractionsHandlerClass.Merge(
+                    moveAction.ToMove,
+                    moveAction.ToItem,
+                    _inventoryController,
+                    true
+                );
+
+                if (value.Failed)
+                {
+                    if (_log.ErrorEnabled)
+                    {
+                        _log.LogError(
+                            $"Failed to merge {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})"
+                        );
+                    }
                     return false;
                 }
 

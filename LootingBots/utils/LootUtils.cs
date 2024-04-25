@@ -212,6 +212,39 @@ namespace LootingBots.Patch.Util
             return dimensions.X * dimensions.Y;
         }
 
+        /** Given an item that is stackable and can be merged, search through the inventory and find any matches of that item that are not in a secure container. */
+        public static Item FindItemToMerge(this InventoryControllerClass controller, Item item)
+        {
+            // Return null if item cannot be stacked
+            if (item.StackMaxSize <= 1)
+            {
+                return null;
+            }
+
+            // Use the item's template id to search for the same item in the inventory
+            var mergeTarget = controller.Inventory
+                .GetAllItemByTemplate(item.TemplateId)
+                .First(
+                    (foundItem) =>
+                    {
+                        // We dont want bots to stack loot in their secure containers
+                        bool isSecureContainer = foundItem
+                            .GetRootItem()
+                            .Parent.Container.ID.ToLower()
+                            .Equals("securedcontainer");
+
+                        // In order for an item to be considered a valid merge target, the sum of the 2 stacks being merged must not exceed the maximum stack size
+                        return !isSecureContainer
+                            && (
+                                item.StackObjectsCount + foundItem.StackObjectsCount
+                                <= foundItem.StackMaxSize
+                            );
+                    }
+                );
+
+            return mergeTarget;
+        }
+
         // Custom extension for EFT InventoryControllerClass.FindGridToPickUp that uses a custom method for choosing the grid slot to place a loot item
         public static ItemAddressExClass FindGridToPickUp(
             this InventoryControllerClass controller,
