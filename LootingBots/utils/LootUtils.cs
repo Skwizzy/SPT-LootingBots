@@ -54,7 +54,7 @@ namespace LootingBots.Patch.Util
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
             InteractionResult result = new InteractionResult(action);
-            container.Interact(result);
+            container?.Interact(result);
         }
 
         /**
