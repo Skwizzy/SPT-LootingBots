@@ -114,7 +114,7 @@ namespace LootingBots.Patch.Components
                 LootableContainer container =
                     collider.gameObject.GetComponentInParent<LootableContainer>();
                 LootItem lootItem = collider.gameObject.GetComponentInParent<LootItem>();
-                BotOwner corpse = collider.gameObject.GetComponentInParent<BotOwner>();
+                Player corpse = collider.gameObject.GetComponentInParent<Player>();
                 Item rootItem = container?.ItemOwner?.RootItem ?? lootItem?.ItemOwner?.RootItem;
                 // If object has been ignored, skip to the next object detected
                 if (_lootingBrain.IsLootIgnored(rootItem?.Id))

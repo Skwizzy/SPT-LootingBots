@@ -44,7 +44,7 @@ namespace LootingBots.Patch.Components
         public LootItem ActiveItem;
 
         // Current corpse that the bot will try to loot
-        public BotOwner ActiveCorpse;
+        public Player ActiveCorpse;
 
         // Final destination of the bot when moving to loot something
         public Vector3 Destination = Vector3.zero;
@@ -166,7 +166,7 @@ namespace LootingBots.Patch.Components
         */
         public IEnumerator LootCorpse()
         {
-            if (ActiveCorpse?.GetPlayer)
+            if (ActiveCorpse != null)
             {
                 var watch = new System.Diagnostics.Stopwatch();
                 watch.Start();
@@ -177,8 +177,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                Player corpsePlayer = ActiveCorpse.GetPlayer;
-                Type corpseType = corpsePlayer.GetType();
+                Type corpseType = ActiveCorpse.GetType();
                 FieldInfo corpseInventory = corpseType.BaseType.GetField(
                     "_inventoryController",
                     BindingFlags.NonPublic
@@ -187,7 +186,7 @@ namespace LootingBots.Patch.Components
                         | BindingFlags.Instance
                 );
                 InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                    corpseInventory.GetValue(corpsePlayer);
+                    corpseInventory.GetValue(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
                 EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
