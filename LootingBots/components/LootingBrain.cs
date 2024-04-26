@@ -233,13 +233,8 @@ namespace LootingBots.Patch.Components
             if (_log.DebugEnabled)
                 _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
-            bool didOpen = false;
-            // If a container was closed, open it before looting
-            if (ActiveContainer?.DoorState == EDoorState.Shut)
-            {
-                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
-                didOpen = true;
-            }
+            // Open the container
+            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
 
             Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
@@ -247,11 +242,8 @@ namespace LootingBots.Patch.Components
             Task<bool> lootTask = InventoryController.LootNestedItems(item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            // Close the container after looting if a container was open, and the bot didnt open it
-            if (ActiveContainer?.DoorState == EDoorState.Open && !didOpen)
-            {
-                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
-            }
+            // Close the container
+            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
 
             InventoryController.UpdateActiveWeapon();
 
