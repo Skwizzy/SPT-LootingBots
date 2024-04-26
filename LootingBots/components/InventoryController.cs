@@ -288,8 +288,13 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    // Check to see if we need to swap gear
-                    TransactionController.EquipAction action = GetEquipAction(item);
+                    if (item.IsArmorMod() && !item.IsUnremovable) {
+                         if (_log.ErrorEnabled)
+                            _log.LogError($"Found some armor mod: {item.Name.Localized()}");
+                    }
+
+                        // Check to see if we need to swap gear
+                        TransactionController.EquipAction action = GetEquipAction(item);
                     if (action.Swap != null)
                     {
                         await _transactionController.ThrowAndEquip(action.Swap);
@@ -949,19 +954,34 @@ namespace LootingBots.Patch.Components
                     .ContainedItem != null;
 
             EquipmentSlot[] prioritySlots = new EquipmentSlot[0];
-            EquipmentSlot[] weaponSlots = new EquipmentSlot[]
-            {
-                EquipmentSlot.Holster,
-                EquipmentSlot.FirstPrimaryWeapon,
-                EquipmentSlot.SecondPrimaryWeapon
-            };
-            EquipmentSlot[] storageSlots = new EquipmentSlot[]
-            {
-                EquipmentSlot.Backpack,
-                EquipmentSlot.ArmorVest,
-                EquipmentSlot.TacticalVest,
-                EquipmentSlot.Pockets
-            };
+            EquipmentSlot[] weaponSlots = GetUnlockedSlots(
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Holster,
+                    EquipmentSlot.FirstPrimaryWeapon,
+                    EquipmentSlot.SecondPrimaryWeapon
+                }
+            );
+            EquipmentSlot[] storageSlots = GetUnlockedSlots(
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Backpack,
+                    EquipmentSlot.ArmorVest,
+                    EquipmentSlot.TacticalVest,
+                    EquipmentSlot.Pockets
+                }
+            );
+
+            EquipmentSlot[] otherSlots = GetUnlockedSlots(
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Headwear,
+                    EquipmentSlot.Earpiece,
+                    EquipmentSlot.Dogtag,
+                    EquipmentSlot.Scabbard,
+                    EquipmentSlot.FaceCover
+                }
+            );
 
             if (hasBackpack || hasTacVest)
             {
@@ -975,17 +995,14 @@ namespace LootingBots.Patch.Components
                 prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
             }
 
-            return prioritySlots
-                .Concat(
-                    new EquipmentSlot[]
-                    {
-                        EquipmentSlot.Headwear,
-                        EquipmentSlot.Earpiece,
-                        EquipmentSlot.Dogtag,
-                        EquipmentSlot.Scabbard,
-                        EquipmentSlot.FaceCover
-                    }
-                )
+            return prioritySlots.Concat(otherSlots).ToArray();
+        }
+
+        /** Given a list of slots, return all slots that are not flagged as Locked */
+        private EquipmentSlot[] GetUnlockedSlots(EquipmentSlot[] desiredSlots)
+        {
+            return desiredSlots
+                .Where(slot => !_botInventoryController.Inventory.Equipment.GetSlot(slot).Locked)
                 .ToArray();
         }
 
