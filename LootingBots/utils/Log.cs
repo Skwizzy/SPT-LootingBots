@@ -44,6 +44,19 @@ namespace LootingBots.Patch.Util
         private readonly BotOwner _botOwner;
         private readonly string _botString;
 
+        private string _currentBotFilter
+        {
+            get { return LootingBots.FilterLogsOnBot.Value.ToString(); }
+        }
+
+        private bool _isLogShown
+        {
+            get
+            {
+                return _currentBotFilter == "0" || _botOwner.name.Equals("Bot" + _currentBotFilter);
+            }
+        }
+
         public bool DebugEnabled
         {
             get { return _log.DebugEnabled; }
@@ -70,22 +83,26 @@ namespace LootingBots.Patch.Util
 
         public void LogDebug(object msg)
         {
-            _log.LogDebug(FormatMessage(msg));
+            if (_isLogShown)
+                _log.LogDebug(FormatMessage(msg));
         }
 
         public void LogInfo(object msg)
         {
-            _log.LogInfo(FormatMessage(msg));
+            if (_isLogShown)
+                _log.LogInfo(FormatMessage(msg));
         }
 
         public void LogWarning(object msg)
         {
-            _log.LogWarning(FormatMessage(msg));
+            if (_isLogShown)
+                _log.LogWarning(FormatMessage(msg));
         }
 
         public void LogError(object msg)
         {
-            _log.LogError(FormatMessage(msg));
+            if (_isLogShown)
+                _log.LogError(FormatMessage(msg));
         }
 
         private string FormatMessage(object data)
