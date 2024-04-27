@@ -135,6 +135,10 @@ namespace LootingBots.Patch.Components
                     && (
                         lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
                         || (
+                            lootItem?.ItemOwner?.RootItem is ArmorClass newArmor // If the item is some sort of armor, check to see if its better than what is equipped
+                            && _lootingBrain.IsBetterArmor(newArmor)
+                        )
+                        || (
                             _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
                             && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize()
                         )
@@ -162,8 +166,10 @@ namespace LootingBots.Patch.Components
                     Vector3 destination = GetDestination(center);
 
                     // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
-                    if (IsLootInRange(lootType, destination, out float dist) 
-                        && IsLootInSight(lootType, destination))
+                    if (
+                        IsLootInRange(lootType, destination, out float dist)
+                        && IsLootInSight(lootType, destination)
+                    )
                     {
                         ActiveLootCache.CacheActiveLootId(rootItem.Id, _botOwner);
 
@@ -245,9 +251,11 @@ namespace LootingBots.Patch.Components
             bool isItem = lootType == LootType.Item;
             bool isCorpse = lootType == LootType.Corpse;
 
-            if (LootingBots.DetectContainerNeedsSight.Value == false && isContainer 
-                || LootingBots.DetectItemNeedsSight.Value == false && isItem 
-                || LootingBots.DetectCorpseNeedsSight.Value == false && isCorpse)
+            if (
+                LootingBots.DetectContainerNeedsSight.Value == false && isContainer
+                || LootingBots.DetectItemNeedsSight.Value == false && isItem
+                || LootingBots.DetectCorpseNeedsSight.Value == false && isCorpse
+            )
             {
                 return true;
             }
@@ -267,11 +275,11 @@ namespace LootingBots.Patch.Components
             Vector3 directionOfLoot = destination - start;
 
             bool sightBlocked = Physics.Raycast(
-                start, 
-                directionOfLoot, 
-                directionOfLoot.magnitude, 
+                start,
+                directionOfLoot,
+                directionOfLoot.magnitude,
                 LayerMaskClass.HighPolyWithTerrainMask
-                );
+            );
 
             return !sightBlocked;
         }
