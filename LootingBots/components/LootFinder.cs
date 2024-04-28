@@ -136,7 +136,7 @@ namespace LootingBots.Patch.Components
                         lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
                         || (
                             lootItem?.ItemOwner?.RootItem is ArmorClass newArmor // If the item is some sort of armor, check to see if its better than what is equipped
-                            && _lootingBrain.IsBetterArmor(newArmor)
+                            && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(newArmor)
                         )
                         || (
                             _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
