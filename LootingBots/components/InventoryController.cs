@@ -74,6 +74,24 @@ namespace LootingBots.Patch.Components
                 Color.white,
                 freeSpaceColor
             );
+            debugPanel.AppendLabeledValue(
+                $"Primary Value",
+                $" {WeaponValues.Primary.Value:n0}₽",
+                Color.white,
+                Color.white
+            );
+            debugPanel.AppendLabeledValue(
+                $"Secondary Value",
+                $" {WeaponValues.Secondary.Value:n0}₽",
+                Color.white,
+                Color.white
+            );
+            debugPanel.AppendLabeledValue(
+                $"Holster Value",
+                $" {WeaponValues.Holster.Value:n0}₽",
+                Color.white,
+                Color.white
+            );
         }
     }
 
@@ -88,10 +106,54 @@ namespace LootingBots.Patch.Components
 
         public BotStats Stats = new BotStats();
 
-        private static readonly GearValue GearValue = new GearValue();
+        public ArmorComponent CurrentArmorVest
+        {
+            get
+            {
+                Item chest = _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.ArmorVest)
+                    .ContainedItem;
+                return chest?.GetItemComponent<ArmorComponent>();
+            }
+        }
 
-        // Represents the highest equipped armor class of the bot either from the armor vest or tac vest
-        public int CurrentBodyArmorClass = 0;
+        public ArmorComponent CurrentArmorRig
+        {
+            get
+            {
+                SearchableItemClass tacVest = (SearchableItemClass)
+                    _botInventoryController.Inventory.Equipment
+                        .GetSlot(EquipmentSlot.TacticalVest)
+                        .ContainedItem;
+                return tacVest?.GetItemComponent<ArmorComponent>();
+            }
+        }
+
+        public ArmorComponent CurrentHeadArmor
+        {
+            get
+            {
+                Item helmet = _botInventoryController.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.Headwear)
+                    .ContainedItem;
+                return helmet?.GetItemComponent<ArmorComponent>();
+            }
+        }
+
+        public ArmorComponent CurrentTorsoArmor
+        {
+            get { return CurrentArmorRig ?? CurrentArmorVest; }
+        }
+
+        public int CurrentTorsoArmorClass
+        {
+            get { return CurrentTorsoArmor?.ArmorClass ?? 0; }
+        }
+
+        public int CurrentHeadArmorClass
+        {
+            get { return CurrentHeadArmor?.ArmorClass ?? 0; }
+        }
 
         // Represents the value in roubles of the current item
         public float CurrentItemPrice = 0f;
@@ -107,35 +169,13 @@ namespace LootingBots.Patch.Components
                 _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
-                Type botOwnerType = botOwner.GetPlayer.GetType();
-                FieldInfo botInventory = botOwnerType.BaseType.GetField(
-                    "_inventoryController",
-                    BindingFlags.NonPublic
-                        | BindingFlags.Static
-                        | BindingFlags.Public
-                        | BindingFlags.Instance
-                );
-
+                _botInventoryController = LootUtils.GetBotInventoryController(botOwner.GetPlayer);
                 _botOwner = botOwner;
-                _botInventoryController = (InventoryControllerClass)
-                    botInventory.GetValue(botOwner.GetPlayer);
                 _transactionController = new TransactionController(
                     _botOwner,
                     _botInventoryController,
                     _log
                 );
-
-                // Initialize current armor classs
-                Item chest = _botInventoryController.Inventory.Equipment
-                    .GetSlot(EquipmentSlot.ArmorVest)
-                    .ContainedItem;
-                SearchableItemClass tacVest = (SearchableItemClass)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.TacticalVest)
-                        .ContainedItem;
-                ArmorComponent currentArmor = chest?.GetItemComponent<ArmorComponent>();
-                ArmorComponent currentVest = tacVest?.GetItemComponent<ArmorComponent>();
-                CurrentBodyArmorClass = currentArmor?.ArmorClass ?? currentVest?.ArmorClass ?? 0;
 
                 CalculateGearValue();
                 UpdateGridStats();
@@ -181,20 +221,20 @@ namespace LootingBots.Patch.Components
                 .GetSlot(EquipmentSlot.Holster)
                 .ContainedItem;
 
-            if (primary != null && GearValue.Primary.Id != primary.Id)
+            if (primary != null && Stats.WeaponValues.Primary.Id != primary.Id)
             {
                 float value = _itemAppraiser.GetItemPrice(primary);
-                GearValue.Primary = new ValuePair(primary.Id, value);
+                Stats.WeaponValues.Primary = new ValuePair(primary.Id, value);
             }
-            if (secondary != null && GearValue.Secondary.Id != secondary.Id)
+            if (secondary != null && Stats.WeaponValues.Secondary.Id != secondary.Id)
             {
                 float value = _itemAppraiser.GetItemPrice(secondary);
-                GearValue.Secondary = new ValuePair(secondary.Id, value);
+                Stats.WeaponValues.Secondary = new ValuePair(secondary.Id, value);
             }
-            if (holster != null && GearValue.Holster.Id != holster.Id)
+            if (holster != null && Stats.WeaponValues.Holster.Id != holster.Id)
             {
                 float value = _itemAppraiser.GetItemPrice(holster);
-                GearValue.Holster = new ValuePair(holster.Id, value);
+                Stats.WeaponValues.Holster = new ValuePair(holster.Id, value);
             }
         }
 
@@ -257,7 +297,7 @@ namespace LootingBots.Patch.Components
         * If bots are looting something that is equippable and they have nothing equipped in that slot, they will always equip it.
         * If the bot decides not to equip the item then it will attempt to put in an available container slot
         */
-        public async Task<bool> TryAddItemsToBot(Item[] items)
+        public async Task<bool> TryAddItemsToBot(IEnumerable<Item> items)
         {
             foreach (Item item in items)
             {
@@ -288,13 +328,8 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    if (item.IsArmorMod() && !item.IsUnremovable) {
-                         if (_log.ErrorEnabled)
-                            _log.LogError($"Found some armor mod: {item.Name.Localized()}");
-                    }
-
-                        // Check to see if we need to swap gear
-                        TransactionController.EquipAction action = GetEquipAction(item);
+                    // Check to see if we need to swap gear
+                    TransactionController.EquipAction action = GetEquipAction(item);
                     if (action.Swap != null)
                     {
                         await _transactionController.ThrowAndEquip(action.Swap);
@@ -302,8 +337,10 @@ namespace LootingBots.Patch.Components
                     }
                     else if (action.Move != null)
                     {
-                        if (_log.DebugEnabled)
-                            _log.LogDebug("Moving due to GetEquipAction");
+                        if (_log.WarningEnabled)
+                            _log.LogWarning(
+                                $"Moving {action.Move.ToMove.Name.Localized()} to: {action.Move.Place.Container.ID.Localized()}"
+                            );
 
                         if (await _transactionController.MoveItem(action.Move))
                         {
@@ -517,7 +554,7 @@ namespace LootingBots.Patch.Components
             )
             {
                 // If the tac vest we are looting is higher armor class and we have a chest equipped, make sure to drop the chest and pick up the armored rig
-                if (IsLootingBetterArmor(tacVest, lootItem) && chest != null)
+                if (GetArmorDifference(tacVest, lootItem) > 0 && chest != null)
                 {
                     if (_log.DebugEnabled)
                         _log.LogDebug("Looting armored rig and dropping chest");
@@ -656,22 +693,25 @@ namespace LootingBots.Patch.Components
                     if (place != null)
                     {
                         action.Move = new TransactionController.MoveAction(lootWeapon, place);
-                        GearValue.Holster = new ValuePair(lootWeapon.Id, lootValue);
+                        Stats.WeaponValues.Holster = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
-                else if (holster != null && GearValue.Holster.Value < lootValue)
+                else if (Stats.WeaponValues.Holster.Value < lootValue)
                 {
                     if (_log.DebugEnabled)
                         _log.LogDebug(
-                            $"Trying to swap {holster.Name.Localized()} (₽{GearValue.Holster.Value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
+                            $"Trying to swap {holster.Name.Localized()} (₽{Stats.WeaponValues.Holster.Value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
                         );
 
                     action.Swap = GetSwapAction(holster, lootWeapon);
-                    GearValue.Holster = new ValuePair(lootWeapon.Id, lootValue);
+                    Stats.WeaponValues.Holster = new ValuePair(lootWeapon.Id, lootValue);
                 }
             }
             else
             {
+                bool isBetterThanPrimary = Stats.WeaponValues.Primary.Value < lootValue;
+                bool isBetterThanSecondary = Stats.WeaponValues.Secondary.Value < lootValue;
+
                 // If we have no primary, just equip the weapon to primary
                 if (primary == null)
                 {
@@ -689,12 +729,12 @@ namespace LootingBots.Patch.Components
                                 await TransactionController.SimulatePlayerDelay(1000);
                             }
                         );
-                        GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                        Stats.WeaponValues.Primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
-                else if (GearValue.Primary.Value < lootValue)
+                else if (isBetterThanPrimary)
                 {
-                    // If the loot weapon is worth more than the primary, by nature its also worth more than the secondary. Try to move the primary weapon to the secondary slot and equip the new weapon as the primary
+                    // If the weapon is better than the primary and there is no secondary, move the primary to secondary and equip the new weapon as the primary
                     if (secondary == null)
                     {
                         ItemAddress place = _botInventoryController.FindSlotToPickUp(primary);
@@ -702,7 +742,7 @@ namespace LootingBots.Patch.Components
                         {
                             if (_log.DebugEnabled)
                                 _log.LogDebug(
-                                    $"Moving {primary.Name.Localized()} (₽{GearValue.Primary.Value}) to secondary and equipping {lootWeapon.Name.Localized()} (₽{lootValue})"
+                                    $"Moving {primary.Name.Localized()} (₽{Stats.WeaponValues.Primary.Value}) to secondary and equipping {lootWeapon.Name.Localized()} (₽{lootValue})"
                                 );
 
                             action.Move = new TransactionController.MoveAction(
@@ -717,16 +757,16 @@ namespace LootingBots.Patch.Components
                                 }
                             );
 
-                            GearValue.Secondary = GearValue.Primary;
-                            GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                            Stats.WeaponValues.Secondary = Stats.WeaponValues.Primary;
+                            Stats.WeaponValues.Primary = new ValuePair(lootWeapon.Id, lootValue);
                         }
                     }
-                    // In the case where we have a secondary, throw it, move the primary to secondary, and equip the loot weapon as primary
-                    else
+                    // If the weapon is also better than the secondary, throw the secondary and move the primary to secondary before equipping the new weapon to primary
+                    else if (isBetterThanSecondary)
                     {
                         if (_log.DebugEnabled)
                             _log.LogDebug(
-                                $"Trying to swap {secondary.Name.Localized()} (₽{GearValue.Secondary.Value}) with {primary.Name.Localized()} (₽{GearValue.Primary.Value}) and equip {lootWeapon.Name.Localized()} (₽{lootValue})"
+                                $"Trying to swap {secondary.Name.Localized()} (₽{Stats.WeaponValues.Secondary.Value}) with {primary.Name.Localized()} (₽{Stats.WeaponValues.Primary.Value}) and equip {lootWeapon.Name.Localized()} (₽{lootValue})"
                             );
 
                         action.Swap = GetSwapAction(
@@ -743,8 +783,8 @@ namespace LootingBots.Patch.Components
                                 ChangeToPrimary();
                             }
                         );
-                        GearValue.Secondary = GearValue.Primary;
-                        GearValue.Primary = new ValuePair(lootWeapon.Id, lootValue);
+                        Stats.WeaponValues.Secondary = Stats.WeaponValues.Primary;
+                        Stats.WeaponValues.Primary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
                 // If there is no secondary weapon, equip to secondary
@@ -757,19 +797,19 @@ namespace LootingBots.Patch.Components
                             lootWeapon,
                             _botInventoryController.FindSlotToPickUp(lootWeapon)
                         );
-                        GearValue.Secondary = new ValuePair(lootWeapon.Id, lootValue);
+                        Stats.WeaponValues.Secondary = new ValuePair(lootWeapon.Id, lootValue);
                     }
                 }
                 // If the loot weapon is worth more than the secondary, swap it
-                else if (GearValue.Secondary.Value < lootValue)
+                else if (isBetterThanSecondary)
                 {
                     if (_log.DebugEnabled)
                         _log.LogDebug(
-                            $"Trying to swap {secondary.Name.Localized()} (₽{GearValue.Secondary.Value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
+                            $"Trying to swap {secondary.Name.Localized()} (₽{Stats.WeaponValues.Secondary.Value}) with {lootWeapon.Name.Localized()} (₽{lootValue})"
                         );
 
                     action.Swap = GetSwapAction(secondary, lootWeapon);
-                    GearValue.Secondary = new ValuePair(secondary.Id, lootValue);
+                    Stats.WeaponValues.Secondary = new ValuePair(secondary.Id, lootValue);
                 }
             }
 
@@ -796,6 +836,7 @@ namespace LootingBots.Patch.Components
             }
 
             bool foundBiggerContainer = false;
+
             // If the item is a container, calculate the size and see if its bigger than what is equipped
             if (equipped.IsContainer)
             {
@@ -805,52 +846,35 @@ namespace LootingBots.Patch.Components
                 foundBiggerContainer = equippedSize < itemToLootSize;
             }
 
-            bool foundBetterArmor = IsLootingBetterArmor(equipped, itemToLoot);
-            ArmorComponent lootArmor = itemToLoot.GetItemComponent<ArmorComponent>();
-            ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
+            int armorDifference = GetArmorDifference(equipped, itemToLoot);
 
-            // Equip if we found item with a better armor class.
-            // Equip if we found an item with more slots only if what we have equipped is the same or worse armor class
-            return foundBetterArmor
-                || (
-                    foundBiggerContainer
-                    && (equippedArmor == null || equippedArmor.ArmorClass <= lootArmor?.ArmorClass)
-                );
+            bool foundBetterArmor = armorDifference > 0; // Equip if we found item with a better armor class.
+            bool pickupBiggerContainer = armorDifference == 0 && foundBiggerContainer; // If the item is bigger than what is equipped, only equip it if the armor class is the same
+
+            return foundBetterArmor || pickupBiggerContainer;
+        }
+
+        /** Given a piece of armor, compare it against what is curren */
+        public bool IsBetterArmorThanEquipped(ArmorClass newArmor)
+        {
+            ArmorComponent equippedArmor = EquipmentTypeUtils.IsHelmet(newArmor)
+                ? CurrentHeadArmor
+                : CurrentTorsoArmor;
+            return GetArmorDifference(equippedArmor.Item, newArmor) > 0;
         }
 
         /**
-        * Checks to see if the item we are looting has higher armor value than what is currently equipped. For chests/vests, make sure we compare against the
-        * currentBodyArmorClass and update the value if a higher armor class is found.
+        * Returns an integer representing the difference between the armor classes of the itemToLoot and the currently equippedItem
         */
-        public bool IsLootingBetterArmor(Item equipped, Item itemToLoot)
+        public int GetArmorDifference(Item equippedItem, Item itemToLoot)
         {
-            ArmorComponent lootArmor = itemToLoot.GetItemComponent<ArmorComponent>();
-            HelmetComponent lootHelmet = itemToLoot.GetItemComponent<HelmetComponent>();
-            ArmorComponent equippedArmor = equipped.GetItemComponent<ArmorComponent>();
+            ArmorComponent newArmor = itemToLoot.GetItemComponent<ArmorComponent>();
+            ArmorComponent currentArmor = equippedItem.GetItemComponent<ArmorComponent>();
 
-            bool foundBetterArmor = false;
-            // If we are looting a helmet, check to see if it has a better armor class than what is equipped
-            if (lootArmor != null && lootHelmet != null)
-            {
-                // If the equipped item is not an ArmorComponent then assume the lootArmor item is higher class
-                if (equippedArmor == null)
-                {
-                    return lootArmor != null;
-                }
-                foundBetterArmor = equippedArmor.ArmorClass <= lootArmor.ArmorClass;
-            }
-            else if (lootArmor != null)
-            {
-                // If we are looting chest/rig with armor, check to see if it has a better armor class than what is equipped
-                foundBetterArmor = CurrentBodyArmorClass <= lootArmor.ArmorClass;
+            int currentArmorClass = currentArmor?.ArmorClass ?? 0;
+            int newArmorClass = newArmor?.ArmorClass ?? 0;
 
-                if (foundBetterArmor)
-                {
-                    CurrentBodyArmorClass = lootArmor.ArmorClass;
-                }
-            }
-
-            return foundBetterArmor;
+            return newArmorClass - currentArmorClass;
         }
 
         /** Searches throught the child items of a container and attempts to loot them */
@@ -861,23 +885,30 @@ namespace LootingBots.Patch.Components
                 return false;
             }
 
-            Item[] items = parentItem
-                .GetFirstLevelItems()
-                .ToArray()
-                .Where(
-                    // Filter out the parent item from the list, quest items, and single use keys
-                    nestedItem =>
-                        nestedItem.Id != parentItem.Id
-                        && !nestedItem.QuestItem
-                        && !LootUtils.IsSingleUseKey(nestedItem)
-                )
-                .ToArray();
+            // If the parentItem is an item that has slots such as armor, find any slots that are locked and return the list of items in those slots to use later
+            IEnumerable<Item> lockedItems = parentItem is LootItemClass itemWithSlots
+                ? LootUtils.GetAllLockedItems(itemWithSlots)
+                : null;
 
-            if (items.Length > 0)
+            IEnumerable<Item> items = parentItem
+                .GetFirstLevelItems()
+                .Where(
+                // Filter out the parent item from the list, quest items, and single use keys
+                nestedItem =>
+                {
+                    bool isItemLocked = lockedItems != null && lockedItems.Contains(nestedItem);
+
+                    return nestedItem.Id != parentItem.Id
+                        && !nestedItem.QuestItem
+                        && !isItemLocked
+                        && !LootUtils.IsSingleUseKey(nestedItem);
+                });
+
+            if (items.Count() > 0)
             {
                 if (_log.DebugEnabled)
                     _log.LogDebug(
-                        $"Looting {items.Length} items from {parentItem.Name.Localized()}"
+                        $"Looting {items.Count()} items from {parentItem.Name.Localized()}"
                     );
 
                 await TransactionController.SimulatePlayerDelay(LootingBrain.LootingStartDelay);
@@ -936,74 +967,6 @@ namespace LootingBots.Patch.Components
             return IsUsableMag(lootItem as MagazineClass)
                 || isMoney
                 || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
-        }
-
-        /**
-        *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
-        */
-        public EquipmentSlot[] GetPrioritySlots()
-        {
-            InventoryControllerClass botInventoryController = _botInventoryController;
-            bool hasBackpack =
-                botInventoryController.Inventory.Equipment
-                    .GetSlot(EquipmentSlot.Backpack)
-                    .ContainedItem != null;
-            bool hasTacVest =
-                botInventoryController.Inventory.Equipment
-                    .GetSlot(EquipmentSlot.TacticalVest)
-                    .ContainedItem != null;
-
-            EquipmentSlot[] prioritySlots = new EquipmentSlot[0];
-            EquipmentSlot[] weaponSlots = GetUnlockedSlots(
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Holster,
-                    EquipmentSlot.FirstPrimaryWeapon,
-                    EquipmentSlot.SecondPrimaryWeapon
-                }
-            );
-            EquipmentSlot[] storageSlots = GetUnlockedSlots(
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Backpack,
-                    EquipmentSlot.ArmorVest,
-                    EquipmentSlot.TacticalVest,
-                    EquipmentSlot.Pockets
-                }
-            );
-
-            EquipmentSlot[] otherSlots = GetUnlockedSlots(
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Headwear,
-                    EquipmentSlot.Earpiece,
-                    EquipmentSlot.Dogtag,
-                    EquipmentSlot.Scabbard,
-                    EquipmentSlot.FaceCover
-                }
-            );
-
-            if (hasBackpack || hasTacVest)
-            {
-                if (_log.DebugEnabled)
-                    _log.LogDebug($"Has backpack/rig and is looting weapons first!");
-
-                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
-            }
-            else
-            {
-                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
-            }
-
-            return prioritySlots.Concat(otherSlots).ToArray();
-        }
-
-        /** Given a list of slots, return all slots that are not flagged as Locked */
-        private EquipmentSlot[] GetUnlockedSlots(EquipmentSlot[] desiredSlots)
-        {
-            return desiredSlots
-                .Where(slot => !_botInventoryController.Inventory.Equipment.GetSlot(slot).Locked)
-                .ToArray();
         }
 
         /** Generates a SwapAction to send to the transaction controller*/
