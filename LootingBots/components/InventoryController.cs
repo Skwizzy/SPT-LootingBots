@@ -847,7 +847,7 @@ namespace LootingBots.Patch.Components
             ArmorComponent equippedArmor = EquipmentTypeUtils.IsHelmet(newArmor)
                 ? CurrentHeadArmor
                 : CurrentTorsoArmor;
-            return GetArmorDifference(equippedArmor.Item, newArmor) > 0;
+            return GetArmorDifference(equippedArmor?.Item, newArmor) > 0;
         }
 
         /**
@@ -856,7 +856,7 @@ namespace LootingBots.Patch.Components
         public int GetArmorDifference(Item equippedItem, Item itemToLoot)
         {
             ArmorComponent newArmor = itemToLoot.GetItemComponent<ArmorComponent>();
-            ArmorComponent currentArmor = equippedItem.GetItemComponent<ArmorComponent>();
+            ArmorComponent currentArmor = equippedItem?.GetItemComponent<ArmorComponent>();
 
             int currentArmorClass = currentArmor?.ArmorClass ?? 0;
             int newArmorClass = newArmor?.ArmorClass ?? 0;
