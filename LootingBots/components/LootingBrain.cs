@@ -177,25 +177,17 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                Type corpseType = ActiveCorpse.GetType();
-                FieldInfo corpseInventory = corpseType.BaseType.GetField(
-                    "_inventoryController",
-                    BindingFlags.NonPublic
-                        | BindingFlags.Static
-                        | BindingFlags.Public
-                        | BindingFlags.Instance
-                );
-                InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                    corpseInventory.GetValue(ActiveCorpse);
+                InventoryControllerClass corpseInventoryController =
+                    LootUtils.GetBotInventoryController(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
-                EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
+                IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(
+                    corpseInventoryController
+                );
 
-                Item[] priorityItems = corpseInventoryController.Inventory.Equipment
-                    .GetSlotsByName(prioritySlots)
+                IEnumerable<Item> priorityItems = prioritySlots
                     .Select(slot => slot.ContainedItem)
-                    .Where(item => item != null && !item.IsUnremovable)
-                    .ToArray();
+                    .Where(item => item != null);
 
                 Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
                 yield return new WaitUntil(() => delayTask.IsCompleted);
@@ -238,7 +230,7 @@ namespace LootingBots.Patch.Components
             Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = InventoryController.LootNestedItems(item);
+            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemClass)item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container

@@ -18,6 +18,8 @@ using SortResultStruct = GStruct414<GClass2808>;
 using GridItemClass = GClass2507;
 using ItemAddressExClass = GClass2769;
 using SortErrorClass = GClass3302;
+using System.Reflection;
+using System;
 
 namespace LootingBots.Patch.Util
 {
@@ -28,6 +30,19 @@ namespace LootingBots.Patch.Util
             new string[] { "Interactive", "Loot", "Deadbody" }
         );
         public static int RESERVED_SLOT_COUNT = 2;
+
+        public static InventoryControllerClass GetBotInventoryController(Player targetBot)
+        {
+            Type targetBotType = targetBot.GetType();
+            FieldInfo botInventory = targetBotType.BaseType.GetField(
+                "_inventoryController",
+                BindingFlags.NonPublic
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.Instance
+            );
+            return (InventoryControllerClass)botInventory.GetValue(targetBot);
+        }
 
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
@@ -264,6 +279,83 @@ namespace LootingBots.Patch.Util
             }
 
             return null;
+        }
+
+        /**
+       *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
+       */
+        public static IEnumerable<Slot> GetPrioritySlots(InventoryControllerClass targetInventory)
+        {
+            bool hasBackpack =
+                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem
+                != null;
+            bool hasTacVest =
+                targetInventory.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem != null;
+
+            IEnumerable<EquipmentSlot> prioritySlots = new EquipmentSlot[0];
+            IEnumerable<EquipmentSlot> weaponSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Holster,
+                    EquipmentSlot.FirstPrimaryWeapon,
+                    EquipmentSlot.SecondPrimaryWeapon
+                }
+            );
+            IEnumerable<EquipmentSlot> storageSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Backpack,
+                    EquipmentSlot.ArmorVest,
+                    EquipmentSlot.TacticalVest,
+                    EquipmentSlot.Pockets
+                }
+            );
+
+            IEnumerable<EquipmentSlot> otherSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Headwear,
+                    EquipmentSlot.Earpiece,
+                    EquipmentSlot.Dogtag,
+                    EquipmentSlot.Scabbard,
+                    EquipmentSlot.FaceCover
+                }
+            );
+
+            if (hasBackpack || hasTacVest)
+            {
+                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
+            }
+            else
+            {
+                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+            }
+
+            prioritySlots = prioritySlots.Concat(otherSlots).ToArray();
+
+            return targetInventory.Inventory.Equipment.GetSlotsByName(prioritySlots);
+        }
+
+        /** Given a list of slots, return all slots that are not flagged as Locked */
+        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(
+            InventoryControllerClass targetInventory,
+            EquipmentSlot[] desiredSlots
+        )
+        {
+            return desiredSlots.Where(
+                slot => targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false
+            );
+        }
+
+        /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
+        public static IEnumerable<Item> GetAllLockedItems(LootItemClass itemWithSlots)
+        {
+            return itemWithSlots.Slots?.Where(slot => slot.Locked).SelectMany(slot => slot.Items);
         }
 
         // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
