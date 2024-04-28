@@ -318,7 +318,7 @@ namespace LootingBots.Patch.Components
 
                     if (_log.InfoEnabled)
                         _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
-
+                    
                     // Ignore magazines that a bot cannot actively use
                     if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
@@ -356,34 +356,6 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    // If the item we are trying to pickup is a weapon, we need to perform the "pickup" action before trying to strip the weapon of its mods. This is to
-                    // prevent stripping the mods from a weapon and then picking up the weapon afterwards.
-                    if (item is Weapon weapon)
-                    {
-                        if (
-                            AllowedToPickup(weapon)
-                            && await _transactionController.TryPickupItem(weapon)
-                        )
-                        {
-                            Stats.AddNetValue(CurrentItemPrice);
-                            UpdateGridStats();
-                            continue;
-                        }
-
-                        if (LootingBots.CanStripAttachments.Value)
-                        {
-                            // Strip the weapon of its mods if we cannot pickup the weapon
-                            bool success = await TryAddItemsToBot(
-                                weapon.Mods.Where(mod => !mod.IsUnremovable).ToArray()
-                            );
-
-                            if (!success)
-                            {
-                                UpdateKnownItems();
-                                return success;
-                            }
-                        }
-                    }
 
                     // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
                     if (item is SearchableItemClass)
@@ -403,6 +375,21 @@ namespace LootingBots.Patch.Components
                         Stats.AddNetValue(CurrentItemPrice);
                         UpdateGridStats();
                         continue;
+                    }
+                    else if (item is Weapon weapon && LootingBots.CanStripAttachments.Value)
+                    {
+                        // Strip the weapon of its mods if we cannot pickup the weapon
+                        bool success = await TryAddItemsToBot(
+                            weapon.Slots
+                                .Where(slot => !slot.Required)
+                                .SelectMany(slot => slot.Items.Where(modItem => modItem is Mod mod && mod.RaidModdable))
+                        );
+
+                        if (!success)
+                        {
+                            UpdateKnownItems();
+                            return success;
+                        }
                     }
                 }
                 else if (_log.DebugEnabled)
@@ -918,7 +905,7 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogDebug($"No nested items found in {parentItem.Name}");
             }
-
+            
             return true;
         }
 
