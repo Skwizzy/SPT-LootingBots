@@ -22,7 +22,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.3.1";
+        private const string MOD_VERSION = "1.3.2";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -43,6 +43,7 @@ namespace LootingBots
 
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
+        public static ConfigEntry<int> FilterLogsOnBot;
         public static Log LootLog;
 
         // Loot Settings
@@ -171,6 +172,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
                 )
             );
+            FilterLogsOnBot = Config.Bind(
+                "Loot Finder",
+                "Debug: Filter logs on bot",
+                0,
+                new ConfigDescription(
+                    "Filters new log entries only showing logs for the number of the bot specified. A value of 0 denotes no filter",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                )
+            );
             DebugLootNavigation = Config.Bind(
                 "Loot Finder",
                 "Debug: Show navigation points",
@@ -178,7 +189,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
-                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                    new ConfigurationManagerAttributes { Order = -2, IsAdvanced = true }
                 )
             );
 

@@ -55,8 +55,10 @@ namespace LootingBots.Patch.Util
             try
             {
                 // Check to make sure the BotOwner we are cleaning up has a valid name
-                if (botOwner?.name == null) {
-                    if (LootingBots.LootLog.ErrorEnabled) {
+                if (botOwner == null || botOwner.name == null)
+                {
+                    if (LootingBots.LootLog.ErrorEnabled)
+                    {
                         LootingBots.LootLog.LogError("Cleanup issued on a bot with no name?");
                     }
                     return;
@@ -65,15 +67,18 @@ namespace LootingBots.Patch.Util
                 // Look through the entries in the disctionary and remove any that match the specified bot owner
                 foreach (
                     var item in ActiveLoot
-                        .Where(keyValue => { 
+                        .Where(keyValue =>
+                        {
                             // Check to make sure the BotOwner saved in the dictionary has a valid name before comparing
-                            if (keyValue.Value?.name == null) { 
-                                if (LootingBots.LootLog.ErrorEnabled) {
+                            if (keyValue.Value == null || keyValue.Value.name == null)
+                            {
+                                if (LootingBots.LootLog.ErrorEnabled)
+                                {
                                     LootingBots.LootLog.LogError("Bot in loot cache has no name?");
                                 }
                                 return false;
-                            }  
-                            
+                            }
+
                             return keyValue.Value.name == botOwner.name;
                         })
                         .ToList()

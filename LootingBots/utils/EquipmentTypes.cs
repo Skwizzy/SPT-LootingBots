@@ -3,6 +3,7 @@ using System;
 using EFT.InventoryLogic;
 
 using FaceCoveringClass = GClass2635;
+using ArmorPlateClass = GClass2633;
 using HeadArmorClass = GClass2636;
 using BodyArmorClass = GClass2637;
 using BackpackItemClass = GClass2684;
@@ -79,11 +80,14 @@ namespace LootingBots.Patch.Util
                 return allowedGear.HasBackpack();
             }
 
+            if (IsArmoredRig(item))
+            {
+                return allowedGear.HasArmoredRig();
+            }
+
             if (IsTacticalRig(item))
             {
-                return ((TacticalRigItemClass)item).IsArmorMod()
-                    ? allowedGear.HasArmoredRig()
-                    : allowedGear.HasTacticalRig();
+                return allowedGear.HasTacticalRig();
             }
 
             if (item is KnifeClass) { }
@@ -106,6 +110,11 @@ namespace LootingBots.Patch.Util
             return item is TacticalRigItemClass;
         }
 
+        public static bool IsArmoredRig(Item item)
+        {
+            return item is TacticalRigItemClass && item.IsArmorMod();
+        }
+
         public static bool IsBackpack(Item item)
         {
             return item is BackpackItemClass;
@@ -124,6 +133,14 @@ namespace LootingBots.Patch.Util
         public static bool IsFaceCovering(Item item)
         {
             return item is FaceCoveringClass;
+        }
+
+        public static bool IsArmorPlate(Item item, out ArmorPlateClass plate)
+        {
+            bool isArmorPlate = item is ArmorPlateClass;
+            plate = isArmorPlate ? (ArmorPlateClass)item : null;
+
+            return isArmorPlate;
         }
     }
 }

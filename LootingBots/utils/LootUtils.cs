@@ -18,6 +18,8 @@ using SortResultStruct = GStruct414<GClass2808>;
 using GridItemClass = GClass2507;
 using ItemAddressExClass = GClass2769;
 using SortErrorClass = GClass3302;
+using System.Reflection;
+using System;
 
 namespace LootingBots.Patch.Util
 {
@@ -28,6 +30,19 @@ namespace LootingBots.Patch.Util
             new string[] { "Interactive", "Loot", "Deadbody" }
         );
         public static int RESERVED_SLOT_COUNT = 2;
+
+        public static InventoryControllerClass GetBotInventoryController(Player targetBot)
+        {
+            Type targetBotType = targetBot.GetType();
+            FieldInfo botInventory = targetBotType.BaseType.GetField(
+                "_inventoryController",
+                BindingFlags.NonPublic
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.Instance
+            );
+            return (InventoryControllerClass)botInventory.GetValue(targetBot);
+        }
 
         /** Calculate the size of a container */
         public static int GetContainerSize(SearchableItemClass container)
@@ -54,7 +69,7 @@ namespace LootingBots.Patch.Util
         public static void InteractContainer(LootableContainer container, EInteractionType action)
         {
             InteractionResult result = new InteractionResult(action);
-            container.Interact(result);
+            container?.Interact(result);
         }
 
         /**
@@ -212,6 +227,39 @@ namespace LootingBots.Patch.Util
             return dimensions.X * dimensions.Y;
         }
 
+        /** Given an item that is stackable and can be merged, search through the inventory and find any matches of that item that are not in a secure container. */
+        public static Item FindItemToMerge(this InventoryControllerClass controller, Item item)
+        {
+            // Return null if item cannot be stacked
+            if (item.StackMaxSize <= 1)
+            {
+                return null;
+            }
+
+            // Use the item's template id to search for the same item in the inventory
+            var mergeTarget = controller.Inventory
+                .GetAllItemByTemplate(item.TemplateId)
+                .FirstOrDefault(
+                    (foundItem) =>
+                    {
+                        // We dont want bots to stack loot in their secure containers
+                        bool isSecureContainer = foundItem
+                            .GetRootItem()
+                            .Parent.Container.ID.ToLower()
+                            .Equals("securedcontainer");
+
+                        // In order for an item to be considered a valid merge target, the sum of the 2 stacks being merged must not exceed the maximum stack size
+                        return !isSecureContainer
+                            && (
+                                item.StackObjectsCount + foundItem.StackObjectsCount
+                                <= foundItem.StackMaxSize
+                            );
+                    }
+                );
+
+            return mergeTarget;
+        }
+
         // Custom extension for EFT InventoryControllerClass.FindGridToPickUp that uses a custom method for choosing the grid slot to place a loot item
         public static ItemAddressExClass FindGridToPickUp(
             this InventoryControllerClass controller,
@@ -231,6 +279,83 @@ namespace LootingBots.Patch.Util
             }
 
             return null;
+        }
+
+        /**
+       *   Returns the list of slots to loot from a corpse in priority order. When a bot already has a backpack/rig, they will attempt to loot the weapons off the bot first. Otherwise they will loot the equipement first and loot the weapons afterwards.
+       */
+        public static IEnumerable<Slot> GetPrioritySlots(InventoryControllerClass targetInventory)
+        {
+            bool hasBackpack =
+                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem
+                != null;
+            bool hasTacVest =
+                targetInventory.Inventory.Equipment
+                    .GetSlot(EquipmentSlot.TacticalVest)
+                    .ContainedItem != null;
+
+            IEnumerable<EquipmentSlot> prioritySlots = new EquipmentSlot[0];
+            IEnumerable<EquipmentSlot> weaponSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Holster,
+                    EquipmentSlot.FirstPrimaryWeapon,
+                    EquipmentSlot.SecondPrimaryWeapon
+                }
+            );
+            IEnumerable<EquipmentSlot> storageSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Backpack,
+                    EquipmentSlot.ArmorVest,
+                    EquipmentSlot.TacticalVest,
+                    EquipmentSlot.Pockets
+                }
+            );
+
+            IEnumerable<EquipmentSlot> otherSlots = GetUnlockedEquipmentSlots(
+                targetInventory,
+                new EquipmentSlot[]
+                {
+                    EquipmentSlot.Headwear,
+                    EquipmentSlot.Earpiece,
+                    EquipmentSlot.Dogtag,
+                    EquipmentSlot.Scabbard,
+                    EquipmentSlot.FaceCover
+                }
+            );
+
+            if (hasBackpack || hasTacVest)
+            {
+                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
+            }
+            else
+            {
+                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+            }
+
+            prioritySlots = prioritySlots.Concat(otherSlots).ToArray();
+
+            return targetInventory.Inventory.Equipment.GetSlotsByName(prioritySlots);
+        }
+
+        /** Given a list of slots, return all slots that are not flagged as Locked */
+        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(
+            InventoryControllerClass targetInventory,
+            EquipmentSlot[] desiredSlots
+        )
+        {
+            return desiredSlots.Where(
+                slot => targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false
+            );
+        }
+
+        /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
+        public static IEnumerable<Item> GetAllLockedItems(LootItemClass itemWithSlots)
+        {
+            return itemWithSlots.Slots?.Where(slot => slot.Locked).SelectMany(slot => slot.Items);
         }
 
         // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot

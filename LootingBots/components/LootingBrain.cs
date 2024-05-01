@@ -44,7 +44,7 @@ namespace LootingBots.Patch.Components
         public LootItem ActiveItem;
 
         // Current corpse that the bot will try to loot
-        public BotOwner ActiveCorpse;
+        public Player ActiveCorpse;
 
         // Final destination of the bot when moving to loot something
         public Vector3 Destination = Vector3.zero;
@@ -166,7 +166,7 @@ namespace LootingBots.Patch.Components
         */
         public IEnumerator LootCorpse()
         {
-            if (ActiveCorpse?.GetPlayer)
+            if (ActiveCorpse != null)
             {
                 var watch = new System.Diagnostics.Stopwatch();
                 watch.Start();
@@ -177,26 +177,17 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                Player corpsePlayer = ActiveCorpse.GetPlayer;
-                Type corpseType = corpsePlayer.GetType();
-                FieldInfo corpseInventory = corpseType.BaseType.GetField(
-                    "_inventoryController",
-                    BindingFlags.NonPublic
-                        | BindingFlags.Static
-                        | BindingFlags.Public
-                        | BindingFlags.Instance
-                );
-                InventoryControllerClass corpseInventoryController = (InventoryControllerClass)
-                    corpseInventory.GetValue(corpsePlayer);
+                InventoryControllerClass corpseInventoryController =
+                    LootUtils.GetBotInventoryController(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
-                EquipmentSlot[] prioritySlots = InventoryController.GetPrioritySlots();
+                IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(
+                    corpseInventoryController
+                );
 
-                Item[] priorityItems = corpseInventoryController.Inventory.Equipment
-                    .GetSlotsByName(prioritySlots)
+                IEnumerable<Item> priorityItems = prioritySlots
                     .Select(slot => slot.ContainedItem)
-                    .Where(item => item != null && !item.IsUnremovable)
-                    .ToArray();
+                    .Where(item => item != null);
 
                 Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
                 yield return new WaitUntil(() => delayTask.IsCompleted);
@@ -233,25 +224,17 @@ namespace LootingBots.Patch.Components
             if (_log.DebugEnabled)
                 _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
-            bool didOpen = false;
-            // If a container was closed, open it before looting
-            if (ActiveContainer?.DoorState == EDoorState.Shut)
-            {
-                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
-                didOpen = true;
-            }
+            // Open the container
+            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
 
             Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = InventoryController.LootNestedItems(item);
+            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemClass)item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            // Close the container after looting if a container was open, and the bot didnt open it
-            if (ActiveContainer?.DoorState == EDoorState.Open && !didOpen)
-            {
-                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
-            }
+            // Close the container
+            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
 
             InventoryController.UpdateActiveWeapon();
 
