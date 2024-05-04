@@ -18,7 +18,7 @@ namespace LootingBots
         {
             if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (!lootingBrain.HasFreeSpace)
                 {
@@ -42,7 +42,7 @@ namespace LootingBots
         {
             if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug($"Preventing a bot from looting for the next {duration} seconds");
@@ -62,7 +62,7 @@ namespace LootingBots
         {
             if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug(
@@ -81,7 +81,7 @@ namespace LootingBots
         {
             if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug(
@@ -124,6 +124,11 @@ namespace LootingBots
         {
             lootFinder = bot.GetPlayer.gameObject.GetComponent<LootFinder>();
             return lootFinder != null;
+        }
+
+        private static BotLog CreateInteropLog(BotOwner bot)
+        {
+            return new BotLog(LootingBots.InteropLog, bot);
         }
     }
 }

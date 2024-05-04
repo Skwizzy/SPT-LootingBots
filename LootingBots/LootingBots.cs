@@ -43,8 +43,11 @@ namespace LootingBots
 
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
+        public static ConfigEntry<LogLevel> InteropLogLevels;
+
         public static ConfigEntry<int> FilterLogsOnBot;
         public static Log LootLog;
+        public static Log InteropLog;
 
         // Loot Settings
         public static ConfigEntry<bool> UseMarketPrices;
@@ -66,6 +69,10 @@ namespace LootingBots
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
         public static Log ItemAppraiserLog;
         public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
+
+        // Performance Settings
+        public static ConfigEntry<int> MaxActiveLootingBots;
+        public static ConfigEntry<int> LimitDistnaceFromPlayer;
 
         public void LootFinderSettings()
         {
@@ -172,6 +179,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
                 )
             );
+            InteropLogLevels = Config.Bind(
+                "Loot Finder",
+                "Debug: Interop Log Levels",
+                LogLevel.Error,
+                new ConfigDescription(
+                    "Enable different levels of log messages specific to the mod interop methods",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                )
+            );
             FilterLogsOnBot = Config.Bind(
                 "Loot Finder",
                 "Debug: Filter logs on bot",
@@ -179,7 +196,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Filters new log entries only showing logs for the number of the bot specified. A value of 0 denotes no filter",
                     null,
-                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                    new ConfigurationManagerAttributes { Order = -2, IsAdvanced = true }
                 )
             );
             DebugLootNavigation = Config.Bind(
@@ -189,7 +206,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
-                    new ConfigurationManagerAttributes { Order = -2, IsAdvanced = true }
+                    new ConfigurationManagerAttributes { Order = -3, IsAdvanced = true }
                 )
             );
 
@@ -351,7 +368,7 @@ namespace LootingBots
 
             ItemAppraiserLogLevels = Config.Bind(
                 "Loot Settings",
-                "Debug: Log Levels",
+                "Debug: Item Appraiser Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
                     "Enables logs for the item apprasier that calcualtes the weapon values",
@@ -361,12 +378,38 @@ namespace LootingBots
             );
         }
 
+        public void PerformanceSettings()
+        {
+            MaxActiveLootingBots = Config.Bind(
+                "Performance",
+                "Maximum looting bots",
+                20,
+                new ConfigDescription(
+                    "Limits the amount of bots that are able to simultaneously run looting logic",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 11 }
+                )
+            );
+            // LimitDistnaceFromPlayer = Config.Bind(
+            //     "Performance",
+            //     "Limit looting by distance",
+            //     0,
+            //     new ConfigDescription(
+            //         "Any bot farther than the specified distance in meters will not run any looting logic",
+            //         null,
+            //         new ConfigurationManagerAttributes { Order = 10 }
+            //     )
+            // );
+        }
+
         public void Awake()
         {
             LootFinderSettings();
             LootSettings();
+            PerformanceSettings();
 
             LootLog = new Log(Logger, LootingLogLevels);
+            InteropLog = new Log(Logger, InteropLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
             new SettingsAndCachePatch().Enable();
