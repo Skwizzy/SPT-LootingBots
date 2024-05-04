@@ -50,6 +50,7 @@ namespace LootingBots
         public static Log InteropLog;
 
         // Loot Settings
+        public static ConfigEntry<bool> BotsAlwaysCloseContainers;
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<int> TransactionDelay;
         public static ConfigEntry<bool> UseExamineTime;
@@ -255,6 +256,16 @@ namespace LootingBots
 
         public void LootSettings()
         {
+            BotsAlwaysCloseContainers = Config.Bind(
+                "Loot Settings",
+                "Bots always close containers",
+                true,
+                new ConfigDescription(
+                    "When enabled, bots will always try to close a container after they have finished looting. If the bot is inturrupted while looting, the container may remain open.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 12 }
+                )
+            );
             UseMarketPrices = Config.Bind(
                 "Loot Settings",
                 "Use flea market prices",
