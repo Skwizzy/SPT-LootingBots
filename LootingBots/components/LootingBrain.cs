@@ -150,9 +150,10 @@ namespace LootingBots.Patch.Components
                 }
                 else
                 {
-                    _log.LogError(
-                        $"Looting disabled! Distance to player: {Math.Sqrt(_distanceToPlayer)}"
-                    );
+                    if (_log.WarningEnabled)
+                        _log.LogWarning(
+                            $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                        );
                     _isDisabledForPerformance = true;
                 }
             }
@@ -197,6 +198,11 @@ namespace LootingBots.Patch.Components
                         {
                             ActiveBotCache.Remove(BotOwner);
                             _isDisabledForPerformance = true;
+
+                            if (_log.WarningEnabled)
+                                _log.LogWarning(
+                                    $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                                );
                         }
 
                         // The performance check should occur every 3 seconds at the minimum.

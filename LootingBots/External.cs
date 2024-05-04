@@ -1,13 +1,8 @@
-﻿using System;
-
-using EFT;
-using EFT.Interactive;
+﻿using EFT;
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
-
-using UnityEngine;
 
 namespace LootingBots
 {
