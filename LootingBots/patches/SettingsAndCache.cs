@@ -39,9 +39,10 @@ namespace LootingBots.Patch
         private static void PatchPrefix()
         {
             if (LootingBots.LootLog.DebugEnabled)
-                LootingBots.LootLog.LogDebug("Resetting Loot Cache");
+                LootingBots.LootLog.LogDebug("Resetting Caches");
 
             ActiveLootCache.Reset();
+            ActiveBotCache.Reset();
         }
     }
 
@@ -116,6 +117,7 @@ namespace LootingBots.Patch
                 LootingBots.LootLog.LogDebug("Cleanup on ActiveLootCache");
     
             ActiveLootCache.Cleanup(__instance);
+            ActiveBotCache.Remove(__instance);
         }
     }
 

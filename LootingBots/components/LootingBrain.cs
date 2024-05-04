@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 using EFT;
@@ -64,9 +63,12 @@ namespace LootingBots.Patch.Components
         {
             get
             {
-                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
-                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this);
+                return !_isDisabledForPerformance
+                    && (
+                        LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
+                        || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
+                        || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this)
+                    );
             }
         }
 
@@ -97,6 +99,7 @@ namespace LootingBots.Patch.Components
         // Delay simulating the time it takes for the UI to open and start searching a container
         public const int LootingStartDelay = 2500;
 
+        private bool _isDisabledForPerformance = false;
         private BotLog _log;
 
         public void Init(BotOwner botOwner)
@@ -108,6 +111,19 @@ namespace LootingBots.Patch.Components
             NonNavigableLootIds = new List<string> { };
             IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
             ActiveLootCache.Init();
+
+            if (ActiveBotCache.IsActive)
+            {
+                // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
+                if (ActiveBotCache.IsAbleToCache)
+                {
+                    ActiveBotCache.Add(botOwner);
+                }
+                else
+                {
+                    _isDisabledForPerformance = true;
+                }
+            }
         }
 
         /*
@@ -117,22 +133,45 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                if (IsBrainEnabled && BotOwner.BotState == EBotState.Active)
+                if (BotOwner.BotState == EBotState.Active)
                 {
-                    if (InventoryController.ShouldSort)
+                    if (ActiveBotCache.IsActive)
                     {
-                        // Sort items in tacVest for better space management
-                        await InventoryController.SortTacVest();
+                        // If the bot is disabled for performance and there is space in the ActiveBotCache, add the bot to the cache and enable the bot for looting
+                        if (_isDisabledForPerformance && ActiveBotCache.IsAbleToCache)
+                        {
+                            ActiveBotCache.Add(BotOwner);
+                            _isDisabledForPerformance = false;
+                        }
+                        // If the bot is not actively looting something, is has looting enabled, and the cache is over capacity, remove the bot from the cache and disable looting
+                        else if (
+                            !HasActiveLootable
+                            && ActiveBotCache.Has(BotOwner)
+                            && ActiveBotCache.IsOverCapacity
+                        )
+                        {
+                            ActiveBotCache.Remove(BotOwner);
+                            _isDisabledForPerformance = true;
+                        }
                     }
 
-                    // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item
-                    if (ActiveItem && ActiveItem?.ItemOwner?.RootItem == null)
+                    if (IsBrainEnabled)
                     {
-                        CleanupItem(false);
-                    }
+                        if (InventoryController.ShouldSort)
+                        {
+                            // Sort items in tacVest for better space management
+                            await InventoryController.SortTacVest();
+                        }
 
-                    // Open any nearby door
-                    BotOwner.DoorOpener.Update();
+                        // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item
+                        if (ActiveItem && ActiveItem?.ItemOwner?.RootItem == null)
+                        {
+                            CleanupItem(false);
+                        }
+
+                        // Open any nearby door
+                        BotOwner.DoorOpener.Update();
+                    }
                 }
             }
             catch (Exception e)
