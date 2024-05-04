@@ -60,7 +60,8 @@ namespace LootingBots.Patch.Components
         public bool IsPlayerScav;
 
         public bool LockUntilNextScan = false;
-
+        
+        // Allows external methods to force the looting brain for a bot to be enabled regardless of performance settings
         public bool ForceBrainEnabled = false;
 
         public bool IsBrainEnabled

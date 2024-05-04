@@ -22,7 +22,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.3.2";
+        private const string MOD_VERSION = "1.3.3";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
