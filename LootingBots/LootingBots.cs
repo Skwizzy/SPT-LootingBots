@@ -403,7 +403,7 @@ namespace LootingBots
             );
             LimitDistnaceFromPlayer = Config.Bind(
                 "Performance",
-                "Limit looting by distance",
+                "Limit looting by distance to player",
                 0,
                 new ConfigDescription(
                     "Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit",

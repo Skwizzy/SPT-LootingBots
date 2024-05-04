@@ -57,6 +57,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Loot scan interval` - The amount of seconds the bot will wait until triggering another loot scan
 
 **Loot Settings**
+- `Bots always close containers` - When enabled, bots will always try to close a container after they have finished looting. If the bot is inturrupted while looting, the container may remain open.
 - `Use flea market prices` - Bots will query more accurate ragfair prices to do item value checks. Will make a query to get ragfair prices when the client is first started. May affect initial client start times.
 - `Calculate value from attachments` - Calculate weapon value by looking up each attachement. More accurate than just looking at the base weapon template but a slightly more expensive check.
 - `Allow weapon attachment stripping` - Allows bots to take the attachments off of a weapon if they are not able to pick the weapon up into their inventory
@@ -69,6 +70,10 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Scav: Allowed gear to equip` - The equipment a non-PMC bot is able to equip during raid
 - `Scav: Allowed gear in bags` - The equipment a non-PMC bot is able to place in their backpack/rig
 - `Log Levels` - Enable different levels of log messages to show in the logs
+
+**Performance Settings**
+- `Maximum looting bots` - Limits the amount of bots that are able to simultaneously run looting logic. A value of 0 represents no limit
+- `Limit looting by distance to player` - Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit
 
 ## Server Mod Settings (NoDiscardLimit/config/config.json)
 - `pmcSpawnWithLoot` - When set to `true`, PMCs will spawn with loot in their bags/pockets (default SPT behavior)
