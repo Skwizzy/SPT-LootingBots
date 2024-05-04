@@ -9,7 +9,7 @@ namespace LootingBots.Patch.Util
     {
         public static List<BotOwner> ActiveBots = new List<BotOwner>();
 
-        public static bool IsActive
+        public static bool IsCacheActive
         {
             get { return LootingBots.MaxActiveLootingBots.Value > 0; }
         }

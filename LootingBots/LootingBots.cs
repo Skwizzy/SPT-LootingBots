@@ -385,21 +385,21 @@ namespace LootingBots
                 "Maximum looting bots",
                 20,
                 new ConfigDescription(
-                    "Limits the amount of bots that are able to simultaneously run looting logic",
+                    "Limits the amount of bots that are able to simultaneously run looting logic. A value of 0 represents no limit",
                     null,
                     new ConfigurationManagerAttributes { Order = 11 }
                 )
             );
-            // LimitDistnaceFromPlayer = Config.Bind(
-            //     "Performance",
-            //     "Limit looting by distance",
-            //     0,
-            //     new ConfigDescription(
-            //         "Any bot farther than the specified distance in meters will not run any looting logic",
-            //         null,
-            //         new ConfigurationManagerAttributes { Order = 10 }
-            //     )
-            // );
+            LimitDistnaceFromPlayer = Config.Bind(
+                "Performance",
+                "Limit looting by distance",
+                0,
+                new ConfigDescription(
+                    "Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 10 }
+                )
+            );
         }
 
         public void Awake()

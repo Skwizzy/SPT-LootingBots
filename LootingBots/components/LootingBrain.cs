@@ -99,7 +99,28 @@ namespace LootingBots.Patch.Components
         // Delay simulating the time it takes for the UI to open and start searching a container
         public const int LootingStartDelay = 2500;
 
+        // Interval for the performance check to disable the looting brain
+        const float PeformanceTimerInterval = 3f;
+
+        // Max distance from the player a bot can be before their looting brain is disabled
+        private double _distanceLimit
+        {
+            get { return Math.Pow(LootingBots.LimitDistnaceFromPlayer.Value, 2); }
+        }
+
+        // Current distance to the player
+        private float _distanceToPlayer
+        {
+            get { return (BotOwner.Position - ActiveLootCache.MainPlayer.Position).sqrMagnitude; }
+        }
+
+        // Bot will be considered close enough to the player if the distanceLimit is 0, otherwise the distance from the player must be <= the limit
+        private bool _isCloseToPlayer
+        {
+            get { return _distanceLimit == 0 || _distanceToPlayer <= _distanceLimit; }
+        }
         private bool _isDisabledForPerformance = false;
+        private float _performanceTimer = 0f;
         private BotLog _log;
 
         public void Init(BotOwner botOwner)
@@ -110,17 +131,21 @@ namespace LootingBots.Patch.Components
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
             IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
+            _performanceTimer = Time.time + PeformanceTimerInterval;
             ActiveLootCache.Init();
 
-            if (ActiveBotCache.IsActive)
+            if (ActiveBotCache.IsCacheActive)
             {
                 // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
-                if (ActiveBotCache.IsAbleToCache)
+                if (ActiveBotCache.IsAbleToCache && _isCloseToPlayer)
                 {
                     ActiveBotCache.Add(botOwner);
                 }
                 else
                 {
+                    _log.LogError(
+                        $"Looting disabled! Distance to player: {Math.Sqrt(_distanceToPlayer)}"
+                    );
                     _isDisabledForPerformance = true;
                 }
             }
@@ -135,24 +160,38 @@ namespace LootingBots.Patch.Components
             {
                 if (BotOwner.BotState == EBotState.Active)
                 {
-                    if (ActiveBotCache.IsActive)
+                    if (ActiveBotCache.IsCacheActive && _performanceTimer < Time.time)
                     {
-                        // If the bot is disabled for performance and there is space in the ActiveBotCache, add the bot to the cache and enable the bot for looting
-                        if (_isDisabledForPerformance && ActiveBotCache.IsAbleToCache)
+                        // For a disabled bot to be allowed to loot they must meet the following criteria:
+                        // 1. ActiveBotCache is not at capacity
+                        // 2. Bot is close enough to the player
+                        if (
+                            _isDisabledForPerformance
+                            && ActiveBotCache.IsAbleToCache
+                            && _isCloseToPlayer
+                        )
                         {
                             ActiveBotCache.Add(BotOwner);
                             _isDisabledForPerformance = false;
                         }
-                        // If the bot is not actively looting something, is has looting enabled, and the cache is over capacity, remove the bot from the cache and disable looting
+                        // For an enabled bot to become disabled they must meet the following criteria:
+                        // 1. Bot is not currently trying to loot something
+                        // 2. BotCache is over capacity or the bot is no longer close enough to the player
                         else if (
                             !HasActiveLootable
                             && ActiveBotCache.Has(BotOwner)
-                            && ActiveBotCache.IsOverCapacity
+                            && (ActiveBotCache.IsOverCapacity || !_isCloseToPlayer)
                         )
                         {
                             ActiveBotCache.Remove(BotOwner);
                             _isDisabledForPerformance = true;
                         }
+
+                        // The performance check should occur every 3 seconds at the minimum.
+                        // If the loot scan interval is faster, we should do the performance check at the loot scan interval
+                        _performanceTimer =
+                            Time.time
+                            + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
                     }
 
                     if (IsBrainEnabled)
