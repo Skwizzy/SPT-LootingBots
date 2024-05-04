@@ -72,6 +72,17 @@ namespace LootingBots.Patch.Components
             LockUntilNextScan = false;
         }
 
+        public void ForceScan() {
+            ScanTimer = Time.time - 1f;
+            LockUntilNextScan = true;
+            _lootingBrain.ForceBrainEnabled = true;
+        }
+
+        public void OverrideNextScanTime(float scanTime) {
+            ScanTimer = Time.time + scanTime;
+            LockUntilNextScan = true;
+        }
+
         public IEnumerator FindLootable()
         {
             IsScanRunning = true;

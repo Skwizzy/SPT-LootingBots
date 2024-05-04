@@ -30,8 +30,7 @@ namespace LootingBots
                     log.LogDebug("Forcing a loot scan");
                 }
 
-                lootFinder.ScanTimer = Time.time - 1f;
-                lootFinder.LockUntilNextScan = true;
+                lootFinder.ForceScan();
                 return true;
             }
             return false;
@@ -47,9 +46,13 @@ namespace LootingBots
                 if (log.DebugEnabled)
                     log.LogDebug($"Preventing a bot from looting for the next {duration} seconds");
 
-                lootFinder.ScanTimer = Time.time + duration;
-                lootFinder.LockUntilNextScan = true;
-                lootingBrain.DisableTransactions();
+                if (lootingBrain.IsBrainEnabled)
+                {
+                    lootFinder.OverrideNextScanTime(duration);
+
+                    lootingBrain.DisableTransactions();
+                }
+
                 return true;
             }
             return false;

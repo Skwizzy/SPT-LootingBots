@@ -59,15 +59,22 @@ namespace LootingBots.Patch.Components
 
         public bool IsPlayerScav;
 
+        public bool LockUntilNextScan = false;
+
+        public bool ForceBrainEnabled = false;
+
         public bool IsBrainEnabled
         {
             get
             {
-                return !_isDisabledForPerformance
-                    && (
-                        LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
-                        || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
-                        || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this)
+                return ForceBrainEnabled
+                    || (
+                        !_isDisabledForPerformance
+                        && (
+                            LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
+                            || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
+                            || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this)
+                        )
                     );
             }
         }
@@ -137,7 +144,7 @@ namespace LootingBots.Patch.Components
             if (ActiveBotCache.IsCacheActive)
             {
                 // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
-                if (ActiveBotCache.IsAbleToCache && _isCloseToPlayer)
+                if (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer))
                 {
                     ActiveBotCache.Add(botOwner);
                 }
@@ -163,12 +170,16 @@ namespace LootingBots.Patch.Components
                     if (ActiveBotCache.IsCacheActive && _performanceTimer < Time.time)
                     {
                         // For a disabled bot to be allowed to loot they must meet the following criteria:
+                        // 1. The bot has been manually flagged for looting
+                        //              OR
                         // 1. ActiveBotCache is not at capacity
                         // 2. Bot is close enough to the player
                         if (
                             _isDisabledForPerformance
-                            && ActiveBotCache.IsAbleToCache
-                            && _isCloseToPlayer
+                            && (
+                                ForceBrainEnabled
+                                || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer)
+                            )
                         )
                         {
                             ActiveBotCache.Add(BotOwner);
@@ -179,6 +190,7 @@ namespace LootingBots.Patch.Components
                         // 2. BotCache is over capacity or the bot is no longer close enough to the player
                         else if (
                             !HasActiveLootable
+                            && !ForceBrainEnabled
                             && ActiveBotCache.Has(BotOwner)
                             && (ActiveBotCache.IsOverCapacity || !_isCloseToPlayer)
                         )
