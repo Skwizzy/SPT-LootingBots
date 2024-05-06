@@ -6,6 +6,7 @@ import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
 import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
 import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
+import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
 
 
 import config from "../config/config.json";
@@ -15,6 +16,8 @@ class DisableDiscardLimits implements IPostDBLoadMod {
     const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
     const configServer = container.resolve<ConfigServer>("ConfigServer");
     const pmcConfig = configServer.getConfig<IPmcConfig>(ConfigTypes.PMC);
+    const botConfig = configServer.getConfig<IBotConfig>(ConfigTypes.BOT);
+
     const { logInfo } = useLogger(container);
 
     const tables = databaseServer.getTables();
@@ -30,9 +33,9 @@ class DisableDiscardLimits implements IPostDBLoadMod {
         const vestWeights = tables.bots.types[type].generation.items.vestLoot.weights;
         const pocketWeights = tables.bots.types[type].generation.items.pocketLoot.weights;
         
-        Object.keys(backpackWeights).forEach(weight => backpackWeights[weight] = 0);
-        Object.keys(vestWeights).forEach(weight => vestWeights[weight] = 0);
-        Object.keys(pocketWeights).forEach(weight => pocketWeights[weight] = 0);
+        clearWeights(backpackWeights);
+        clearWeights(vestWeights);
+        clearWeights(pocketWeights);
       });
     };
 
@@ -40,6 +43,14 @@ class DisableDiscardLimits implements IPostDBLoadMod {
       emptyInventory(["usec", "bear"]);
       // Do not allow weapons to spawn in PMC bags
       pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
+      
+      // Clear weights in pmc randomisation
+      botConfig.equipment.pmc.randomisation.forEach(details => {
+        const generation = details?.generation;
+        clearWeights(generation?.backpackLoot?.weights);
+        clearWeights(generation?.pocketLoot?.weights);
+        clearWeights(generation?.vestLoot?.weights);
+    });
     }
 
     if (!config.scavSpawnWithLoot) {
@@ -66,6 +77,10 @@ class DisableDiscardLimits implements IPostDBLoadMod {
     tables.globals.config.DiscardLimitsEnabled = false;
     logInfo("Global config DiscardLimitsEnabled set to false");
   }
+}
+
+function clearWeights(weights: Record<string, number> = {}) {
+  Object.keys(weights).forEach(weight => weights[weight] = 0);
 }
 
 function useLogger(container: DependencyContainer) {
