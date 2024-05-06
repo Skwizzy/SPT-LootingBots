@@ -1,24 +1,25 @@
-import { HideoutHelper } from "../helpers/HideoutHelper";
-import { InventoryHelper } from "../helpers/InventoryHelper";
-import { ItemHelper } from "../helpers/ItemHelper";
-import { ProfileHelper } from "../helpers/ProfileHelper";
-import { TraderHelper } from "../helpers/TraderHelper";
-import { IPmcData } from "../models/eft/common/IPmcData";
-import { Bonus, HideoutSlot } from "../models/eft/common/tables/IBotBase";
-import { IPmcDataRepeatableQuest, IRepeatableQuest } from "../models/eft/common/tables/IRepeatableQuests";
-import { StageBonus } from "../models/eft/hideout/IHideoutArea";
-import { IAkiProfile } from "../models/eft/profile/IAkiProfile";
-import { HideoutAreas } from "../models/enums/HideoutAreas";
-import { ICoreConfig } from "../models/spt/config/ICoreConfig";
-import { IRagfairConfig } from "../models/spt/config/IRagfairConfig";
-import { ILogger } from "../models/spt/utils/ILogger";
-import { ConfigServer } from "../servers/ConfigServer";
-import { DatabaseServer } from "../servers/DatabaseServer";
-import { HashUtil } from "../utils/HashUtil";
-import { JsonUtil } from "../utils/JsonUtil";
-import { TimeUtil } from "../utils/TimeUtil";
-import { Watermark } from "../utils/Watermark";
-import { LocalisationService } from "./LocalisationService";
+import { HideoutHelper } from "@spt-aki/helpers/HideoutHelper";
+import { InventoryHelper } from "@spt-aki/helpers/InventoryHelper";
+import { ItemHelper } from "@spt-aki/helpers/ItemHelper";
+import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import { TraderHelper } from "@spt-aki/helpers/TraderHelper";
+import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
+import { Bonus, HideoutSlot } from "@spt-aki/models/eft/common/tables/IBotBase";
+import { IPmcDataRepeatableQuest, IRepeatableQuest } from "@spt-aki/models/eft/common/tables/IRepeatableQuests";
+import { ITemplateItem } from "@spt-aki/models/eft/common/tables/ITemplateItem";
+import { StageBonus } from "@spt-aki/models/eft/hideout/IHideoutArea";
+import { IAkiProfile, IEquipmentBuild, IMagazineBuild, IWeaponBuild } from "@spt-aki/models/eft/profile/IAkiProfile";
+import { HideoutAreas } from "@spt-aki/models/enums/HideoutAreas";
+import { ICoreConfig } from "@spt-aki/models/spt/config/ICoreConfig";
+import { IRagfairConfig } from "@spt-aki/models/spt/config/IRagfairConfig";
+import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { LocalisationService } from "@spt-aki/services/LocalisationService";
+import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { TimeUtil } from "@spt-aki/utils/TimeUtil";
+import { Watermark } from "@spt-aki/utils/Watermark";
 export declare class ProfileFixerService {
     protected logger: ILogger;
     protected watermark: Watermark;
@@ -41,11 +42,16 @@ export declare class ProfileFixerService {
      * @param pmcProfile profile to check and fix
      */
     checkForAndFixPmcProfileIssues(pmcProfile: IPmcData): void;
+    /**
+     * Find issues in the scav profile data that may cause issues
+     * @param scavProfile profile to check and fix
+     */
+    checkForAndFixScavProfileIssues(scavProfile: IPmcData): void;
     protected addMissingGunStandContainerImprovements(pmcProfile: IPmcData): void;
+    protected addMissingHallOfFameContainerImprovements(pmcProfile: IPmcData): void;
     protected ensureGunStandLevelsMatch(pmcProfile: IPmcData): void;
     protected addHideoutAreaStashes(pmcProfile: IPmcData): void;
     protected addMissingHideoutWallAreas(pmcProfile: IPmcData): void;
-    protected adjustUnreasonableModFleaPrices(): void;
     /**
      * Add tag to profile to indicate when it was made
      * @param fullProfile
@@ -59,7 +65,11 @@ export declare class ProfileFixerService {
     removeDanglingConditionCounters(pmcProfile: IPmcData): void;
     addLighthouseKeeperIfMissing(pmcProfile: IPmcData): void;
     protected addUnlockedInfoObjectIfMissing(pmcProfile: IPmcData): void;
-    protected removeDanglingBackendCounters(pmcProfile: IPmcData): void;
+    /**
+     * Repeatable quests leave behind TaskConditionCounter objects that make the profile bloat with time, remove them
+     * @param pmcProfile Player profile to check
+     */
+    protected removeDanglingTaskConditionCounters(pmcProfile: IPmcData): void;
     protected getActiveRepeatableQuests(repeatableQuests: IPmcDataRepeatableQuest[]): IRepeatableQuest[];
     protected fixNullTraderSalesSums(pmcProfile: IPmcData): void;
     protected addMissingBonusesProperty(pmcProfile: IPmcData): void;
@@ -67,9 +77,9 @@ export declare class ProfileFixerService {
      * Adjust profile quest status and statusTimers object values
      * quest.status is numeric e.g. 2
      * quest.statusTimers keys are numeric as strings e.g. "2"
-     * @param pmcProfile profile to update
+     * @param profile profile to update
      */
-    protected updateProfileQuestDataValues(pmcProfile: IPmcData): void;
+    protected updateProfileQuestDataValues(profile: IPmcData): void;
     protected addMissingRepeatableQuestsProperty(pmcProfile: IPmcData): void;
     /**
      * Some profiles have hideout maxed and therefore no improvements
@@ -94,17 +104,11 @@ export declare class ProfileFixerService {
     protected addEmptyObjectsToHideoutAreaSlots(areaType: HideoutAreas, emptyItemCount: number, pmcProfile: IPmcData): void;
     protected addObjectsToArray(count: number, slots: HideoutSlot[]): HideoutSlot[];
     /**
-     * In 18876 bsg changed the pockets tplid to be one that has 3 additional special slots
-     * @param pmcProfile
-     */
-    protected updateProfilePocketsToNewId(pmcProfile: IPmcData): void;
-    /**
      * Iterate over players hideout areas and find what's build, look for missing bonuses those areas give and add them if missing
      * @param pmcProfile Profile to update
      */
     addMissingHideoutBonusesToProfile(pmcProfile: IPmcData): void;
     /**
-     *
      * @param profileBonuses bonuses from profile
      * @param bonus bonus to find
      * @returns matching bonus
@@ -116,6 +120,24 @@ export declare class ProfileFixerService {
      * @param pmcProfile Profile to check inventory of
      */
     checkForOrphanedModdedItems(sessionId: string, fullProfile: IAkiProfile): void;
+    /**
+     * @param buildType The type of build, used for logging only
+     * @param build The build to check for invalid items
+     * @param itemsDb The items database to use for item lookup
+     * @returns True if the build should be removed from the build list, false otherwise
+     */
+    protected shouldRemoveWeaponEquipmentBuild(buildType: string, build: IWeaponBuild | IEquipmentBuild, itemsDb: Record<string, ITemplateItem>): boolean;
+    /**
+     * @param magazineBuild The magazine build to check for validity
+     * @param itemsDb The items database to use for item lookup
+     * @returns True if the build should be removed from the build list, false otherwise
+     */
+    protected shouldRemoveMagazineBuild(magazineBuild: IMagazineBuild, itemsDb: Record<string, ITemplateItem>): boolean;
+    /**
+     * Attempt to fix common item issues that corrupt profiles
+     * @param pmcProfile Profile to check items of
+     */
+    fixProfileBreakingInventoryItemIssues(pmcProfile: IPmcData): void;
     /**
      * Add `Improvements` object to hideout if missing - added in eft 13.0.21469
      * @param pmcProfile profile to update
@@ -148,8 +170,22 @@ export declare class ProfileFixerService {
      */
     addMissingIdsToBonuses(pmcProfile: IPmcData): void;
     /**
+     * 3.8.0 utilized the wrong ProductionTime for bitcoin, fix it if it's found
+     */
+    fixBitcoinProductionTime(pmcProfile: IPmcData): void;
+    /**
      * At some point the property name was changed,migrate data across to new name
      * @param pmcProfile Profile to migrate improvements in
      */
     protected migrateImprovements(pmcProfile: IPmcData): void;
+    /**
+     * After removing mods that add quests, the quest panel will break without removing these
+     * @param pmcProfile Profile to remove dead quests from
+     */
+    protected removeOrphanedQuests(pmcProfile: IPmcData): void;
+    /**
+     * If someone has run a mod from pre-3.8.0, it results in an invalid `nextResupply` value
+     * Resolve this by setting the nextResupply to 0 if it's null
+     */
+    protected fixNullTraderNextResupply(pmcProfile: IPmcData): void;
 }

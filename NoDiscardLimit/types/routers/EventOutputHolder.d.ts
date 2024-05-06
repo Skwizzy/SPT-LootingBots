@@ -1,9 +1,10 @@
-import { ProfileHelper } from "../helpers/ProfileHelper";
-import { IPmcData } from "../models/eft/common/IPmcData";
-import { IHideoutImprovement, Productive, TraderData, TraderInfo } from "../models/eft/common/tables/IBotBase";
-import { IItemEventRouterResponse } from "../models/eft/itemEvent/IItemEventRouterResponse";
-import { JsonUtil } from "../utils/JsonUtil";
-import { TimeUtil } from "../utils/TimeUtil";
+import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
+import { IHideoutImprovement, Productive, TraderInfo } from "@spt-aki/models/eft/common/tables/IBotBase";
+import { TraderData } from "@spt-aki/models/eft/itemEvent/IItemEventRouterBase";
+import { IItemEventRouterResponse } from "@spt-aki/models/eft/itemEvent/IItemEventRouterResponse";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 export declare class EventOutputHolder {
     protected jsonUtil: JsonUtil;
     protected profileHelper: ProfileHelper;
@@ -44,4 +45,9 @@ export declare class EventOutputHolder {
      * @returns dictionary of hideout productions
      */
     protected getProductionsFromProfileAndFlagComplete(productions: Record<string, Productive>): Record<string, Productive>;
+    /**
+     * Required as continuous productions don't reset and stay at 100% completion but client thinks it hasn't started
+     * @param productions Productions in a profile
+     */
+    protected cleanUpCompleteCraftsInProfile(productions: Record<string, Productive>): void;
 }

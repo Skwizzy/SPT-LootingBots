@@ -1,41 +1,44 @@
-import { RepeatableQuestGenerator } from "../generators/RepeatableQuestGenerator";
-import { ProfileHelper } from "../helpers/ProfileHelper";
-import { RagfairServerHelper } from "../helpers/RagfairServerHelper";
-import { RepeatableQuestHelper } from "../helpers/RepeatableQuestHelper";
-import { IEmptyRequestData } from "../models/eft/common/IEmptyRequestData";
-import { IPmcData } from "../models/eft/common/IPmcData";
-import { IPmcDataRepeatableQuest } from "../models/eft/common/tables/IRepeatableQuests";
-import { IItemEventRouterResponse } from "../models/eft/itemEvent/IItemEventRouterResponse";
-import { IRepeatableQuestChangeRequest } from "../models/eft/quests/IRepeatableQuestChangeRequest";
-import { IQuestConfig, IRepeatableQuestConfig } from "../models/spt/config/IQuestConfig";
-import { IQuestTypePool } from "../models/spt/repeatable/IQuestTypePool";
-import { ILogger } from "../models/spt/utils/ILogger";
-import { EventOutputHolder } from "../routers/EventOutputHolder";
-import { ConfigServer } from "../servers/ConfigServer";
-import { PaymentService } from "../services/PaymentService";
-import { ProfileFixerService } from "../services/ProfileFixerService";
-import { HttpResponseUtil } from "../utils/HttpResponseUtil";
-import { JsonUtil } from "../utils/JsonUtil";
-import { ObjectId } from "../utils/ObjectId";
-import { RandomUtil } from "../utils/RandomUtil";
-import { TimeUtil } from "../utils/TimeUtil";
+import { RepeatableQuestGenerator } from "@spt-aki/generators/RepeatableQuestGenerator";
+import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
+import { QuestHelper } from "@spt-aki/helpers/QuestHelper";
+import { RepeatableQuestHelper } from "@spt-aki/helpers/RepeatableQuestHelper";
+import { IEmptyRequestData } from "@spt-aki/models/eft/common/IEmptyRequestData";
+import { IPmcData } from "@spt-aki/models/eft/common/IPmcData";
+import { IPmcDataRepeatableQuest, IRepeatableQuest } from "@spt-aki/models/eft/common/tables/IRepeatableQuests";
+import { IItemEventRouterResponse } from "@spt-aki/models/eft/itemEvent/IItemEventRouterResponse";
+import { IRepeatableQuestChangeRequest } from "@spt-aki/models/eft/quests/IRepeatableQuestChangeRequest";
+import { ELocationName } from "@spt-aki/models/enums/ELocationName";
+import { IQuestConfig, IRepeatableQuestConfig } from "@spt-aki/models/spt/config/IQuestConfig";
+import { IQuestTypePool } from "@spt-aki/models/spt/repeatable/IQuestTypePool";
+import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import { EventOutputHolder } from "@spt-aki/routers/EventOutputHolder";
+import { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { PaymentService } from "@spt-aki/services/PaymentService";
+import { ProfileFixerService } from "@spt-aki/services/ProfileFixerService";
+import { HttpResponseUtil } from "@spt-aki/utils/HttpResponseUtil";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { ObjectId } from "@spt-aki/utils/ObjectId";
+import { RandomUtil } from "@spt-aki/utils/RandomUtil";
+import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 export declare class RepeatableQuestController {
-    protected timeUtil: TimeUtil;
     protected logger: ILogger;
+    protected databaseServer: DatabaseServer;
+    protected timeUtil: TimeUtil;
     protected randomUtil: RandomUtil;
     protected httpResponse: HttpResponseUtil;
     protected jsonUtil: JsonUtil;
     protected profileHelper: ProfileHelper;
     protected profileFixerService: ProfileFixerService;
-    protected ragfairServerHelper: RagfairServerHelper;
     protected eventOutputHolder: EventOutputHolder;
     protected paymentService: PaymentService;
     protected objectId: ObjectId;
     protected repeatableQuestGenerator: RepeatableQuestGenerator;
     protected repeatableQuestHelper: RepeatableQuestHelper;
+    protected questHelper: QuestHelper;
     protected configServer: ConfigServer;
     protected questConfig: IQuestConfig;
-    constructor(timeUtil: TimeUtil, logger: ILogger, randomUtil: RandomUtil, httpResponse: HttpResponseUtil, jsonUtil: JsonUtil, profileHelper: ProfileHelper, profileFixerService: ProfileFixerService, ragfairServerHelper: RagfairServerHelper, eventOutputHolder: EventOutputHolder, paymentService: PaymentService, objectId: ObjectId, repeatableQuestGenerator: RepeatableQuestGenerator, repeatableQuestHelper: RepeatableQuestHelper, configServer: ConfigServer);
+    constructor(logger: ILogger, databaseServer: DatabaseServer, timeUtil: TimeUtil, randomUtil: RandomUtil, httpResponse: HttpResponseUtil, jsonUtil: JsonUtil, profileHelper: ProfileHelper, profileFixerService: ProfileFixerService, eventOutputHolder: EventOutputHolder, paymentService: PaymentService, objectId: ObjectId, repeatableQuestGenerator: RepeatableQuestGenerator, repeatableQuestHelper: RepeatableQuestHelper, questHelper: QuestHelper, configServer: ConfigServer);
     /**
      * Handle client/repeatalbeQuests/activityPeriods
      * Returns an array of objects in the format of repeatable quests to the client.
@@ -57,11 +60,19 @@ export declare class RepeatableQuestController {
      * (if the are on "Succeed" but not "Completed" we keep them, to allow the player to complete them and get the rewards)
      * The new quests generated are again persisted in profile.RepeatableQuests
      *
+     * @param   {string}    _info       Request from client
+     * @param   {string}    sessionID   Player's session id
      *
-     * @param   {string}    sessionId       Player's session id
-     * @returns  {array}                    array of "repeatableQuestObjects" as descibed above
+     * @returns  {array}                Array of "repeatableQuestObjects" as descibed above
      */
     getClientRepeatableQuests(_info: IEmptyRequestData, sessionID: string): IPmcDataRepeatableQuest[];
+    /**
+     * Get the number of quests to generate - takes into account charisma state of player
+     * @param repeatableConfig Config
+     * @param pmcData Player profile
+     * @returns Quest count
+     */
+    protected getQuestCount(repeatableConfig: IRepeatableQuestConfig, pmcData: IPmcData): number;
     /**
      * Get repeatable quest data from profile from name (daily/weekly), creates base repeatable quest object if none exists
      * @param repeatableConfig daily/weekly config
@@ -83,9 +94,24 @@ export declare class RepeatableQuestController {
      */
     protected generateQuestPool(repeatableConfig: IRepeatableQuestConfig, pmcLevel: number): IQuestTypePool;
     protected createBaseQuestPool(repeatableConfig: IRepeatableQuestConfig): IQuestTypePool;
+    /**
+     * Return the locations this PMC is allowed to get daily quests for based on their level
+     * @param locations The original list of locations
+     * @param pmcLevel The level of the player PMC
+     * @returns A filtered list of locations that allow the player PMC level to access it
+     */
+    protected getAllowedLocations(locations: Record<ELocationName, string[]>, pmcLevel: number): Partial<Record<ELocationName, string[]>>;
+    /**
+     * Return true if the given pmcLevel is allowed on the given location
+     * @param location The location name to check
+     * @param pmcLevel The level of the pmc
+     * @returns True if the given pmc level is allowed to access the given location
+     */
+    protected isPmcLevelAllowedOnLocation(location: string, pmcLevel: number): boolean;
     debugLogRepeatableQuestIds(pmcData: IPmcData): void;
     /**
      * Handle RepeatableQuestChange event
      */
     changeRepeatableQuest(pmcData: IPmcData, changeRequest: IRepeatableQuestChangeRequest, sessionID: string): IItemEventRouterResponse;
+    protected attemptToGenerateRepeatableQuest(pmcData: IPmcData, questTypePool: IQuestTypePool, repeatableConfig: IRepeatableQuestConfig): IRepeatableQuest;
 }

@@ -1,8 +1,8 @@
-import { IEliminationConfig, IQuestConfig, IRepeatableQuestConfig } from "../models/spt/config/IQuestConfig";
-import { ConfigServer } from "../servers/ConfigServer";
-import { JsonUtil } from "../utils/JsonUtil";
-import { MathUtil } from "../utils/MathUtil";
-import { ProbabilityObject, ProbabilityObjectArray } from "../utils/RandomUtil";
+import { IEliminationConfig, IQuestConfig, IRepeatableQuestConfig } from "@spt-aki/models/spt/config/IQuestConfig";
+import { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { MathUtil } from "@spt-aki/utils/MathUtil";
+import { ProbabilityObject, ProbabilityObjectArray } from "@spt-aki/utils/RandomUtil";
 export declare class RepeatableQuestHelper {
     protected mathUtil: MathUtil;
     protected jsonUtil: JsonUtil;

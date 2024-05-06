@@ -1,4 +1,4 @@
-import { ELocationName } from "../../../models/enums/ELocationName";
+import { ELocationName } from "@spt-aki/models/enums/ELocationName";
 export interface IQuestTypePool {
     types: string[];
     pool: IQuestPool;
@@ -6,6 +6,7 @@ export interface IQuestTypePool {
 export interface IQuestPool {
     Exploration: IExplorationPool;
     Elimination: IEliminationPool;
+    Pickup: IExplorationPool;
 }
 export interface IExplorationPool {
     locations: Partial<Record<ELocationName, string[]>>;

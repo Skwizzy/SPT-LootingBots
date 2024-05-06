@@ -1,19 +1,19 @@
-import { DialogueHelper } from "../helpers/DialogueHelper";
-import { ItemHelper } from "../helpers/ItemHelper";
-import { NotificationSendHelper } from "../helpers/NotificationSendHelper";
-import { NotifierHelper } from "../helpers/NotifierHelper";
-import { TraderHelper } from "../helpers/TraderHelper";
-import { Item } from "../models/eft/common/tables/IItem";
-import { Dialogue, IUserDialogInfo, Message, MessageItems } from "../models/eft/profile/IAkiProfile";
-import { MessageType } from "../models/enums/MessageType";
-import { Traders } from "../models/enums/Traders";
-import { ISendMessageDetails } from "../models/spt/dialog/ISendMessageDetails";
-import { ILogger } from "../models/spt/utils/ILogger";
-import { DatabaseServer } from "../servers/DatabaseServer";
-import { SaveServer } from "../servers/SaveServer";
-import { HashUtil } from "../utils/HashUtil";
-import { TimeUtil } from "../utils/TimeUtil";
-import { LocalisationService } from "./LocalisationService";
+import { DialogueHelper } from "@spt-aki/helpers/DialogueHelper";
+import { ItemHelper } from "@spt-aki/helpers/ItemHelper";
+import { NotificationSendHelper } from "@spt-aki/helpers/NotificationSendHelper";
+import { NotifierHelper } from "@spt-aki/helpers/NotifierHelper";
+import { TraderHelper } from "@spt-aki/helpers/TraderHelper";
+import { Item } from "@spt-aki/models/eft/common/tables/IItem";
+import { Dialogue, IUserDialogInfo, Message, MessageItems } from "@spt-aki/models/eft/profile/IAkiProfile";
+import { MessageType } from "@spt-aki/models/enums/MessageType";
+import { Traders } from "@spt-aki/models/enums/Traders";
+import { IProfileChangeEvent, ISendMessageDetails } from "@spt-aki/models/spt/dialog/ISendMessageDetails";
+import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
+import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
+import { SaveServer } from "@spt-aki/servers/SaveServer";
+import { LocalisationService } from "@spt-aki/services/LocalisationService";
+import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { TimeUtil } from "@spt-aki/utils/TimeUtil";
 export declare class MailSendService {
     protected logger: ILogger;
     protected hashUtil: HashUtil;
@@ -55,7 +55,7 @@ export declare class MailSendService {
      * @param items Optional items to send to player
      * @param maxStorageTimeSeconds Optional time to collect items before they expire
      */
-    sendSystemMessageToPlayer(sessionId: string, message: string, items?: Item[], maxStorageTimeSeconds?: any): void;
+    sendSystemMessageToPlayer(sessionId: string, message: string, items?: Item[], maxStorageTimeSeconds?: number, profileChangeEvents?: IProfileChangeEvent[]): void;
     /**
      * Send a message from SYSTEM to the player with or without items with localised text
      * @param sessionId The session ID to send the message to
@@ -63,7 +63,7 @@ export declare class MailSendService {
      * @param items Optional items to send to player
      * @param maxStorageTimeSeconds Optional time to collect items before they expire
      */
-    sendLocalisedSystemMessageToPlayer(sessionId: string, messageLocaleId: string, items?: Item[], maxStorageTimeSeconds?: any): void;
+    sendLocalisedSystemMessageToPlayer(sessionId: string, messageLocaleId: string, items?: Item[], profileChangeEvents?: IProfileChangeEvent[], maxStorageTimeSeconds?: number): void;
     /**
      * Send a USER message to a player with or without items
      * @param sessionId The session ID to send the message to
