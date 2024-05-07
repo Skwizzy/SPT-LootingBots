@@ -45,7 +45,7 @@ class DisableDiscardLimits implements IPostDBLoadMod {
       pmcConfig.looseWeaponInBackpackLootMinMax.max = 0;
       
       // Clear weights in pmc randomisation
-      botConfig.equipment.pmc.randomisation.forEach(details => {
+      botConfig.equipment?.pmc?.randomisation?.forEach(details => {
         const generation = details?.generation;
         clearWeights(generation?.backpackLoot?.weights);
         clearWeights(generation?.pocketLoot?.weights);

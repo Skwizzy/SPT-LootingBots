@@ -158,10 +158,9 @@ namespace LootingBots.Brain.Logics
                         NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                             _destination,
                             true,
-                            1f,
+                            -1f,
                             false,
-                            false,
-                            true
+                            false
                         );
                         // Log every 5 movement attempts to reduce noise
                         if (_navigationAttempts % 5 == 1 && _log.DebugEnabled)
@@ -171,9 +170,11 @@ namespace LootingBots.Brain.Logics
                             );
                         }
 
-                        if (pathStatus != NavMeshPathStatus.PathComplete && _log.WarningEnabled)
+                        if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
-                            _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
+                            if (_log.WarningEnabled)
+                                _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
+
                             canMove = false;
                         }
                     }
@@ -237,6 +238,11 @@ namespace LootingBots.Brain.Logics
                 _lootingBrain.DistanceToLoot = dist;
             }
 
+            if (isCloseEnough)
+            {
+                _log.LogWarning($"Bot is close enought to loot. {dist}");
+            }
+
             return isCloseEnough;
         }
 
@@ -245,7 +251,7 @@ namespace LootingBots.Brain.Logics
         {
             // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
             float changeInDist = Math.Abs(_lootingBrain.DistanceToLoot - dist);
-            bool isStuck = changeInDist < 0.25f;
+            bool isStuck = changeInDist < 0.3f;
 
             if (isStuck)
             {

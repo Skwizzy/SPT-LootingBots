@@ -72,13 +72,15 @@ namespace LootingBots.Patch.Components
             LockUntilNextScan = false;
         }
 
-        public void ForceScan() {
+        public void ForceScan()
+        {
             ScanTimer = Time.time - 1f;
             LockUntilNextScan = true;
             _lootingBrain.ForceBrainEnabled = true;
         }
 
-        public void OverrideNextScanTime(float scanTime) {
+        public void OverrideNextScanTime(float scanTime)
+        {
             ScanTimer = Time.time + scanTime;
             LockUntilNextScan = true;
         }
@@ -315,7 +317,7 @@ namespace LootingBots.Patch.Components
 
             // Make sure the point is still snapped to the NavMesh after its been pushed
             Vector3 destination = NavMesh.SamplePosition(
-                center - padding,
+                center - (padding * 1.5f),
                 out navMeshAlignedPoint,
                 1f,
                 navMeshAlignedPoint.mask
