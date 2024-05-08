@@ -68,8 +68,14 @@ namespace LootingBots.Brain.Logics
                 {
                     _closeEnoughTimer = Time.time + 2f;
 
+
+                    bool isCloseEnough = IsCloseEnough();
+
+                    // If the bot is closer than 4m from the loot, they should slow down and not sprint to prevent powersliding
+                    bool slowDown = _lootingBrain.DistanceToLoot != -1 && _lootingBrain.DistanceToLoot < 4f;
+
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_lootingBrain.LootTaskRunning && IsCloseEnough())
+                    if (!_lootingBrain.LootTaskRunning && isCloseEnough)
                     {
                         // Crouch and look to item
                         BotOwner.SetPose(0f);
@@ -83,6 +89,11 @@ namespace LootingBots.Brain.Logics
                         BotOwner.SetTargetMoveSpeed(1f);
                         BotOwner.SetPose(1f);
                         BotOwner.Steering.LookToMovingDirection();
+                    }
+                    
+                    // Stop the bot from sprinting when approaching lootable
+                    if (slowDown) {
+                        BotOwner.Mover.Sprint(false);
                     }
                 }
 
