@@ -163,7 +163,7 @@ namespace LootingBots.Patch.Components
         /*
         * LootFinder update should only be running if one of the looting settings is enabled and the bot is in an active state
         */
-        public async Task Update()
+        public void Update()
         {
             try
             {
@@ -171,6 +171,7 @@ namespace LootingBots.Patch.Components
                 {
                     if (ActiveBotCache.IsCacheActive && _performanceTimer < Time.time)
                     {
+                        bool closeEnoughToPlayer = _isCloseToPlayer;
                         // For a disabled bot to be allowed to loot they must meet the following criteria:
                         // 1. The bot has been manually flagged for looting
                         //              OR
@@ -180,7 +181,7 @@ namespace LootingBots.Patch.Components
                             _isDisabledForPerformance
                             && (
                                 ForceBrainEnabled
-                                || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer)
+                                || (ActiveBotCache.IsAbleToCache && closeEnoughToPlayer)
                             )
                         )
                         {
@@ -194,7 +195,7 @@ namespace LootingBots.Patch.Components
                             !HasActiveLootable
                             && !ForceBrainEnabled
                             && ActiveBotCache.Has(BotOwner)
-                            && (ActiveBotCache.IsOverCapacity || !_isCloseToPlayer)
+                            && (ActiveBotCache.IsOverCapacity || !closeEnoughToPlayer)
                         )
                         {
                             ActiveBotCache.Remove(BotOwner);
@@ -212,13 +213,13 @@ namespace LootingBots.Patch.Components
                             Time.time
                             + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
                     }
-
+                    
                     if (IsBrainEnabled)
                     {
                         if (InventoryController.ShouldSort)
                         {
                             // Sort items in tacVest for better space management
-                            await InventoryController.SortTacVest();
+                           StartCoroutine(InventoryController.SortTacVest());
                         }
 
                         // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item

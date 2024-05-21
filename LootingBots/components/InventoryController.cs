@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -270,7 +271,7 @@ namespace LootingBots.Patch.Components
         /**
         * Sorts the items in the tactical vest so that items prefer to be in slots that match their size. I.E a 1x1 item will be placed in a 1x1 slot instead of a 1x2 slot
         */
-        public async Task<IResult> SortTacVest()
+        public IEnumerator SortTacVest()
         {
             SearchableItemClass tacVest = (SearchableItemClass)
                 _botInventoryController.Inventory.Equipment
@@ -281,15 +282,15 @@ namespace LootingBots.Patch.Components
 
             if (tacVest != null)
             {
-                var result = LootUtils.SortContainer(tacVest, _botInventoryController);
+                var result = InteractionsHandlerClass.Sort(tacVest, _botInventoryController, true);
+                yield return null;
 
                 if (result.Succeeded)
                 {
-                    return await _transactionController.TryRunNetworkTransaction(result);
+                    Task sortTask = _transactionController.TryRunNetworkTransaction(result);
+                    yield return new WaitUntil(() => sortTask.IsCompleted);
                 }
             }
-
-            return null;
         }
 
         /**
@@ -318,7 +319,7 @@ namespace LootingBots.Patch.Components
 
                     if (_log.InfoEnabled)
                         _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
-                    
+
                     // Ignore magazines that a bot cannot actively use
                     if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
@@ -356,7 +357,6 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-
                     // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
                     if (item is SearchableItemClass)
                     {
@@ -382,7 +382,12 @@ namespace LootingBots.Patch.Components
                         bool success = await TryAddItemsToBot(
                             weapon.Slots
                                 .Where(slot => !slot.Required)
-                                .SelectMany(slot => slot.Items.Where(modItem => modItem is Mod mod && mod.RaidModdable))
+                                .SelectMany(
+                                    slot =>
+                                        slot.Items.Where(
+                                            modItem => modItem is Mod mod && mod.RaidModdable
+                                        )
+                                )
                         );
 
                         if (!success)
@@ -905,7 +910,7 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogDebug($"No nested items found in {parentItem.Name}");
             }
-            
+
             return true;
         }
 
