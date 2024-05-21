@@ -26,6 +26,9 @@ namespace LootingBots.Brain.Logics
             // Trigger a scan if one is not running already
             if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
             {
+                if (_log.DebugEnabled) {
+                    _log.LogDebug($"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}");
+                }
                 _lootFinder.BeginSearch();
             }
         }
