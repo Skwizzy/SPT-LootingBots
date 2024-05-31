@@ -36,6 +36,7 @@ namespace LootingBots.Brain.Logics
         public override void Stop()
         {
             _lootFinder.IsScanRunning = false;
+            _lootFinder.ResetScanTimer();
             _lootFinder.StopAllCoroutines();
             base.Stop();
         }

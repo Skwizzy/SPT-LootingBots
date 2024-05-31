@@ -80,14 +80,7 @@ namespace LootingBots.Brain
 
             if (currentActionType == typeof(FindLootLogic))
             {
-                bool lootScanDone = !_lootFinder.IsScanRunning;
-                // Reset scan timer once scan is complete
-                if (lootScanDone)
-                {
-                    _lootFinder.ResetScanTimer();
-                }
-
-                return lootScanDone;
+                return !_lootFinder.IsScanRunning;
             }
 
             bool notLooting = !_lootingBrain.IsBotLooting;
