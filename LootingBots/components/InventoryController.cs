@@ -718,7 +718,7 @@ namespace LootingBots.Patch.Components
                             {
                                 ChangeToPrimary();
                                 Stats.AddNetValue(lootValue);
-                                await TransactionController.SimulatePlayerDelay(1000);
+                                await TransactionController.SimulatePlayerDelay(1500);
                             }
                         );
                         Stats.WeaponValues.Primary = new ValuePair(lootWeapon.Id, lootValue);
@@ -746,6 +746,7 @@ namespace LootingBots.Patch.Components
                                     await _transactionController.TryEquipItem(lootWeapon);
                                     await TransactionController.SimulatePlayerDelay(1500);
                                     ChangeToPrimary();
+                                    await TransactionController.SimulatePlayerDelay(1500);
                                 }
                             );
 
@@ -773,6 +774,7 @@ namespace LootingBots.Patch.Components
                                 Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1500);
                                 ChangeToPrimary();
+                                await TransactionController.SimulatePlayerDelay(1500);
                             }
                         );
                         Stats.WeaponValues.Secondary = Stats.WeaponValues.Primary;
@@ -991,7 +993,7 @@ namespace LootingBots.Patch.Components
                         {
                             Stats.SubtractNetValue(_itemAppraiser.GetItemPrice(toThrow));
                             _lootingBrain.IgnoreLoot(toThrow.Id);
-                            await TransactionController.SimulatePlayerDelay(1000);
+                            await TransactionController.SimulatePlayerDelay(1500);
 
                             if (toThrow is Weapon weapon)
                             {
