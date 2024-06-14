@@ -27,6 +27,9 @@ namespace LootingBots
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
+        public const EquipmentType EquipmentSettingsDefaults = 
+            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon;
+
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
         public static ConfigEntry<BotType> ContainerLootingEnabled;
@@ -319,7 +322,7 @@ namespace LootingBots
             PMCGearToEquip = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear to equip",
-                EquipmentType.All,
+                EquipmentSettingsDefaults,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to equip during raid",
                     null,
@@ -329,7 +332,7 @@ namespace LootingBots
             PMCGearToPickup = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear in bags",
-                EquipmentType.All,
+                EquipmentSettingsDefaults,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to place in their backpack/rig",
                     null,
@@ -359,7 +362,7 @@ namespace LootingBots
             ScavGearToEquip = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear to equip",
-                EquipmentType.All,
+                EquipmentSettingsDefaults,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to equip during raid",
                     null,
@@ -369,7 +372,7 @@ namespace LootingBots
             ScavGearToPickup = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear in bags",
-                EquipmentType.All,
+                EquipmentSettingsDefaults,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to place in their backpack/rig",
                     null,

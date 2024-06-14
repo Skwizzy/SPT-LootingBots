@@ -107,6 +107,8 @@ namespace LootingBots.Patch.Components
                 QueryTriggerInteraction.Ignore
             );
 
+            yield return null;
+
             // Sort by nearest to bot location
             List<Collider> colliderList = colliders.ToList().GetRange(0, hits - 1);
             if (_log.DebugEnabled)
@@ -128,6 +130,8 @@ namespace LootingBots.Patch.Components
                     return distA.CompareTo(distB);
                 }
             );
+
+            yield return null;
 
             int rangeCalculations = 0;
             // For each object detected, check to see if it is loot and then calculate its distance from the player

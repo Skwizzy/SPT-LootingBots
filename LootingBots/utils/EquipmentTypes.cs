@@ -21,8 +21,9 @@ namespace LootingBots.Patch.Util
         Weapon = 16,
         Grenade = 32,
         Helmet = 64,
+        ArmorPlate = 128,
 
-        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade
+        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade | ArmorPlate
     }
 
     public static class EquipmentTypeUtils
@@ -62,6 +63,11 @@ namespace LootingBots.Patch.Util
             return equipmentType.HasFlag(EquipmentType.Helmet);
         }
 
+        public static bool HasArmorPlate(this EquipmentType equipmentType)
+        {
+            return equipmentType.HasFlag(EquipmentType.ArmorPlate);
+        }
+
         // GClasses based off GClass2558.FindSlotToPickUp
         public static bool IsItemEligible(this EquipmentType allowedGear, Item item)
         {
@@ -90,6 +96,10 @@ namespace LootingBots.Patch.Util
                 return allowedGear.HasTacticalRig();
             }
 
+            if (IsArmorPlate(item, out ArmorPlateClass _)) {
+                return allowedGear.HasArmorPlate();
+            }
+
             if (item is KnifeClass) { }
 
             if (item is GrenadeClass)
@@ -101,6 +111,7 @@ namespace LootingBots.Patch.Util
             {
                 return allowedGear.HasWeapon();
             }
+            
 
             return true;
         }
