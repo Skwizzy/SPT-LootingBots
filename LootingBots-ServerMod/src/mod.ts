@@ -87,7 +87,7 @@ function useLogger(container: DependencyContainer) {
   const logger = container.resolve<ILogger>("WinstonLogger");
   return {
     logInfo: (message: string) => {
-      logger.info(`[NoDiscardLimit] ${message}`);
+      logger.info(`[LootingBots-ServerMod] ${message}`);
     },
   };
 }

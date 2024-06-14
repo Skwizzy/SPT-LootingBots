@@ -28,7 +28,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
     - If loot is behind a door, bots will open the door if unlocked 
     - If a bot is stuck in place or if the bot spends too much time moving, the loot will be ignored
   - Once looting has finished, bots will wait a certain amount of time before the next loot scan period occurs (configurable in the settings)
-  - PMCs by default will no longer spawn with loot in their inventories. (can be changed in the settings for NoDiscardLimit)
+  - PMCs by default will no longer spawn with loot in their inventories. (can be changed in the settings for LootingBots-ServerMod)
 
 **Gear Swap Critria** 
 - Bot will always swap to gear that has higher armor rating (helmets, armor vests, armored rigs)
@@ -75,7 +75,7 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Maximum looting bots` - Limits the amount of bots that are able to simultaneously run looting logic. A value of 0 represents no limit
 - `Limit looting by distance to player` - Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit
 
-## Server Mod Settings (NoDiscardLimit/config/config.json)
+## Server Mod Settings (LootingBots-ServerMod/config/config.json)
 - `pmcSpawnWithLoot` - When set to `true`, PMCs will spawn with loot in their bags/pockets (default SPT behavior)
 - `scavSpawnWithLoot` - When set to `true`, Scavs will spawn with loot in the bags/pockets (default SPT behavior)
 
@@ -106,7 +106,7 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 
 ## Package Contents
 - `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-NoDiscardLimit` - Provide the option to clear out the loot that PMC/Scav bots start with in their backpacks. This does not include meds, ammo, grenades ect. These options can be found in the `NoDiscardLimit/config/config.json`.
+- `user/mods/Skwizzy-LootingBots-ServerMod` - Provide the option to clear out the loot that PMC/Scav bots start with in their backpacks. This does not include meds, ammo, grenades ect. These options can be found in the `Skwizzy-LootingBots-ServerMod/config/config.json`.
 
 ## Install instructions
 Simply extract the contents of the .zip file into your SPT directory.
