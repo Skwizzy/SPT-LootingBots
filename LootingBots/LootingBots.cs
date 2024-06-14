@@ -27,8 +27,8 @@ namespace LootingBots
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
-        public const EquipmentType EquipmentSettingsDefaults = 
-            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon;
+        public const EquipmentType CanPickupEquipmentDefaults = 
+            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
 
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
@@ -65,9 +65,9 @@ namespace LootingBots
         public static ConfigEntry<float> ScavMinLootThreshold;
         public static ConfigEntry<float> ScavMaxLootThreshold;
 
-        public static ConfigEntry<EquipmentType> PMCGearToEquip;
+        public static ConfigEntry<CanEquipEquipmentType> PMCGearToEquip;
         public static ConfigEntry<EquipmentType> PMCGearToPickup;
-        public static ConfigEntry<EquipmentType> ScavGearToEquip;
+        public static ConfigEntry<CanEquipEquipmentType> ScavGearToEquip;
         public static ConfigEntry<EquipmentType> ScavGearToPickup;
 
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
@@ -322,7 +322,7 @@ namespace LootingBots
             PMCGearToEquip = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear to equip",
-                EquipmentSettingsDefaults,
+                CanEquipEquipmentType.All,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to equip during raid",
                     null,
@@ -332,7 +332,7 @@ namespace LootingBots
             PMCGearToPickup = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear in bags",
-                EquipmentSettingsDefaults,
+                CanPickupEquipmentDefaults,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to place in their backpack/rig",
                     null,
@@ -362,7 +362,7 @@ namespace LootingBots
             ScavGearToEquip = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear to equip",
-                EquipmentSettingsDefaults,
+                CanEquipEquipmentType.All,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to equip during raid",
                     null,
@@ -372,7 +372,7 @@ namespace LootingBots
             ScavGearToPickup = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear in bags",
-                EquipmentSettingsDefaults,
+                CanPickupEquipmentDefaults,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to place in their backpack/rig",
                     null,

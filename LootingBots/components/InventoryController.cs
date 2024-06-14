@@ -2,11 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
-using Comfort.Common;
 
 using EFT;
 using EFT.InventoryLogic;
@@ -939,11 +936,16 @@ namespace LootingBots.Patch.Components
 
         public bool AllowedToEquip(Item lootItem)
         {
+            Util.EquipmentType eligiblePmcGear = (Util.EquipmentType)
+                LootingBots.PMCGearToEquip.Value;
+            Util.EquipmentType eligibleScavGear = (Util.EquipmentType)
+                LootingBots.ScavGearToEquip.Value;
+
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
             bool allowedToEquip = isPMC
-                ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
-                : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
+                ? eligiblePmcGear.IsItemEligible(lootItem)
+                : eligibleScavGear.IsItemEligible(lootItem);
 
             return allowedToEquip;
         }
@@ -960,7 +962,10 @@ namespace LootingBots.Patch.Components
             // All usable mags and money should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
             return IsUsableMag(lootItem as MagazineClass)
                 || isMoney
-                || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
+                || (
+                    pickupNotRestricted
+                    && (EquipmentTypeUtils.IsDogtag(lootItem) || IsValuableEnough(CurrentItemPrice))
+                );
         }
 
         /** Generates a SwapAction to send to the transaction controller*/
