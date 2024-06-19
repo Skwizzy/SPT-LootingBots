@@ -47,7 +47,7 @@ namespace LootingBots.Patch.Components
             Item = 2
         }
 
-        public bool IsScanRunning = false;
+        public bool IsScanRunning;
 
         public void Init(BotOwner botOwner)
         {
@@ -68,8 +68,22 @@ namespace LootingBots.Patch.Components
 
         public void BeginSearch()
         {
+            IsScanRunning = true;
             StartCoroutine(FindLootable());
             LockUntilNextScan = false;
+        }
+
+        public void ForceScan()
+        {
+            ScanTimer = Time.time - 1f;
+            LockUntilNextScan = true;
+            _lootingBrain.ForceBrainEnabled = true;
+        }
+
+        public void OverrideNextScanTime(float scanTime)
+        {
+            ScanTimer = Time.time + scanTime;
+            LockUntilNextScan = true;
         }
 
         public IEnumerator FindLootable()
@@ -83,31 +97,49 @@ namespace LootingBots.Patch.Components
             );
 
             // Cast a sphere on the bot, detecting any Interacive world objects that collide with the sphere
-            Collider[] colliders = Physics.OverlapSphere(
+            Collider[] colliders = new Collider[3000];
+
+            var hits = Physics.OverlapSphereNonAlloc(
                 _botOwner.Position,
                 detectionRadius,
+                colliders,
                 LootUtils.LootMask,
-                QueryTriggerInteraction.Collide
+                QueryTriggerInteraction.Ignore
             );
 
+            yield return null;
+
             // Sort by nearest to bot location
-            List<Collider> colliderList = colliders.ToList();
+            List<Collider> colliderList = colliders.ToList().GetRange(0, hits - 1);
+            if (_log.DebugEnabled)
+            {
+                _log.LogDebug($"Scan results: {colliderList.Count}");
+            }
+
             colliderList.Sort(
                 (a, b) =>
                 {
-                    var distA = Vector3.Distance(a.bounds.center, _botOwner.Position);
-                    var distB = Vector3.Distance(b.bounds.center, _botOwner.Position);
+                    var distA =
+                        a == null
+                            ? float.NaN
+                            : Vector3.Distance(a.bounds.center, _botOwner.Position);
+                    var distB =
+                        b == null
+                            ? float.NaN
+                            : Vector3.Distance(b.bounds.center, _botOwner.Position);
                     return distA.CompareTo(distB);
                 }
             );
 
-            int rangeCalculations = 0;
+            yield return null;
 
+            int rangeCalculations = 0;
             // For each object detected, check to see if it is loot and then calculate its distance from the player
-            foreach (Collider collider in colliderList)
+            foreach (var collider in colliderList)
             {
                 if (collider == null || String.IsNullOrEmpty(_botOwner.name))
                 {
+                    yield return null;
                     continue;
                 }
 
@@ -119,6 +151,7 @@ namespace LootingBots.Patch.Components
                 // If object has been ignored, skip to the next object detected
                 if (_lootingBrain.IsLootIgnored(rootItem?.Id))
                 {
+                    yield return null;
                     continue;
                 }
 
@@ -304,7 +337,7 @@ namespace LootingBots.Patch.Components
 
             // Make sure the point is still snapped to the NavMesh after its been pushed
             Vector3 destination = NavMesh.SamplePosition(
-                center - padding,
+                center - (padding * 1.5f),
                 out navMeshAlignedPoint,
                 1f,
                 navMeshAlignedPoint.mask

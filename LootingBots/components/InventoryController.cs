@@ -1,11 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
-using Comfort.Common;
 
 using EFT;
 using EFT.InventoryLogic;
@@ -270,7 +268,7 @@ namespace LootingBots.Patch.Components
         /**
         * Sorts the items in the tactical vest so that items prefer to be in slots that match their size. I.E a 1x1 item will be placed in a 1x1 slot instead of a 1x2 slot
         */
-        public async Task<IResult> SortTacVest()
+        public IEnumerator SortTacVest()
         {
             SearchableItemClass tacVest = (SearchableItemClass)
                 _botInventoryController.Inventory.Equipment
@@ -281,15 +279,15 @@ namespace LootingBots.Patch.Components
 
             if (tacVest != null)
             {
-                var result = LootUtils.SortContainer(tacVest, _botInventoryController);
+                var result = InteractionsHandlerClass.Sort(tacVest, _botInventoryController, true);
+                yield return null;
 
                 if (result.Succeeded)
                 {
-                    return await _transactionController.TryRunNetworkTransaction(result);
+                    Task sortTask = _transactionController.TryRunNetworkTransaction(result);
+                    yield return new WaitUntil(() => sortTask.IsCompleted);
                 }
             }
-
-            return null;
         }
 
         /**
@@ -318,7 +316,7 @@ namespace LootingBots.Patch.Components
 
                     if (_log.InfoEnabled)
                         _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
-                    
+
                     // Ignore magazines that a bot cannot actively use
                     if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
@@ -356,7 +354,6 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-
                     // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
                     if (item is SearchableItemClass)
                     {
@@ -382,7 +379,12 @@ namespace LootingBots.Patch.Components
                         bool success = await TryAddItemsToBot(
                             weapon.Slots
                                 .Where(slot => !slot.Required)
-                                .SelectMany(slot => slot.Items.Where(modItem => modItem is Mod mod && mod.RaidModdable))
+                                .SelectMany(
+                                    slot =>
+                                        slot.Items.Where(
+                                            modItem => modItem is Mod mod && mod.RaidModdable
+                                        )
+                                )
                         );
 
                         if (!success)
@@ -713,7 +715,7 @@ namespace LootingBots.Patch.Components
                             {
                                 ChangeToPrimary();
                                 Stats.AddNetValue(lootValue);
-                                await TransactionController.SimulatePlayerDelay(1000);
+                                await TransactionController.SimulatePlayerDelay(1500);
                             }
                         );
                         Stats.WeaponValues.Primary = new ValuePair(lootWeapon.Id, lootValue);
@@ -741,6 +743,7 @@ namespace LootingBots.Patch.Components
                                     await _transactionController.TryEquipItem(lootWeapon);
                                     await TransactionController.SimulatePlayerDelay(1500);
                                     ChangeToPrimary();
+                                    await TransactionController.SimulatePlayerDelay(1500);
                                 }
                             );
 
@@ -768,6 +771,7 @@ namespace LootingBots.Patch.Components
                                 Stats.AddNetValue(lootValue);
                                 await TransactionController.SimulatePlayerDelay(1500);
                                 ChangeToPrimary();
+                                await TransactionController.SimulatePlayerDelay(1500);
                             }
                         );
                         Stats.WeaponValues.Secondary = Stats.WeaponValues.Primary;
@@ -905,7 +909,7 @@ namespace LootingBots.Patch.Components
             {
                 _log.LogDebug($"No nested items found in {parentItem.Name}");
             }
-            
+
             return true;
         }
 
@@ -932,11 +936,16 @@ namespace LootingBots.Patch.Components
 
         public bool AllowedToEquip(Item lootItem)
         {
+            Util.EquipmentType eligiblePmcGear = (Util.EquipmentType)
+                LootingBots.PMCGearToEquip.Value;
+            Util.EquipmentType eligibleScavGear = (Util.EquipmentType)
+                LootingBots.ScavGearToEquip.Value;
+
             WildSpawnType botType = _botOwner.Profile.Info.Settings.Role;
             bool isPMC = BotTypeUtils.IsPMC(botType);
             bool allowedToEquip = isPMC
-                ? LootingBots.PMCGearToEquip.Value.IsItemEligible(lootItem)
-                : LootingBots.ScavGearToEquip.Value.IsItemEligible(lootItem);
+                ? eligiblePmcGear.IsItemEligible(lootItem)
+                : eligibleScavGear.IsItemEligible(lootItem);
 
             return allowedToEquip;
         }
@@ -953,7 +962,10 @@ namespace LootingBots.Patch.Components
             // All usable mags and money should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
             return IsUsableMag(lootItem as MagazineClass)
                 || isMoney
-                || (pickupNotRestricted && IsValuableEnough(CurrentItemPrice));
+                || (
+                    pickupNotRestricted
+                    && (EquipmentTypeUtils.IsDogtag(lootItem) || IsValuableEnough(CurrentItemPrice))
+                );
         }
 
         /** Generates a SwapAction to send to the transaction controller*/
@@ -986,7 +998,7 @@ namespace LootingBots.Patch.Components
                         {
                             Stats.SubtractNetValue(_itemAppraiser.GetItemPrice(toThrow));
                             _lootingBrain.IgnoreLoot(toThrow.Id);
-                            await TransactionController.SimulatePlayerDelay(1000);
+                            await TransactionController.SimulatePlayerDelay(1500);
 
                             if (toThrow is Weapon weapon)
                             {

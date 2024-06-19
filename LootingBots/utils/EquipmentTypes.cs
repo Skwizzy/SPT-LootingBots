@@ -8,6 +8,7 @@ using HeadArmorClass = GClass2636;
 using BodyArmorClass = GClass2637;
 using BackpackItemClass = GClass2684;
 using TacticalRigItemClass = GClass2685;
+using DogtagClass = GClass2713;
 
 namespace LootingBots.Patch.Util
 {
@@ -21,6 +22,31 @@ namespace LootingBots.Patch.Util
         Weapon = 16,
         Grenade = 32,
         Helmet = 64,
+        Dogtag = 128,
+        ArmorPlate = 256,
+
+        All =
+            Backpack
+            | TacticalRig
+            | ArmoredRig
+            | ArmorVest
+            | Weapon
+            | Helmet
+            | Grenade
+            | Dogtag
+            | ArmorPlate
+    }
+
+    [Flags]
+    public enum CanEquipEquipmentType
+    {
+        Backpack = EquipmentType.Backpack,
+        TacticalRig = EquipmentType.TacticalRig,
+        ArmoredRig = EquipmentType.ArmoredRig,
+        ArmorVest = EquipmentType.ArmorVest,
+        Weapon = EquipmentType.Weapon,
+        Grenade = EquipmentType.Grenade,
+        Helmet = EquipmentType.Helmet,
 
         All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade
     }
@@ -62,6 +88,15 @@ namespace LootingBots.Patch.Util
             return equipmentType.HasFlag(EquipmentType.Helmet);
         }
 
+        public static bool HasArmorPlate(this EquipmentType equipmentType)
+        {
+            return equipmentType.HasFlag(EquipmentType.ArmorPlate);
+        }
+
+        public static bool HasDogtag(this EquipmentType equipmentType) {
+            return equipmentType.HasFlag(EquipmentType.Dogtag);
+        }
+
         // GClasses based off GClass2558.FindSlotToPickUp
         public static bool IsItemEligible(this EquipmentType allowedGear, Item item)
         {
@@ -88,6 +123,15 @@ namespace LootingBots.Patch.Util
             if (IsTacticalRig(item))
             {
                 return allowedGear.HasTacticalRig();
+            }
+
+            if (IsArmorPlate(item, out ArmorPlateClass _))
+            {
+                return allowedGear.HasArmorPlate();
+            }
+
+            if (IsDogtag(item)) {
+                return allowedGear.HasDogtag();
             }
 
             if (item is KnifeClass) { }
@@ -141,6 +185,10 @@ namespace LootingBots.Patch.Util
             plate = isArmorPlate ? (ArmorPlateClass)item : null;
 
             return isArmorPlate;
+        }
+
+        public static bool IsDogtag(Item item) {
+            return item is DogtagClass;
         }
     }
 }

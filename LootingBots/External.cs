@@ -1,13 +1,8 @@
-﻿using System;
-
-using EFT;
-using EFT.Interactive;
+﻿using EFT;
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
-
-using UnityEngine;
 
 namespace LootingBots
 {
@@ -18,7 +13,7 @@ namespace LootingBots
         {
             if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (!lootingBrain.HasFreeSpace)
                 {
@@ -30,8 +25,7 @@ namespace LootingBots
                     log.LogDebug("Forcing a loot scan");
                 }
 
-                lootFinder.ScanTimer = Time.time - 1f;
-                lootFinder.LockUntilNextScan = true;
+                lootFinder.ForceScan();
                 return true;
             }
             return false;
@@ -42,14 +36,18 @@ namespace LootingBots
         {
             if (GetAllComponents(bot, out LootingBrain lootingBrain, out LootFinder lootFinder))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug($"Preventing a bot from looting for the next {duration} seconds");
 
-                lootFinder.ScanTimer = Time.time + duration;
-                lootFinder.LockUntilNextScan = true;
-                lootingBrain.DisableTransactions();
+                if (lootingBrain.IsBrainEnabled)
+                {
+                    lootFinder.OverrideNextScanTime(duration);
+
+                    lootingBrain.DisableTransactions();
+                }
+
                 return true;
             }
             return false;
@@ -62,7 +60,7 @@ namespace LootingBots
         {
             if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug(
@@ -81,7 +79,7 @@ namespace LootingBots
         {
             if (GetLootingBrain(bot, out LootingBrain lootingBrain))
             {
-                BotLog log = new BotLog(LootingBots.LootLog, bot);
+                BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
                     log.LogDebug(
@@ -124,6 +122,11 @@ namespace LootingBots
         {
             lootFinder = bot.GetPlayer.gameObject.GetComponent<LootFinder>();
             return lootFinder != null;
+        }
+
+        private static BotLog CreateInteropLog(BotOwner bot)
+        {
+            return new BotLog(LootingBots.InteropLog, bot);
         }
     }
 }

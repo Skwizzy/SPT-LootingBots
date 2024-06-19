@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 using EFT;
@@ -60,13 +59,24 @@ namespace LootingBots.Patch.Components
 
         public bool IsPlayerScav;
 
+        public bool LockUntilNextScan = false;
+
+        // Allows external methods to force the looting brain for a bot to be enabled regardless of performance settings
+        public bool ForceBrainEnabled = false;
+
         public bool IsBrainEnabled
         {
             get
             {
-                return LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
-                    || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
-                    || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this);
+                return ForceBrainEnabled
+                    || (
+                        !_isDisabledForPerformance
+                        && (
+                            LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(this)
+                            || LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(this)
+                            || LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(this)
+                        )
+                    );
             }
         }
 
@@ -97,6 +107,28 @@ namespace LootingBots.Patch.Components
         // Delay simulating the time it takes for the UI to open and start searching a container
         public const int LootingStartDelay = 2500;
 
+        // Interval for the performance check to disable the looting brain
+        const float PeformanceTimerInterval = 3f;
+
+        // Max distance from the player a bot can be before their looting brain is disabled
+        private double _distanceLimit
+        {
+            get { return Math.Pow(LootingBots.LimitDistnaceFromPlayer.Value, 2); }
+        }
+
+        // Current distance to the player
+        private float _distanceToPlayer
+        {
+            get { return (BotOwner.Position - ActiveLootCache.MainPlayer.Position).sqrMagnitude; }
+        }
+
+        // Bot will be considered close enough to the player if the distanceLimit is 0, otherwise the distance from the player must be <= the limit
+        private bool _isCloseToPlayer
+        {
+            get { return _distanceLimit == 0 || _distanceToPlayer <= _distanceLimit; }
+        }
+        private bool _isDisabledForPerformance = false;
+        private float _performanceTimer = 0f;
         private BotLog _log;
 
         public void Init(BotOwner botOwner)
@@ -107,32 +139,98 @@ namespace LootingBots.Patch.Components
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
             IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
+            _performanceTimer = Time.time + PeformanceTimerInterval;
             ActiveLootCache.Init();
+
+            if (ActiveBotCache.IsCacheActive)
+            {
+                // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
+                if (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer))
+                {
+                    ActiveBotCache.Add(botOwner);
+                }
+                else
+                {
+                    if (_log.WarningEnabled)
+                        _log.LogWarning(
+                            $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                        );
+                    _isDisabledForPerformance = true;
+                }
+            }
         }
 
         /*
         * LootFinder update should only be running if one of the looting settings is enabled and the bot is in an active state
         */
-        public async Task Update()
+        public void Update()
         {
             try
             {
-                if (IsBrainEnabled && BotOwner.BotState == EBotState.Active)
+                if (BotOwner.BotState == EBotState.Active)
                 {
-                    if (InventoryController.ShouldSort)
+                    if (ActiveBotCache.IsCacheActive && _performanceTimer < Time.time)
                     {
-                        // Sort items in tacVest for better space management
-                        await InventoryController.SortTacVest();
-                    }
+                        bool closeEnoughToPlayer = _isCloseToPlayer;
+                        // For a disabled bot to be allowed to loot they must meet the following criteria:
+                        // 1. The bot has been manually flagged for looting
+                        //              OR
+                        // 1. ActiveBotCache is not at capacity
+                        // 2. Bot is close enough to the player
+                        if (
+                            _isDisabledForPerformance
+                            && (
+                                ForceBrainEnabled
+                                || (ActiveBotCache.IsAbleToCache && closeEnoughToPlayer)
+                            )
+                        )
+                        {
+                            ActiveBotCache.Add(BotOwner);
+                            _isDisabledForPerformance = false;
+                        }
+                        // For an enabled bot to become disabled they must meet the following criteria:
+                        // 1. Bot is not currently trying to loot something
+                        // 2. BotCache is over capacity or the bot is no longer close enough to the player
+                        else if (
+                            !HasActiveLootable
+                            && !ForceBrainEnabled
+                            && ActiveBotCache.Has(BotOwner)
+                            && (ActiveBotCache.IsOverCapacity || !closeEnoughToPlayer)
+                        )
+                        {
+                            ActiveBotCache.Remove(BotOwner);
+                            _isDisabledForPerformance = true;
 
-                    // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item
-                    if (ActiveItem && ActiveItem?.ItemOwner?.RootItem == null)
+                            if (_log.WarningEnabled)
+                                _log.LogWarning(
+                                    $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                                );
+                        }
+
+                        // The performance check should occur every 3 seconds at the minimum.
+                        // If the loot scan interval is faster, we should do the performance check at the loot scan interval
+                        _performanceTimer =
+                            Time.time
+                            + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
+                    }
+                    
+                    if (IsBrainEnabled)
                     {
-                        CleanupItem(false);
-                    }
+                        if (InventoryController.ShouldSort)
+                        {
+                            // Sort items in tacVest for better space management
+                           StartCoroutine(InventoryController.SortTacVest());
+                        }
 
-                    // Open any nearby door
-                    BotOwner.DoorOpener.Update();
+                        // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item
+                        if (ActiveItem && ActiveItem?.ItemOwner?.RootItem == null)
+                        {
+                            CleanupItem(false);
+                        }
+
+                        // Open any nearby door
+                        BotOwner.DoorOpener.Update();
+                    }
                 }
             }
             catch (Exception e)
@@ -224,8 +322,13 @@ namespace LootingBots.Patch.Components
             if (_log.DebugEnabled)
                 _log.LogDebug($"Trying to add items from: {item.Name.Localized()}");
 
-            // Open the container
-            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
+            bool didOpen = false;
+            // If a container was closed, open it before looting
+            if (ActiveContainer?.DoorState == EDoorState.Shut)
+            {
+                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Open);
+                didOpen = true;
+            }
 
             Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
@@ -233,8 +336,11 @@ namespace LootingBots.Patch.Components
             Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemClass)item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
-            // Close the container
-            LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
+            // Close the container if the settings to close containers is checked or if the container was already opened when the bot tried to loot it
+            if (LootingBots.BotsAlwaysCloseContainers.Value || !didOpen)
+            {
+                LootUtils.InteractContainer(ActiveContainer, EInteractionType.Close);
+            }
 
             InventoryController.UpdateActiveWeapon();
 

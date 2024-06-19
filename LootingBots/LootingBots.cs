@@ -22,10 +22,13 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.3.2";
+        private const string MOD_VERSION = "1.3.3";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
+
+        public const EquipmentType CanPickupEquipmentDefaults = 
+            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
 
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
@@ -43,10 +46,14 @@ namespace LootingBots
 
         public static ConfigEntry<bool> DebugLootNavigation;
         public static ConfigEntry<LogLevel> LootingLogLevels;
+        public static ConfigEntry<LogLevel> InteropLogLevels;
+
         public static ConfigEntry<int> FilterLogsOnBot;
         public static Log LootLog;
+        public static Log InteropLog;
 
         // Loot Settings
+        public static ConfigEntry<bool> BotsAlwaysCloseContainers;
         public static ConfigEntry<bool> UseMarketPrices;
         public static ConfigEntry<int> TransactionDelay;
         public static ConfigEntry<bool> UseExamineTime;
@@ -58,14 +65,18 @@ namespace LootingBots
         public static ConfigEntry<float> ScavMinLootThreshold;
         public static ConfigEntry<float> ScavMaxLootThreshold;
 
-        public static ConfigEntry<EquipmentType> PMCGearToEquip;
+        public static ConfigEntry<CanEquipEquipmentType> PMCGearToEquip;
         public static ConfigEntry<EquipmentType> PMCGearToPickup;
-        public static ConfigEntry<EquipmentType> ScavGearToEquip;
+        public static ConfigEntry<CanEquipEquipmentType> ScavGearToEquip;
         public static ConfigEntry<EquipmentType> ScavGearToPickup;
 
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
         public static Log ItemAppraiserLog;
         public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
+
+        // Performance Settings
+        public static ConfigEntry<int> MaxActiveLootingBots;
+        public static ConfigEntry<int> LimitDistnaceFromPlayer;
 
         public void LootFinderSettings()
         {
@@ -172,6 +183,16 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
                 )
             );
+            InteropLogLevels = Config.Bind(
+                "Loot Finder",
+                "Debug: Interop Log Levels",
+                LogLevel.Error,
+                new ConfigDescription(
+                    "Enable different levels of log messages specific to the mod interop methods",
+                    null,
+                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                )
+            );
             FilterLogsOnBot = Config.Bind(
                 "Loot Finder",
                 "Debug: Filter logs on bot",
@@ -179,7 +200,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Filters new log entries only showing logs for the number of the bot specified. A value of 0 denotes no filter",
                     null,
-                    new ConfigurationManagerAttributes { Order = -1, IsAdvanced = true }
+                    new ConfigurationManagerAttributes { Order = -2, IsAdvanced = true }
                 )
             );
             DebugLootNavigation = Config.Bind(
@@ -189,7 +210,7 @@ namespace LootingBots
                 new ConfigDescription(
                     "Renders shperes where bots are trying to navigate when container looting. (Red): Container position. (Black): 'Optimized' container position. (Green): Calculated bot destination. (Blue): NavMesh corrected destination (where the bot will move).",
                     null,
-                    new ConfigurationManagerAttributes { Order = -2, IsAdvanced = true }
+                    new ConfigurationManagerAttributes { Order = -3, IsAdvanced = true }
                 )
             );
 
@@ -238,6 +259,16 @@ namespace LootingBots
 
         public void LootSettings()
         {
+            BotsAlwaysCloseContainers = Config.Bind(
+                "Loot Settings",
+                "Bots always close containers",
+                true,
+                new ConfigDescription(
+                    "When enabled, bots will always try to close a container after they have finished looting. If the bot is inturrupted while looting, the container may remain open.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 12 }
+                )
+            );
             UseMarketPrices = Config.Bind(
                 "Loot Settings",
                 "Use flea market prices",
@@ -291,7 +322,7 @@ namespace LootingBots
             PMCGearToEquip = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear to equip",
-                EquipmentType.All,
+                CanEquipEquipmentType.All,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to equip during raid",
                     null,
@@ -301,7 +332,7 @@ namespace LootingBots
             PMCGearToPickup = Config.Bind(
                 "Loot Settings",
                 "PMC: Allowed gear in bags",
-                EquipmentType.All,
+                CanPickupEquipmentDefaults,
                 new ConfigDescription(
                     "The equipment a PMC bot is able to place in their backpack/rig",
                     null,
@@ -331,7 +362,7 @@ namespace LootingBots
             ScavGearToEquip = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear to equip",
-                EquipmentType.All,
+                CanEquipEquipmentType.All,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to equip during raid",
                     null,
@@ -341,7 +372,7 @@ namespace LootingBots
             ScavGearToPickup = Config.Bind(
                 "Loot Settings",
                 "Scav: Allowed gear in bags",
-                EquipmentType.All,
+                CanPickupEquipmentDefaults,
                 new ConfigDescription(
                     "The equipment a non-PMC bot is able to place in their backpack/rig",
                     null,
@@ -351,7 +382,7 @@ namespace LootingBots
 
             ItemAppraiserLogLevels = Config.Bind(
                 "Loot Settings",
-                "Debug: Log Levels",
+                "Debug: Item Appraiser Log Levels",
                 LogLevel.Error,
                 new ConfigDescription(
                     "Enables logs for the item apprasier that calcualtes the weapon values",
@@ -361,12 +392,38 @@ namespace LootingBots
             );
         }
 
+        public void PerformanceSettings()
+        {
+            MaxActiveLootingBots = Config.Bind(
+                "Performance",
+                "Maximum looting bots",
+                20,
+                new ConfigDescription(
+                    "Limits the amount of bots that are able to simultaneously run looting logic. A value of 0 represents no limit",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 11 }
+                )
+            );
+            LimitDistnaceFromPlayer = Config.Bind(
+                "Performance",
+                "Limit looting by distance to player",
+                0,
+                new ConfigDescription(
+                    "Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 10 }
+                )
+            );
+        }
+
         public void Awake()
         {
             LootFinderSettings();
             LootSettings();
+            PerformanceSettings();
 
             LootLog = new Log(Logger, LootingLogLevels);
+            InteropLog = new Log(Logger, InteropLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
             new SettingsAndCachePatch().Enable();

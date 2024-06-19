@@ -23,6 +23,17 @@ namespace LootingBots.Brain.Logics
         private int _navigationAttempts = 0;
         private Vector3 _destination = Vector3.zero;
 
+        // Run looting logic only when the bot is not looting and when the bot has an active item to loot
+        private bool _shouldUpdate
+        {
+            get
+            {
+                return !_lootingBrain.LootTaskRunning
+                    && _lootingBrain.HasActiveLootable
+                    && BotOwner.BotState == EBotState.Active;
+            }
+        }
+
         public LootingLogic(BotOwner botOwner)
             : base(botOwner)
         {
@@ -33,7 +44,7 @@ namespace LootingBots.Brain.Logics
         public override void Update()
         {
             // Kick off looting logic
-            if (ShouldUpdate())
+            if (_shouldUpdate)
             {
                 TryLoot();
             }
@@ -48,14 +59,6 @@ namespace LootingBots.Brain.Logics
             base.Stop();
         }
 
-        // Run looting logic only when the bot is not looting and when the bot has an active item to loot
-        public bool ShouldUpdate()
-        {
-            return !_lootingBrain.LootTaskRunning
-                && _lootingBrain.HasActiveLootable
-                && BotOwner.BotState == EBotState.Active;
-        }
-
         private void TryLoot()
         {
             try
@@ -65,14 +68,32 @@ namespace LootingBots.Brain.Logics
                 {
                     _closeEnoughTimer = Time.time + 2f;
 
+
+                    bool isCloseEnough = IsCloseEnough();
+
+                    // If the bot is closer than 4m from the loot, they should slow down and not sprint to prevent powersliding
+                    bool slowDown = _lootingBrain.DistanceToLoot != -1 && _lootingBrain.DistanceToLoot < 6f;
+
                     // If the bot has not just looted something, loot the current item since we are now close enough
-                    if (!_lootingBrain.LootTaskRunning && IsCloseEnough())
+                    if (!_lootingBrain.LootTaskRunning && isCloseEnough)
                     {
                         // Crouch and look to item
                         BotOwner.SetPose(0f);
                         BotOwner.Steering.LookToPoint(_lootingBrain.LootObjectPosition);
                         _lootingBrain.StartLooting();
                         return;
+                    }
+                    else if (!_lootingBrain.LootTaskRunning)
+                    {
+                        // Stand and move to lootable
+                        BotOwner.SetTargetMoveSpeed(1f);
+                        BotOwner.SetPose(1f);
+                        BotOwner.Steering.LookToMovingDirection();
+                    }
+                    
+                    // Stop the bot from sprinting when approaching lootable
+                    if (slowDown) {
+                        BotOwner.Mover.Sprint(false);
                     }
                 }
 
@@ -131,11 +152,6 @@ namespace LootingBots.Brain.Logics
             bool canMove = true;
             try
             {
-                // Stand and move to lootable
-                BotOwner.SetPose(1f);
-                BotOwner.SetTargetMoveSpeed(1f);
-                BotOwner.Steering.LookToMovingDirection();
-
                 //Increment navigation attempt counter
                 _navigationAttempts++;
 
@@ -147,40 +163,34 @@ namespace LootingBots.Brain.Logics
                 // If the bot has not been stuck for more than 2 navigation checks, attempt to navigate to the lootable otherwise ignore the container forever
                 bool isBotStuck = _stuckCount > 1;
                 bool isNavigationLimit = _navigationAttempts > 30;
+
+                // Log every 5 movement attempts to reduce noise
+                if (_navigationAttempts % 5 == 1 && _log.DebugEnabled)
+                {
+                    _log.LogDebug($"[Attempt: {_navigationAttempts}] Moving to {lootableName}");
+                }
+
                 if (!isBotStuck && !isNavigationLimit && _lootingBrain.Destination != Vector3.zero)
                 {
-                    // Make sure the point is still snapped to the NavMesh after its been pushed
                     _destination = _lootingBrain.Destination;
 
-                    // If we were able to snap the loot position to a NavMesh, attempt to navigate
-                    if (HasLOS())
+                    if (_navigationAttempts == 1)
                     {
                         NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
                             _destination,
                             true,
-                            1f,
+                            -1f,
                             false,
-                            false,
-                            true
+                            false
                         );
-                        // Log every 5 movement attempts to reduce noise
-                        if (_navigationAttempts % 5 == 1 && _log.DebugEnabled)
-                        {
-                            _log.LogDebug(
-                                $"[Attempt: {_navigationAttempts}] Moving to {lootableName} status: {pathStatus}"
-                            );
-                        }
 
-                        if (pathStatus != NavMeshPathStatus.PathComplete && _log.WarningEnabled)
+                        if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
-                            _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
+                            if (_log.WarningEnabled)
+                                _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
+
                             canMove = false;
                         }
-                    }
-                    else if (_log.WarningEnabled)
-                    {
-                        _log.LogWarning($"Have no LOS. Ignoring {lootableName}");
-                        canMove = false;
                     }
                 }
                 else
@@ -237,6 +247,11 @@ namespace LootingBots.Brain.Logics
                 _lootingBrain.DistanceToLoot = dist;
             }
 
+            if (isCloseEnough && _log.WarningEnabled)
+            {
+                _log.LogWarning($"Bot is close enought to loot. {dist}. height diff: {y}");
+            }
+
             return isCloseEnough;
         }
 
@@ -245,7 +260,7 @@ namespace LootingBots.Brain.Logics
         {
             // Calculate change in distance and assume any change less than .25f means the bot hasnt moved.
             float changeInDist = Math.Abs(_lootingBrain.DistanceToLoot - dist);
-            bool isStuck = changeInDist < 0.25f;
+            bool isStuck = changeInDist < 0.3f;
 
             if (isStuck)
             {
