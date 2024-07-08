@@ -1,17 +1,14 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
 using Comfort.Common;
-
 using EFT;
 using EFT.InventoryLogic;
-
 using LootingBots.Patch.Util;
 
 using InventoryControllerResultStruct = GStruct413;
-using GridClassEx = GClass2502;
-using GridCacheClass = GClass1390;
+using GridClassEx = GClass2516;
+using GridCacheClass = GClass1401;
 
 namespace LootingBots.Patch.Components
 {
