@@ -42,44 +42,44 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\3.8.0\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Aki.Common">
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Aki.Common.dll</HintPath>
+    <Reference Include="spt-common">
+      <HintPath>..\..\..\3.9.0\BepInEx\plugins\spt\spt-common.dll</HintPath>
     </Reference>
-    <Reference Include="Aki.Reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="spt-reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Aki.Reflection.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
     </Reference>
-    <Reference Include="aki_PrePatch">
-      <HintPath>..\..\..\3.8.0\BepInEx\patchers\aki_PrePatch.dll</HintPath>
+    <Reference Include="spt-prepatch">
+      <HintPath>..\..\..\3.9.0\BepInEx\patchers\spt-prepatch.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>..\..\..\3.8.0\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="Comfort">
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
     </Reference>
-    <Reference Include="ItemComponent.Types" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll" Private="False" />
+    <Reference Include="ItemComponent.Types" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll" Private="False" />
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
-    <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
-    <Reference Include="DissonanceVoip" HintPath="..\..\..\3.8.0\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll" Private="False" />
-    <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.8.0\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
+    <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
+    <Reference Include="DissonanceVoip" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll" Private="False" />
+    <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.9.0\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="External.cs" />
