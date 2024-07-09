@@ -1,10 +1,10 @@
 {
     "name": "LootingBots-ServerMod",
-    "version": "1.3.4",
+    "version": "1.3.5",
     "main": "src/mod.js",
     "license": "MIT",
     "author": "Skwizzy",
-    "akiVersion": "~3.8",
+    "sptVersion": "~3.9",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"

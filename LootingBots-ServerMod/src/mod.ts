@@ -1,12 +1,12 @@
 import { DependencyContainer } from "tsyringe";
 
-import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
-import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
-import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { ConfigServer } from "@spt-aki/servers/ConfigServer";
-import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
-import { IPmcConfig } from "@spt-aki/models/spt/config/IPmcConfig";
-import { IBotConfig } from "@spt-aki/models/spt/config/IBotConfig";
+import { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
+import { DatabaseServer } from "@spt/servers/DatabaseServer";
+import { ILogger } from "@spt/models/spt/utils/ILogger";
+import { ConfigServer } from "@spt/servers/ConfigServer";
+import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
+import { IPmcConfig } from "@spt/models/spt/config/IPmcConfig";
+import { IBotConfig } from "@spt/models/spt/config/IBotConfig";
 
 
 import config from "../config/config.json";
