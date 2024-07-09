@@ -1,25 +1,22 @@
+using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
-
 using Comfort.Common;
-
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-
 using UnityEngine;
 
 // Found in InteractionHsHandlerClass.Sort
-using GridClassEx = GClass2502;
+using GridClassEx = GClass2516;
 // Found in GClass2502.SetSearched
-using GridCacheClass = GClass1390;
-using GridManagerClass = GClass2808;
-using SortResultStruct = GStruct414<GClass2808>;
-using GridItemClass = GClass2507;
-using ItemAddressExClass = GClass2769;
-using SortErrorClass = GClass3302;
-using System.Reflection;
-using System;
+using GridCacheClass = GClass1401;
+using GridManagerClass = GClass2824;
+using SortResultStruct = GStruct414<GClass2824>;
+using GridItemClass = GClass2521;
+using ItemAddressExClass = ItemAddressClass;
+using SortErrorClass = GClass3326;
 
 namespace LootingBots.Patch.Util
 {

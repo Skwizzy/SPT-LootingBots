@@ -2,13 +2,13 @@ using System;
 
 using EFT.InventoryLogic;
 
-using FaceCoveringClass = GClass2635;
-using ArmorPlateClass = GClass2633;
-using HeadArmorClass = GClass2636;
-using BodyArmorClass = GClass2637;
-using BackpackItemClass = GClass2684;
-using TacticalRigItemClass = GClass2685;
-using DogtagClass = GClass2713;
+using FaceCoveringClass = GogglesClass;
+using ArmorPlateClass = GClass2648;
+using HeadArmorClass = GClass2651;
+using BodyArmorClass = GClass2652;
+using BackpackItemClass = GClass2699;
+using TacticalRigItemClass = GClass2700;
+using DogtagClass = GClass2728;
 
 namespace LootingBots.Patch.Util
 {

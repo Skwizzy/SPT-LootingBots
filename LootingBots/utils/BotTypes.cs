@@ -133,14 +133,7 @@ namespace LootingBots.Patch.Util
 
         public static bool IsPMC(WildSpawnType wildSpawnType)
         {
-            // Unchecked to get around cast of usec/bear WildSpawnType added in AkiBotsPrePatcher
-            unchecked
-            {
-                WildSpawnType bear = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptBearValue;
-                WildSpawnType usec = (WildSpawnType)Aki.PrePatch.AkiBotsPrePatcher.sptUsecValue;
-
-                return wildSpawnType == bear || wildSpawnType == usec;
-            }
+            return wildSpawnType == WildSpawnType.pmcBEAR || wildSpawnType == WildSpawnType.pmcUSEC;
         }
 
         public static bool IsScav(WildSpawnType wildSpawnType)
