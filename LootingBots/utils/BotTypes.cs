@@ -105,6 +105,11 @@ namespace LootingBots.Patch.Util
                 case WildSpawnType.followerTagilla:
                 case WildSpawnType.followerTest:
                 case WildSpawnType.followerZryachiy:
+                case WildSpawnType.followerKolontayAssault:
+                case WildSpawnType.followerKolontaySecurity:
+                case WildSpawnType.bossBoarSniper:
+                case WildSpawnType.followerBoarClose1:
+                case WildSpawnType.followerBoarClose2:
                 case WildSpawnType.followerBoar:
                 {
                     return enabledTypes.HasFollower();
