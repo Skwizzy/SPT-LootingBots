@@ -4,7 +4,7 @@
     "main": "src/mod.js",
     "license": "MIT",
     "author": "Skwizzy",
-    "sptVersion": "~3.9",
+    "sptVersion": "~3.10",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"
