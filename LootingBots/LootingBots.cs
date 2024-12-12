@@ -23,7 +23,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.3.5";
+        private const string MOD_VERSION = "1.4.0-rc1";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -177,7 +177,7 @@ namespace LootingBots
             LootingLogLevels = Config.Bind(
                 "Loot Finder",
                 "Debug: Log Levels",
-                LogLevel.Error,
+                LogLevel.Info,
                 new ConfigDescription(
                     "Enable different levels of log messages to show in the logs",
                     null,
