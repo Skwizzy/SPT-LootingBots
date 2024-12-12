@@ -6,7 +6,7 @@ using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 
-using InventoryControllerResultStruct = GStruct413;
+using InventoryControllerResultStruct = GStruct445;
 using GridClassEx = GClass2516;
 using GridCacheClass = GClass1401;
 
@@ -15,13 +15,13 @@ namespace LootingBots.Patch.Components
     public class TransactionController
     {
         readonly BotLog _log;
-        readonly InventoryControllerClass _inventoryController;
+        readonly EFT.InventoryLogic.InventoryController _inventoryController;
         readonly BotOwner _botOwner;
         public bool Enabled;
 
         public TransactionController(
             BotOwner botOwner,
-            InventoryControllerClass inventoryController,
+            EFT.InventoryLogic.InventoryController inventoryController,
             BotLog log
         )
         {
@@ -88,7 +88,7 @@ namespace LootingBots.Patch.Components
         {
             try
             {
-                SearchableItemClass secureContainer = (SearchableItemClass)
+                SearchableItemItemClass secureContainer = (SearchableItemItemClass)
                     _inventoryController.Inventory.Equipment
                         .GetSlot(EquipmentSlot.SecuredContainer)
                         .ContainedItem;
@@ -96,7 +96,7 @@ namespace LootingBots.Patch.Components
                 // Try to get the current ammo used by the weapon by checking the contents of the magazine. If its empty, try to create an instance of the ammo using the Weapon's CurrentAmmoTemplate
                 Item ammoToAdd =
                     weapon.GetCurrentMagazine()?.FirstRealAmmo()
-                    ?? Singleton<ItemFactory>.Instance.CreateItem(
+                    ?? Singleton<ItemFactoryClass>.Instance.CreateItem(
                         MongoID.Generate(),
                         weapon.CurrentAmmoTemplate._id,
                         null
@@ -108,8 +108,8 @@ namespace LootingBots.Patch.Components
                         .GetAllItems()
                         .Where(
                             item =>
-                                item is BulletClass bullet
-                                && bullet.Caliber.Equals(((BulletClass)ammoToAdd).Caliber)
+                                item is AmmoItemClass bullet
+                                && bullet.Caliber.Equals(((AmmoItemClass)ammoToAdd).Caliber)
                         )
                         .ToArray()
                         .Length > 0;
@@ -127,24 +127,23 @@ namespace LootingBots.Patch.Components
                         Item ammo = ammoToAdd.CloneItem();
                         ammo.StackObjectsCount = ammo.StackMaxSize;
 
-                        string[] visitorIds = new string[] { _inventoryController.ID };
-
-                        var location = _inventoryController.FindGridToPickUp(
-                            ammo,
-                            secureContainer.Grids
-                        );
+                        GClass3115 location = _inventoryController.FindGridToPickUp(ammoToAdd);
 
                         if (location != null)
                         {
-                            var result = location.AddWithoutRestrictions(ammo, visitorIds);
+                            var result = location.AddWithoutRestrictions(ammo);
                             if (result.Succeeded)
                             {
                                 ammoAdded += ammo.StackObjectsCount;
+
+                                /*
                                 Singleton<GridCacheClass>.Instance.Add(
                                     location.GetOwner().ID,
                                     location.Grid as GridClassEx,
                                     ammo
                                 );
+
+                                */
                             }
                             else if (_log.ErrorEnabled)
                             {
@@ -271,9 +270,10 @@ namespace LootingBots.Patch.Components
                     return false;
                 }
 
-                if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is BulletClass))
+                if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is AmmoItemClass))
                 {
-                    AddExtraAmmo(weapon);
+                    //Archangel: todo: This is broke at the moment due to methods of 3.9 no longer existing here, would need a re-do
+                    //AddExtraAmmo(weapon);
                 }
 
                 if (_log.DebugEnabled)
@@ -434,23 +434,7 @@ namespace LootingBots.Patch.Components
                 if (_log.WarningEnabled)
                     _log.LogWarning($"Throwing item: {toThrow.Name.Localized()}");
 
-                _inventoryController.ThrowItem(
-                    toThrow,
-                    null,
-                    new Callback(
-                        async (IResult result) =>
-                        {
-                            if (result.Succeed && swapAction.Callback != null)
-                            {
-                                await SimulatePlayerDelay();
-                                await swapAction.Callback();
-                            }
-
-                            promise.TrySetResult(result);
-                        }
-                    ),
-                    false
-                );
+                _inventoryController.ThrowItem(toThrow);
                 await SimulatePlayerDelay();
                 IResult taskResult = await promise.Task;
                 if (taskResult.Failed)

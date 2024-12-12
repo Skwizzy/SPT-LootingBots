@@ -1,14 +1,4 @@
-using System;
-
 using EFT.InventoryLogic;
-
-using FaceCoveringClass = GogglesClass;
-using ArmorPlateClass = GClass2648;
-using HeadArmorClass = GClass2651;
-using BodyArmorClass = GClass2652;
-using BackpackItemClass = GClass2699;
-using TacticalRigItemClass = GClass2700;
-using DogtagClass = GClass2728;
 
 namespace LootingBots.Patch.Util
 {
@@ -125,7 +115,7 @@ namespace LootingBots.Patch.Util
                 return allowedGear.HasTacticalRig();
             }
 
-            if (IsArmorPlate(item, out ArmorPlateClass _))
+            if (IsArmorPlate(item, out ArmorPlateItemClass _))
             {
                 return allowedGear.HasArmorPlate();
             }
@@ -134,9 +124,9 @@ namespace LootingBots.Patch.Util
                 return allowedGear.HasDogtag();
             }
 
-            if (item is KnifeClass) { }
+            if (item is KnifeItemClass) { }
 
-            if (item is GrenadeClass)
+            if (item is ThrowWeapItemClass)
             {
                 return allowedGear.HasGrenade();
             }
@@ -151,12 +141,12 @@ namespace LootingBots.Patch.Util
 
         public static bool IsTacticalRig(Item item)
         {
-            return item is TacticalRigItemClass;
+            return item is VestItemClass;
         }
 
         public static bool IsArmoredRig(Item item)
         {
-            return item is TacticalRigItemClass && item.IsArmorMod();
+            return item is VestItemClass && item.IsArmorMod();
         }
 
         public static bool IsBackpack(Item item)
@@ -166,29 +156,29 @@ namespace LootingBots.Patch.Util
 
         public static bool IsHelmet(Item item)
         {
-            return item is HeadArmorClass;
+            return item is HeadwearItemClass;
         }
 
         public static bool IsArmorVest(Item item)
         {
-            return item is BodyArmorClass;
+            return item is ArmoredEquipmentItemClass;
         }
 
         public static bool IsFaceCovering(Item item)
         {
-            return item is FaceCoveringClass;
+            return item is VisorsItemClass;
         }
 
-        public static bool IsArmorPlate(Item item, out ArmorPlateClass plate)
+        public static bool IsArmorPlate(Item item, out ArmorPlateItemClass plate)
         {
-            bool isArmorPlate = item is ArmorPlateClass;
-            plate = isArmorPlate ? (ArmorPlateClass)item : null;
+            bool isArmorPlate = item is ArmorPlateItemClass;
+            plate = isArmorPlate ? (ArmorPlateItemClass)item : null;
 
             return isArmorPlate;
         }
 
         public static bool IsDogtag(Item item) {
-            return item is DogtagClass;
+            return item is OtherItemClass;
         }
     }
 }

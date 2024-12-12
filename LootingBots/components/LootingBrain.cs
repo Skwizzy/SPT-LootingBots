@@ -275,8 +275,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                InventoryControllerClass corpseInventoryController =
-                    LootUtils.GetBotInventoryController(ActiveCorpse);
+                EFT.InventoryLogic.InventoryController corpseInventoryController = LootUtils.GetBotInventoryController(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
                 IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(
@@ -333,7 +332,7 @@ namespace LootingBots.Patch.Components
             Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemClass)item);
+            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemItemClass)item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container if the settings to close containers is checked or if the container was already opened when the bot tried to loot it
@@ -371,7 +370,7 @@ namespace LootingBots.Patch.Components
                     _log.LogDebug($"Trying to pick up loose item: {item.Name.Localized()}");
 
                 BotOwner.GetPlayer.UpdateInteractionCast();
-                Task<bool> lootTask = InventoryController.TryAddItemsToBot(new Item[] { item });
+                Task<bool> lootTask = InventoryController.TryAddItemsToBot([item]);
 
                 yield return new WaitUntil(() => lootTask.IsCompleted);
 
