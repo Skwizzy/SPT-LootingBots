@@ -12,6 +12,7 @@ using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
 using System.Collections.Generic;
+using skwizzy.LootingBots.patches.DisableBotLooting;
 
 namespace LootingBots
 {
@@ -428,6 +429,9 @@ namespace LootingBots
 
             new SettingsAndCachePatch().Enable();
             new RemoveComponent().Enable();
+            new ItemTaker_Activate_Patch().Enable();
+            new ItemDropper_Activate_Patch().Enable();
+            new BotExternalItemsController_Activate_Patch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
