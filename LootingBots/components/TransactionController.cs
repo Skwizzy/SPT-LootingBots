@@ -434,7 +434,21 @@ namespace LootingBots.Patch.Components
                 if (_log.WarningEnabled)
                     _log.LogWarning($"Throwing item: {toThrow.Name.Localized()}");
 
-                _inventoryController.ThrowItem(toThrow);
+                _inventoryController.ThrowItem(toThrow, false,
+                    new Callback(
+                        async (IResult result) =>
+                        {
+                            if (result.Succeed && swapAction.Callback != null)
+                            {
+                                await SimulatePlayerDelay();
+                                await swapAction.Callback();
+                            }
+
+                            promise.TrySetResult(result);
+                        }
+                    )
+                );
+
                 await SimulatePlayerDelay();
                 IResult taskResult = await promise.Task;
                 if (taskResult.Failed)
