@@ -309,7 +309,6 @@ namespace LootingBots.Patch.Components
 
                     if (_transactionController.IsLootingInterrupted())
                     {
-                        UpdateKnownItems();
                         return false;
                     }
 
@@ -362,7 +361,6 @@ namespace LootingBots.Patch.Components
 
                         if (!success)
                         {
-                            UpdateKnownItems();
                             return success;
                         }
                     }
@@ -390,7 +388,6 @@ namespace LootingBots.Patch.Components
 
                         if (!success)
                         {
-                            UpdateKnownItems();
                             return success;
                         }
                     }
@@ -400,9 +397,6 @@ namespace LootingBots.Patch.Components
                     _log.LogDebug("Item was null");
                 }
             }
-
-            // Refresh bot's known items dictionary
-            UpdateKnownItems();
 
             return true;
         }
@@ -457,38 +451,6 @@ namespace LootingBots.Patch.Components
             {
                 _botOwner.WeaponManager.Reload.TryFillMagazines();
                 _botOwner.WeaponManager.Reload.TryReload();
-            }
-        }
-
-        /** Marks all items placed in rig/pockets/backpack as known items that they are able to use */
-        public void UpdateKnownItems()
-        {
-            // Protection against bot death interruption
-            if (_botOwner != null && _botInventoryController != null)
-            {
-                SearchableItemItemClass tacVest = (SearchableItemItemClass)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.TacticalVest)
-                        .ContainedItem;
-                SearchableItemItemClass backpack = (SearchableItemItemClass)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.Backpack)
-                        .ContainedItem;
-                SearchableItemItemClass pockets = (SearchableItemItemClass)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.Pockets)
-                        .ContainedItem;
-                SearchableItemItemClass secureContainer = (SearchableItemItemClass)
-                    _botInventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.SecuredContainer)
-                        .ContainedItem;
-
-                /*
-                tacVest?.UncoverAll(_botOwner.ProfileId);
-                backpack?.UncoverAll(_botOwner.ProfileId);
-                pockets?.UncoverAll(_botOwner.ProfileId);
-                secureContainer?.UncoverAll(_botOwner.ProfileId);
-                */
             }
         }
 
