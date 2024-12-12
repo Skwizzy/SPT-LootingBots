@@ -34,7 +34,7 @@ namespace LootingBots.Patch.Components
         public BotOwner BotOwner;
 
         // Component responsible for adding items to the bot inventory
-        public InventoryController InventoryController;
+        public LootingInventoryController InventoryController;
 
         // Current container that the bot will try to loot
         public LootableContainer ActiveContainer;
@@ -135,7 +135,7 @@ namespace LootingBots.Patch.Components
         {
             _log = new BotLog(LootingBots.LootLog, botOwner);
             BotOwner = botOwner;
-            InventoryController = new InventoryController(BotOwner, this);
+            InventoryController = new LootingInventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
             IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
@@ -275,7 +275,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                EFT.InventoryLogic.InventoryController corpseInventoryController = LootUtils.GetBotInventoryController(ActiveCorpse);
+                InventoryController corpseInventoryController = LootUtils.GetBotInventoryController(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
                 IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(

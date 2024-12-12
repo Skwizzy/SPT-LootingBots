@@ -15,13 +15,13 @@ namespace LootingBots.Patch.Components
     public class TransactionController
     {
         readonly BotLog _log;
-        readonly EFT.InventoryLogic.InventoryController _inventoryController;
+        readonly InventoryController _inventoryController;
         readonly BotOwner _botOwner;
         public bool Enabled;
 
         public TransactionController(
             BotOwner botOwner,
-            EFT.InventoryLogic.InventoryController inventoryController,
+            InventoryController inventoryController,
             BotLog log
         )
         {

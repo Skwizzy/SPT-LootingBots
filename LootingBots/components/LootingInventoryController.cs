@@ -94,12 +94,12 @@ namespace LootingBots.Patch.Components
         }
     }
 
-    public class InventoryController
+    public class LootingInventoryController
     {
         private readonly BotLog _log;
         private readonly TransactionController _transactionController;
         private readonly BotOwner _botOwner;
-        private readonly EFT.InventoryLogic.InventoryController _botInventoryController;
+        private readonly InventoryController _botInventoryController;
         private readonly LootingBrain _lootingBrain;
         private readonly ItemAppraiser _itemAppraiser;
 
@@ -159,7 +159,7 @@ namespace LootingBots.Patch.Components
 
         public bool ShouldSort = true;
 
-        public InventoryController(BotOwner botOwner, LootingBrain lootingBrain)
+        public LootingInventoryController(BotOwner botOwner, LootingBrain lootingBrain)
         {
             try
             {
