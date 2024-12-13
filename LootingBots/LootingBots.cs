@@ -177,7 +177,7 @@ namespace LootingBots
             LootingLogLevels = Config.Bind(
                 "Loot Finder",
                 "Debug: Log Levels",
-                LogLevel.Info,
+                LogLevel.Error,
                 new ConfigDescription(
                     "Enable different levels of log messages to show in the logs",
                     null,
