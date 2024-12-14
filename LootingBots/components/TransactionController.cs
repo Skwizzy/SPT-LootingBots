@@ -128,16 +128,25 @@ namespace LootingBots.Patch.Components
                         ammo.StackObjectsCount = ammo.StackMaxSize;
 
                         LocationInGrid location = container.FindFreeSpace(ammo);
-                        GStruct446<GClass3136> result = container.AddItemWithoutRestrictions(ammo, location);
 
-                        if (result.Succeeded)
+                        if (location != null)
                         {
-                            ammoAdded += ammo.StackObjectsCount;
+                            GStruct446<GClass3136> result = container.AddItemWithoutRestrictions(ammo, location);
+                            if (result.Succeeded)
+                            {
+                                ammoAdded += ammo.StackObjectsCount;
+                            }
+                            else if (_log.ErrorEnabled)
+                            {
+                                _log.LogError(
+                                    $"Failed to add {ammo.Name.Localized()} to secure container"
+                                );
+                            }
                         }
                         else if (_log.ErrorEnabled)
                         {
                             _log.LogError(
-                                $"Failed to add {ammo.Name.Localized()} to secure container"
+                                $"Cannot find location in secure container for {ammo.Name.Localized()}"
                             );
                         }
                     }
