@@ -4,7 +4,7 @@ import { AssortHelper } from "@spt/helpers/AssortHelper";
 import { PaymentHelper } from "@spt/helpers/PaymentHelper";
 import { ProfileHelper } from "@spt/helpers/ProfileHelper";
 import { TraderHelper } from "@spt/helpers/TraderHelper";
-import { Item } from "@spt/models/eft/common/tables/IItem";
+import { IItem } from "@spt/models/eft/common/tables/IItem";
 import { ITrader, ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
 import { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
 import { ILogger } from "@spt/models/spt/utils/ILogger";
@@ -14,9 +14,9 @@ import { FenceService } from "@spt/services/FenceService";
 import { LocalisationService } from "@spt/services/LocalisationService";
 import { TraderAssortService } from "@spt/services/TraderAssortService";
 import { TraderPurchasePersisterService } from "@spt/services/TraderPurchasePersisterService";
-import { ICloner } from "@spt/utils/cloners/ICloner";
 import { MathUtil } from "@spt/utils/MathUtil";
 import { TimeUtil } from "@spt/utils/TimeUtil";
+import { ICloner } from "@spt/utils/cloners/ICloner";
 export declare class TraderAssortHelper {
     protected logger: ILogger;
     protected mathUtil: MathUtil;
@@ -44,10 +44,10 @@ export declare class TraderAssortHelper {
      * Filter out assorts not unlocked due to level OR quest completion
      * @param sessionId session id
      * @param traderId traders id
-     * @param flea Should assorts player hasn't unlocked be returned - default false
+     * @param showLockedAssorts Should assorts player hasn't unlocked be returned - default false
      * @returns a traders' assorts
      */
-    getAssort(sessionId: string, traderId: string, flea?: boolean): ITraderAssort;
+    getAssort(sessionId: string, traderId: string, showLockedAssorts?: boolean): ITraderAssort;
     /**
      * Given the blacklist provided, remove root items from assort
      * @param assortToFilter Trader assort to modify
@@ -58,7 +58,7 @@ export declare class TraderAssortHelper {
      * Reset every traders root item `BuyRestrictionCurrent` property to 0
      * @param assortItems Items to adjust
      */
-    protected resetBuyRestrictionCurrentValue(assortItems: Item[]): void;
+    protected resetBuyRestrictionCurrentValue(assortItems: IItem[]): void;
     /**
      * Create a dict of all assort id = quest id mappings used to work out what items should be shown to player based on the quests they've started/completed/failed
      */
@@ -76,19 +76,9 @@ export declare class TraderAssortHelper {
      */
     traderAssortsHaveExpired(traderID: string): boolean;
     /**
-     * Iterate over all assorts barter_scheme values, find barters selling for money and multiply by multipler in config
-     * @param traderAssort Assorts to multiple price of
-     */
-    protected multiplyItemPricesByConfigMultiplier(traderAssort: ITraderAssort): void;
-    /**
      * Get an array of pristine trader items prior to any alteration by player (as they were on server start)
      * @param traderId trader id
      * @returns array of Items
      */
-    protected getPristineTraderAssorts(traderId: string): Item[];
-    /**
-     * Returns generated ragfair offers in a trader assort format
-     * @returns Trader assort object
-     */
-    protected getRagfairDataAsTraderAssort(): ITraderAssort;
+    protected getPristineTraderAssorts(traderId: string): IItem[];
 }

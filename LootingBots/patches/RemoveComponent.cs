@@ -23,7 +23,7 @@ namespace LootingBots.Patch
             {
                 if (botOwner.GetPlayer.TryGetComponent<LootingBrain>(out var component))
                 {
-                    Object.Destroy(component);
+                    UnityEngine.Object.Destroy(component);
                 }
             };
         }

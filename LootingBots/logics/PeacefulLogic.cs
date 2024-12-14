@@ -1,7 +1,8 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 
-using PeacefulNodeClass = GClass185;
+//Check in CreateNode(BotLogicDecision type, BotOwner bot) (GClass507 on 3.10 to set this)
+using PeacefulNodeClass = GClass246;
 
 namespace LootingBots.Brain.Logics
 {

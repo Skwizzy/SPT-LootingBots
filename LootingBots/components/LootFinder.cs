@@ -170,9 +170,9 @@ namespace LootingBots.Patch.Components
                         && !(lootItem is Corpse) // Item is not a corpse
                         && !rootItem.QuestItem // Item is not a quest item
                         && (
-                            lootItem?.ItemOwner?.RootItem is SearchableItemClass // If the item is something that can be searched, consider it lootable
+                            lootItem?.ItemOwner?.RootItem is SearchableItemItemClass // If the item is something that can be searched, consider it lootable
                             || (
-                                lootItem?.ItemOwner?.RootItem is ArmorClass newArmor // If the item is some sort of armor, check to see if its better than what is equipped
+                                lootItem?.ItemOwner?.RootItem is ArmoredEquipmentItemClass newArmor // If the item is some sort of armor, check to see if its better than what is equipped
                                 && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(
                                     newArmor
                                 )

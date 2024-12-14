@@ -1,108 +1,47 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4623CFD4-155E-40B9-A6FF-B07401F66CB9}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>skwizzy.LootingBots</RootNamespace>
-    <AssemblyName>skwizzy.LootingBots</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <PlatformTarget>x64</PlatformTarget>
-    <OutputPath>bin\x64\Release\</OutputPath>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>..\..\..\3.9.0\BepInEx\core\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="spt-common">
-      <HintPath>..\..\..\3.9.0\BepInEx\plugins\spt\spt-common.dll</HintPath>
-    </Reference>
-    <Reference Include="spt-reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.9.0\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
-    </Reference>
-    <Reference Include="spt-prepatch">
-      <HintPath>..\..\..\3.9.0\BepInEx\patchers\spt-prepatch.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>..\..\..\3.9.0\BepInEx\core\BepInEx.dll</HintPath>
-    </Reference>
-    <Reference Include="Comfort">
-      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Comfort.dll</HintPath>
-    </Reference>
-    <Reference Include="ItemComponent.Types" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll" Private="False" />
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll" Private="False" />
-    <Reference Include="UnityEngine.AIModule" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\UnityEngine.AIModule.dll" Private="False" />
-    <Reference Include="DissonanceVoip" HintPath="..\..\..\3.9.0\EscapeFromTarkov_Data\Managed\DissonanceVoip.dll" Private="False" />
-    <Reference Include="DrakiaXYZ.BigBrain" HintPath="..\..\..\3.9.0\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="False" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="External.cs" />
-    <Compile Include="LootingBots.cs" />
-    <Compile Include="LootingBotsInterop.cs" />
-    <Compile Include="LootingLayer.cs" />
-    <Compile Include="ConfigurationManagerAttributes.cs" />
-    <Compile Include="utils\*.cs" />
-    <Compile Include="patches\*.cs" />
-    <Compile Include="components\*.cs" />
-    <Compile Include="logics\*.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>FOR /F %25%25x IN ('tasklist /NH /FI "IMAGENAME eq EscapeFromTarkov.exe"') DO IF %25%25x == EscapeFromTarkov.exe (
-taskkill /F /IM EscapeFromTarkov.exe
-ping -n  2 127.0.0.1 &gt;NUL
-)</PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>
-      copy "$(TargetPath)" "C:\SPT\3.9.0\BepInEx\plugins\skwizzy.LootingBots.dll"
-      copy "$(TargetPath)" "C:\SPT\My_Mods\SPT-LootingBots\Build\BepInEx\plugins\skwizzy.LootingBots.dll"
-    </PostBuildEvent>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net471</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <RootNamespace>skwizzy.LootingBots</RootNamespace>
+        <AssemblyName>skwizzy.LootingBots</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Core" Version="5.*" />
+        <PackageReference Include="UnityEngine.Modules" Version="2019.4.39" IncludeAssets="compile" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="DrakiaXYZ-BigBrain">
+          <HintPath>..\References\DrakiaXYZ-BigBrain.dll</HintPath>
+        </Reference>
+        <Reference Include="spt-common">
+            <HintPath>..\References\spt-common.dll</HintPath>
+        </Reference>
+        <Reference Include="spt-reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>..\References\spt-reflection.dll</HintPath>
+        </Reference>
+        <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>..\References\hollowed.dll</HintPath>
+        </Reference>
+        <Reference Include="Comfort">
+            <HintPath>..\References\Comfort.dll</HintPath>
+        </Reference>
+        <Reference Include="ItemComponent.Types" HintPath="..\References\ItemComponent.Types.dll" Private="False" />
+        <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+            <SpecificVersion>False</SpecificVersion>
+            <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+        <Reference Include="System" />
+        <Reference Include="UnityEngine">
+            <HintPath>..\References\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
+    </ItemGroup>
+
 </Project>
