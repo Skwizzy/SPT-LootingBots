@@ -91,6 +91,8 @@ namespace LootingBots.Patch.Components
                         .GetSlot(EquipmentSlot.SecuredContainer)
                         .ContainedItem;
 
+                StashGridClass container = secureContainer.Grids.FirstOrDefault();
+
                 // Try to get the current ammo used by the weapon by checking the contents of the magazine. If its empty, try to create an instance of the ammo using the Weapon's CurrentAmmoTemplate
                 Item ammoToAdd =
                     weapon.GetCurrentMagazine()?.FirstRealAmmo()
@@ -125,35 +127,17 @@ namespace LootingBots.Patch.Components
                         Item ammo = ammoToAdd.CloneItem();
                         ammo.StackObjectsCount = ammo.StackMaxSize;
 
-                        GClass3115 location = _inventoryController.FindGridToPickUp(ammoToAdd);
+                        LocationInGrid location = container.FindFreeSpace(ammo);
+                        GStruct446<GClass3136> result = container.AddItemWithoutRestrictions(ammo, location);
 
-                        if (location != null)
+                        if (result.Succeeded)
                         {
-                            var result = location.AddWithoutRestrictions(ammo);
-                            if (result.Succeeded)
-                            {
-                                ammoAdded += ammo.StackObjectsCount;
-
-                                /*
-                                Singleton<GridCacheClass>.Instance.Add(
-                                    location.GetOwner().ID,
-                                    location.Grid as GridClassEx,
-                                    ammo
-                                );
-
-                                */
-                            }
-                            else if (_log.ErrorEnabled)
-                            {
-                                _log.LogError(
-                                    $"Failed to add {ammo.Name.Localized()} to secure container"
-                                );
-                            }
+                            ammoAdded += ammo.StackObjectsCount;
                         }
                         else if (_log.ErrorEnabled)
                         {
                             _log.LogError(
-                                $"Cannot find location in secure container for {ammo.Name.Localized()}"
+                                $"Failed to add {ammo.Name.Localized()} to secure container"
                             );
                         }
                     }
@@ -271,7 +255,7 @@ namespace LootingBots.Patch.Components
                 if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is AmmoItemClass))
                 {
                     //Archangel: todo: This is broke at the moment due to methods of 3.9 no longer existing here, would need a re-do
-                    //AddExtraAmmo(weapon);
+                    AddExtraAmmo(weapon);
                 }
 
                 if (_log.DebugEnabled)
