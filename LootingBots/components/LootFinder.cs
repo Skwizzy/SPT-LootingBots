@@ -112,28 +112,33 @@ namespace LootingBots.Patch.Components
             // If we have some hits from the sphere overlap, process the results
             if (hits > 0)
             {
-                // Create a sub array from colliders that only contains the relevant results
-                List<Collider> colliderList = colliders.ToList().GetRange(0, hits);
+                List<Collider> colliderList = new(hits);
+                int count = 0;
+
+                // Collect the first 'hits' colliders
+                foreach (var collider in colliders.Take(hits))
+                {
+                    float distance = Vector3.Distance(collider.bounds.center, _botOwner.Position);
+
+                    // Insert in sorted order using a simple insertion sort
+                    int insertIndex = 0;
+                    while (insertIndex < count && Vector3.Distance(colliderList[insertIndex].bounds.center, _botOwner.Position) < distance)
+                    {
+                        insertIndex++;
+                    }
+
+                    // Insert the collider in the appropriate position, nearest should be first.
+                    colliderList.Insert(insertIndex, collider);
+                    count++;
+
+                    if (count == hits) break;
+                }
+
+                // Optional logging if DebugEnabled
                 if (_log.DebugEnabled)
                 {
                     _log.LogDebug($"Scan results: {colliderList.Count}");
                 }
-
-                // Sort by nearest to bot location
-                colliderList.Sort(
-                    (a, b) =>
-                    {
-                        var distA =
-                            a == null
-                                ? float.NaN
-                                : Vector3.Distance(a.bounds.center, _botOwner.Position);
-                        var distB =
-                            b == null
-                                ? float.NaN
-                                : Vector3.Distance(b.bounds.center, _botOwner.Position);
-                        return distA.CompareTo(distB);
-                    }
-                );
 
                 yield return null;
 

@@ -278,13 +278,18 @@ namespace LootingBots.Patch.Components
                 InventoryController corpseInventoryController = LootUtils.GetBotInventoryController(ActiveCorpse);
 
                 // Get items to loot from the corpse in a priority order based off the slots
-                IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(
-                    corpseInventoryController
-                );
+                IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(corpseInventoryController);
 
-                IEnumerable<Item> priorityItems = prioritySlots
-                    .Select(slot => slot.ContainedItem)
-                    .Where(item => item != null);
+                List<Item> priorityItems = new();
+
+                foreach (Slot slot in prioritySlots)
+                {
+                    Item item = slot.ContainedItem;
+                    if (item != null)
+                    {
+                        priorityItems.Add(item);
+                    }
+                }
 
                 Task delayTask = TransactionController.SimulatePlayerDelay(LootingStartDelay);
                 yield return new WaitUntil(() => delayTask.IsCompleted);
