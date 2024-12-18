@@ -263,7 +263,6 @@ namespace LootingBots.Patch.Components
 
                 if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is AmmoItemClass))
                 {
-                    //Archangel: todo: This is broke at the moment due to methods of 3.9 no longer existing here, would need a re-do
                     AddExtraAmmo(weapon);
                 }
 
