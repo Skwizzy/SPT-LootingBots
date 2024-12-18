@@ -20,15 +20,7 @@ namespace LootingBots.Patch.Util
 
         public static InventoryController GetBotInventoryController(Player targetBot)
         {
-            Type targetBotType = targetBot.GetType();
-            FieldInfo botInventory = targetBotType.BaseType.GetField(
-                "_inventoryController",
-                BindingFlags.NonPublic
-                    | BindingFlags.Static
-                    | BindingFlags.Public
-                    | BindingFlags.Instance
-            );
-            return (InventoryController)botInventory.GetValue(targetBot);
+            return targetBot.InventoryController;
         }
 
         /** Calculate the size of a container */
@@ -59,22 +51,6 @@ namespace LootingBots.Patch.Util
             container?.Interact(result);
         }
 
-        // Sort grids in the container from smallest to largest
-        public static StashGridClass[] SortGrids(StashGridClass[] grids)
-        {
-            // Sort grids in the container from smallest to largest
-            var containerGrids = grids.ToList();
-            containerGrids.Sort(
-                (grid1, grid2) =>
-                {
-                    var grid1Size = grid1.GridHeight * grid1.GridWidth;
-                    var grid2Size = grid2.GridHeight * grid2.GridWidth;
-                    return grid1Size.CompareTo(grid2Size);
-                }
-            );
-            return containerGrids.ToArray();
-        }
-
         /**
         * Calculates the amount of empty grid slots in the container
         */
@@ -82,49 +58,35 @@ namespace LootingBots.Patch.Util
         {
             if (grids == null)
             {
-                grids = new StashGridClass[] { };
+                grids = [];
             }
 
-            List<StashGridClass> gridList = grids.ToList();
-            return gridList.Aggregate(
-                0,
-                (freeSpaces, grid) =>
-                {
-                    int gridSize = grid.GridHeight * grid.GridWidth;
-                    int containedItemSize = grid.GetSizeOfContainedItems();
-                    freeSpaces += gridSize - containedItemSize;
-                    return freeSpaces;
-                }
-            );
-        }
+            // Initialize freeSpaces to 0
+            int freeSpaces = 0;
 
-        /**
-        * Returns an array of available grid slots, omitting 1 free 1x2 slot. This is to ensure no loot is placed in this slot and the grid space is only used for reloaded mags
-        */
-        public static StashGridClass[] Reserve2x1Slot(StashGridClass[] grids)
-        {
-            List<StashGridClass> gridList = grids.ToList();
-            foreach (var grid in gridList)
+            // Loop through each grid and calculate the free spaces
+            foreach (StashGridClass grid in grids)
             {
                 int gridSize = grid.GridHeight * grid.GridWidth;
-                bool isLargeEnough = gridSize >= RESERVED_SLOT_COUNT;
-
-                // If the grid is larger than 2 spaces, and the amount of free space in the grid is greater or equal to 2
-                // reserve the grid as a place where the bot can place reloaded mags
-                if (isLargeEnough && gridSize - grid.GetSizeOfContainedItems() >= 2)
-                {
-                    gridList.Remove(grid);
-                    return gridList.ToArray();
-                }
+                int containedItemSize = grid.GetSizeOfContainedItems();
+                freeSpaces += gridSize - containedItemSize;
             }
 
-            return gridList.ToArray();
+            return freeSpaces;
         }
 
         /** Return the amount of spaces taken up by all the items in a given grid slot */
         public static int GetSizeOfContainedItems(this StashGridClass grid)
         {
-            return grid.Items.Aggregate(0, (sum, item2) => sum + item2.GetItemSize());
+            int containedItemSize = 0;
+
+            // Loop through each item in grid.Items and accumulate the item size
+            foreach (Item item in grid.Items)
+            {
+                containedItemSize += item.GetItemSize();
+            }
+
+            return containedItemSize;
         }
 
         /** Gets the size of an item in a grid */
@@ -143,26 +105,29 @@ namespace LootingBots.Patch.Util
                 return null;
             }
 
-            // Use the item's template id to search for the same item in the inventory
-            var mergeTarget = controller.Inventory
-                .GetAllItemByTemplate(item.TemplateId)
-                .FirstOrDefault(
-                    (foundItem) =>
-                    {
-                        // We dont want bots to stack loot in their secure containers
-                        bool isSecureContainer = foundItem
-                            .GetRootItem()
-                            .Parent.Container.ID.ToLower()
-                            .Equals("securedcontainer");
+            Item mergeTarget = null;
 
-                        // In order for an item to be considered a valid merge target, the sum of the 2 stacks being merged must not exceed the maximum stack size
-                        return !isSecureContainer
-                            && (
-                                item.StackObjectsCount + foundItem.StackObjectsCount
-                                <= foundItem.StackMaxSize
-                            );
-                    }
-                );
+            // Use the item's template id to search for the same item in the inventory
+            foreach (Item foundItem in controller.Inventory.GetAllItemByTemplate(item.TemplateId))
+            {
+                if (foundItem == null)
+                {
+                    continue;
+                }
+
+                Item rootItem = foundItem.GetRootItem();
+
+                if (rootItem.Parent.Container.ID.Equals("securedcontainer", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    continue;
+                }
+
+                if (item.StackObjectsCount + foundItem.StackObjectsCount <= foundItem.StackMaxSize)
+                {
+                    mergeTarget = foundItem;
+                    break; // Exit early when a valid merge target is found
+                }
+            }
 
             return mergeTarget;
         }
@@ -228,72 +193,48 @@ namespace LootingBots.Patch.Util
         }
 
         /** Given a list of slots, return all slots that are not flagged as Locked */
-        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(
-            InventoryController targetInventory,
-            EquipmentSlot[] desiredSlots
-        )
+        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(InventoryController targetInventory, EquipmentSlot[] desiredSlots)
         {
-            return desiredSlots.Where(
-                slot => targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false
-            );
+            List<EquipmentSlot> unlockedSlots = new();
+
+            // Loop through each desired slot
+            foreach (EquipmentSlot slot in desiredSlots)
+            {
+                // Check if the slot is unlocked
+                if (targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false)
+                {
+                    // Add the unlocked slot to the result list
+                    unlockedSlots.Add(slot);
+                }
+            }
+
+            return unlockedSlots;
         }
 
         /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
         public static IEnumerable<Item> GetAllLockedItems(CompoundItem itemWithSlots)
         {
-            return itemWithSlots.Slots?.Where(slot => slot.Locked).SelectMany(slot => slot.Items);
-        }
+            List<Item> resultItems = new();
 
-        // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
-        public static IEnumerable<StashGridClass> GetPrioritizedGridsForLoot(
-            this InventoryEquipment equipment,
-            Item item
-        )
-        {
-            SearchableItemItemClass tacVest = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
-            SearchableItemItemClass backpack = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
-            SearchableItemItemClass pockets = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.Pockets).ContainedItem;
-            SearchableItemItemClass secureContainer = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
-
-            StashGridClass[] tacVestGrids = new StashGridClass[0];
-            if (tacVest != null)
+            if(itemWithSlots.Slots == null)
             {
-                var sortedGrids = SortGrids(tacVest.Grids);
-                tacVestGrids = Reserve2x1Slot(sortedGrids);
+                return resultItems;
             }
 
-            StashGridClass[] backpackGrids =
-                (backpack != null) ? SortGrids(backpack.Grids) : new StashGridClass[0];
-            StashGridClass[] pocketGrids =
-                (pockets != null) ? pockets.Grids : new StashGridClass[0];
-            StashGridClass[] secureContainerGrids =
-                (secureContainer != null) ? secureContainer.Grids : new StashGridClass[0];
+            // Iterate over each slot in Slots
+            foreach (Slot slot in itemWithSlots.Slots)
+            {
+                if (slot.Locked)
+                {
+                    // Add all items from the locked slot to the result list
+                    if (slot.Items != null)
+                    {
+                        resultItems.AddRange(slot.Items);
+                    }
+                }
+            }
 
-            if (item is AmmoItemClass || item is MagazineItemClass)
-            {
-                return tacVestGrids
-                    .Concat(pocketGrids)
-                    .Concat(backpackGrids)
-                    .Concat(secureContainerGrids);
-            }
-            else if (item is ThrowWeapItemClass)
-            {
-                return pocketGrids
-                    .Concat(tacVestGrids)
-                    .Concat(backpackGrids)
-                    .Concat(secureContainerGrids);
-            }
-            else
-            {
-                return backpackGrids
-                    .Concat(tacVestGrids)
-                    .Concat(pocketGrids)
-                    .Concat(secureContainerGrids);
-            }
+            return resultItems;
         }
     }
 }

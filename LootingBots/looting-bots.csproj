@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <LangVersion>latest</LangVersion>
-        <RootNamespace>skwizzy.LootingBots</RootNamespace>
+        <RootNamespace>LootingBots</RootNamespace>
         <AssemblyName>skwizzy.LootingBots</AssemblyName>
     </PropertyGroup>
 

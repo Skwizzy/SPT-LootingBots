@@ -375,16 +375,25 @@ namespace LootingBots.Patch.Components
                     else if (item is Weapon weapon && LootingBots.CanStripAttachments.Value)
                     {
                         // Strip the weapon of its mods if we cannot pickup the weapon
-                        bool success = await TryAddItemsToBot(
-                            weapon.Slots
-                                .Where(slot => !slot.Required)
-                                .SelectMany(
-                                    slot =>
-                                        slot.Items.Where(
-                                            modItem => modItem is Mod mod && mod.RaidModdable
-                                        )
-                                )
-                        );
+                        List<Item> itemsToAdd = new();
+
+                        foreach (Slot weaponSlot in weapon.Slots)
+                        {
+                            if (!weaponSlot.Required)
+                            {
+                                foreach (Item weaponMod in weaponSlot.Items)
+                                {
+                                    // check if the weaponMod is an actual mod and if it can be modded in raid
+                                    if (weaponMod is Mod mod && mod.RaidModdable)
+                                    {
+                                        itemsToAdd.Add(weaponMod);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Call TryAddItemsToBot with the filtered items
+                        bool success = await TryAddItemsToBot(itemsToAdd);
 
                         if (!success)
                         {
@@ -534,24 +543,38 @@ namespace LootingBots.Patch.Components
 
         public bool IsUsableMag(MagazineItemClass mag)
         {
-            return mag != null
-                && _botInventoryController.Inventory.Equipment
-                    .GetSlotsByName(
-                        new EquipmentSlot[]
-                        {
-                            EquipmentSlot.FirstPrimaryWeapon,
-                            EquipmentSlot.SecondPrimaryWeapon,
-                            EquipmentSlot.Holster
-                        }
-                    )
-                    .Where(
-                        slot =>
-                            slot.ContainedItem != null
-                            && ((Weapon)slot.ContainedItem).GetMagazineSlot() != null
-                            && ((Weapon)slot.ContainedItem).GetMagazineSlot().CanAccept(mag)
-                    )
-                    .ToArray()
-                    .Length > 0;
+            return mag != null && HasAcceptableMagazineSlot(_botInventoryController.Inventory.Equipment, mag);
+
+        }
+        private bool HasAcceptableMagazineSlot(InventoryEquipment equipment, MagazineItemClass mag)
+        {
+            EquipmentSlot[] slotsToCheck = [
+                EquipmentSlot.FirstPrimaryWeapon,
+                EquipmentSlot.SecondPrimaryWeapon,
+                EquipmentSlot.Holster
+            ];
+
+            foreach (Slot slot in equipment.GetSlotsByName(slotsToCheck))
+            {
+                if (slot.ContainedItem == null)
+                {
+                    continue;
+                }
+
+                if (slot.ContainedItem is not Weapon weapon)
+                {
+                    continue;
+                }
+
+                Slot magazineSlot = weapon.GetMagazineSlot();
+
+                if (magazineSlot != null && magazineSlot.CanAccept(mag))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /**
@@ -845,20 +868,19 @@ namespace LootingBots.Patch.Components
             IEnumerable<Item> lockedItems = parentItem is CompoundItem itemWithSlots
                 ? LootUtils.GetAllLockedItems(itemWithSlots)
                 : null;
-                
-            IEnumerable<Item> items = parentItem
-                .GetFirstLevelItems()
-                .Where(
-                // Filter out the parent item from the list, quest items, and single use keys
-                nestedItem =>
-                {
-                    bool isItemLocked = lockedItems != null && lockedItems.Contains(nestedItem);
 
-                    return nestedItem.Id != parentItem.Id
-                        && !nestedItem.QuestItem
-                        && !isItemLocked
-                        && !LootUtils.IsSingleUseKey(nestedItem);
-                });
+            List<Item> items = new();
+
+            foreach (var nestedItem in parentItem.GetFirstLevelItems())
+            {
+                // Check the conditions to filter out items
+                bool isItemLocked = lockedItems != null && lockedItems.Contains(nestedItem);
+
+                if (nestedItem.Id != parentItem.Id && !nestedItem.QuestItem && !isItemLocked && !LootUtils.IsSingleUseKey(nestedItem))
+                {
+                    items.Add(nestedItem);
+                }
+            }
 
             if (items.Count() > 0)
             {

@@ -11,8 +11,7 @@ using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
-using System.Collections.Generic;
-using skwizzy.LootingBots.patches.DisableBotLooting;
+using LootingBots.Patch.DisableBotLooting;
 
 namespace LootingBots
 {
@@ -23,7 +22,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.4.0";
+        private const string MOD_VERSION = "1.4.1";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;

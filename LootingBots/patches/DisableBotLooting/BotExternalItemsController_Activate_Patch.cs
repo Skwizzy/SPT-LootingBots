@@ -1,7 +1,11 @@
 ﻿using System.Reflection;
+using System.Reflection.Emit;
+
+using HarmonyLib;
+
 using SPT.Reflection.Patching;
 
-namespace skwizzy.LootingBots.patches.DisableBotLooting
+namespace LootingBots.Patch.DisableBotLooting
 {
     internal class BotExternalItemsController_Activate_Patch : ModulePatch
     {
@@ -10,10 +14,16 @@ namespace skwizzy.LootingBots.patches.DisableBotLooting
             return typeof(BotExternalItemsController).GetMethod(nameof(BotExternalItemsController.Activate));
         }
 
-        [PatchPrefix]
-        private static bool PatchPrefix()
+        [PatchTranspiler]
+        private static IEnumerable<CodeInstruction> Transpile(IEnumerable<CodeInstruction> instructions)
         {
-            return false;
+            // Create a new set of instructions
+            List<CodeInstruction> newInstructionsList =
+            [
+                new CodeInstruction(OpCodes.Ret) // Return immediately
+            ];
+
+            return newInstructionsList;
         }
     }
 }
