@@ -1,4 +1,8 @@
 ﻿using System.Reflection;
+using System.Reflection.Emit;
+
+using HarmonyLib;
+
 using SPT.Reflection.Patching;
 
 namespace LootingBots.Patch.DisableBotLooting
@@ -10,10 +14,16 @@ namespace LootingBots.Patch.DisableBotLooting
             return typeof(BotItemDropper).GetMethod(nameof(BotItemDropper.Activate));
         }
 
-        [PatchPrefix]
-        private static bool PatchPrefix()
+        [PatchTranspiler]
+        private static IEnumerable<CodeInstruction> Transpile(IEnumerable<CodeInstruction> instructions)
         {
-            return false;
+            // Create a new set of instructions
+            List<CodeInstruction> instructionsList =
+            [
+                new CodeInstruction(OpCodes.Ret) // Return immediately
+            ];
+
+            return instructionsList;
         }
     }
 }
