@@ -1,6 +1,6 @@
 {
     "name": "LootingBots-ServerMod",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "main": "src/mod.js",
     "license": "MIT",
     "author": "Skwizzy",
