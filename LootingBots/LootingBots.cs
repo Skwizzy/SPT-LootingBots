@@ -11,8 +11,7 @@ using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
-using System.Collections.Generic;
-using skwizzy.LootingBots.patches.DisableBotLooting;
+using LootingBots.Patch.DisableBotLooting;
 
 namespace LootingBots
 {

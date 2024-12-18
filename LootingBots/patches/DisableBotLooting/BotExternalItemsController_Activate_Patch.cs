@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using SPT.Reflection.Patching;
 
-namespace skwizzy.LootingBots.patches.DisableBotLooting
+namespace LootingBots.Patch.DisableBotLooting
 {
     internal class BotExternalItemsController_Activate_Patch : ModulePatch
     {
