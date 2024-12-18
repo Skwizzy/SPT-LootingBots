@@ -116,7 +116,7 @@ namespace LootingBots.Patch.Components
                 int count = 0;
 
                 // Collect the first 'hits' colliders
-                foreach (var collider in colliders.Take(hits))
+                foreach (Collider collider in colliders.Take(hits))
                 {
                     float distance = Vector3.Distance(collider.bounds.center, _botOwner.Position);
 
