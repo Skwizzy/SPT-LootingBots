@@ -76,10 +76,12 @@ namespace LootingBots.Patch.Components
             if (Log.DebugEnabled)
                 Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
 
-            float finalPrice = lootWeapon.Mods.Aggregate(
-                0f,
-                (price, mod) => price += GetItemHandbookPrice(mod)
-            );
+            float finalPrice = 0f;
+
+            foreach (Mod weaponMod in lootWeapon.Mods)
+            {
+                finalPrice += GetItemHandbookPrice(weaponMod);
+            }
 
             if (Log.DebugEnabled)
                 Log.LogDebug(

@@ -543,24 +543,38 @@ namespace LootingBots.Patch.Components
 
         public bool IsUsableMag(MagazineItemClass mag)
         {
-            return mag != null
-                && _botInventoryController.Inventory.Equipment
-                    .GetSlotsByName(
-                        new EquipmentSlot[]
-                        {
-                            EquipmentSlot.FirstPrimaryWeapon,
-                            EquipmentSlot.SecondPrimaryWeapon,
-                            EquipmentSlot.Holster
-                        }
-                    )
-                    .Where(
-                        slot =>
-                            slot.ContainedItem != null
-                            && ((Weapon)slot.ContainedItem).GetMagazineSlot() != null
-                            && ((Weapon)slot.ContainedItem).GetMagazineSlot().CanAccept(mag)
-                    )
-                    .ToArray()
-                    .Length > 0;
+            return mag != null && HasAcceptableMagazineSlot(_botInventoryController.Inventory.Equipment, mag);
+
+        }
+        private bool HasAcceptableMagazineSlot(InventoryEquipment equipment, MagazineItemClass mag)
+        {
+            EquipmentSlot[] slotsToCheck = [
+                EquipmentSlot.FirstPrimaryWeapon,
+                EquipmentSlot.SecondPrimaryWeapon,
+                EquipmentSlot.Holster
+            ];
+
+            foreach (Slot slot in equipment.GetSlotsByName(slotsToCheck))
+            {
+                if (slot.ContainedItem == null)
+                {
+                    continue;
+                }
+
+                if (slot.ContainedItem is not Weapon weapon)
+                {
+                    continue;
+                }
+
+                Slot magazineSlot = weapon.GetMagazineSlot();
+
+                if (magazineSlot != null && magazineSlot.CanAccept(mag))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /**

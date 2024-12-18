@@ -103,16 +103,16 @@ namespace LootingBots.Patch.Components
                     );
 
                 // Check to see if there already is ammo that meets the weapon's caliber in the secure container
-                bool alreadyHasAmmo =
-                    secureContainer
-                        .GetAllItems()
-                        .Where(
-                            item =>
-                                item is AmmoItemClass bullet
-                                && bullet.Caliber.Equals(((AmmoItemClass)ammoToAdd).Caliber)
-                        )
-                        .ToArray()
-                        .Length > 0;
+                bool alreadyHasAmmo = false;
+
+                foreach (var item in secureContainer.GetAllItems())
+                {
+                    if (item is AmmoItemClass bullet && bullet.Caliber.Equals(((AmmoItemClass)ammoToAdd).Caliber))
+                    {
+                        alreadyHasAmmo = true;
+                        break; // Early exit as soon as a match is found
+                    }
+                }
 
                 // If we dont have any ammo, attempt to add 10 max ammo stacks into the bot's secure container for use in the bot's internal reloading code
                 if (!alreadyHasAmmo)

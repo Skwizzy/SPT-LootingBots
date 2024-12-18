@@ -20,18 +20,6 @@ namespace LootingBots.Patch.Util
 
         public static InventoryController GetBotInventoryController(Player targetBot)
         {
-            /*
-            Type targetBotType = targetBot.GetType();
-            FieldInfo botInventory = targetBotType.BaseType.GetField(
-                "_inventoryController",
-                BindingFlags.NonPublic
-                    | BindingFlags.Static
-                    | BindingFlags.Public
-                    | BindingFlags.Instance
-            );
-            return (InventoryController)botInventory.GetValue(targetBot);
-            */
-
             return targetBot.InventoryController;
         }
 
@@ -117,26 +105,29 @@ namespace LootingBots.Patch.Util
                 return null;
             }
 
-            // Use the item's template id to search for the same item in the inventory
-            var mergeTarget = controller.Inventory
-                .GetAllItemByTemplate(item.TemplateId)
-                .FirstOrDefault(
-                    (foundItem) =>
-                    {
-                        // We dont want bots to stack loot in their secure containers
-                        bool isSecureContainer = foundItem
-                            .GetRootItem()
-                            .Parent.Container.ID.ToLower()
-                            .Equals("securedcontainer");
+            Item mergeTarget = null;
 
-                        // In order for an item to be considered a valid merge target, the sum of the 2 stacks being merged must not exceed the maximum stack size
-                        return !isSecureContainer
-                            && (
-                                item.StackObjectsCount + foundItem.StackObjectsCount
-                                <= foundItem.StackMaxSize
-                            );
-                    }
-                );
+            // Use the item's template id to search for the same item in the inventory
+            foreach (Item foundItem in controller.Inventory.GetAllItemByTemplate(item.TemplateId))
+            {
+                if (foundItem == null)
+                {
+                    continue;
+                }
+
+                Item rootItem = foundItem.GetRootItem();
+
+                if (rootItem.Parent.Container.ID.Equals("securedcontainer", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    continue;
+                }
+
+                if (item.StackObjectsCount + foundItem.StackObjectsCount <= foundItem.StackMaxSize)
+                {
+                    mergeTarget = foundItem;
+                    break; // Exit early when a valid merge target is found
+                }
+            }
 
             return mergeTarget;
         }
