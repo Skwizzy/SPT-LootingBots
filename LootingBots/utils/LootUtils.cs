@@ -59,22 +59,6 @@ namespace LootingBots.Patch.Util
             container?.Interact(result);
         }
 
-        // Sort grids in the container from smallest to largest
-        public static StashGridClass[] SortGrids(StashGridClass[] grids)
-        {
-            // Sort grids in the container from smallest to largest
-            var containerGrids = grids.ToList();
-            containerGrids.Sort(
-                (grid1, grid2) =>
-                {
-                    var grid1Size = grid1.GridHeight * grid1.GridWidth;
-                    var grid2Size = grid2.GridHeight * grid2.GridWidth;
-                    return grid1Size.CompareTo(grid2Size);
-                }
-            );
-            return containerGrids.ToArray();
-        }
-
         /**
         * Calculates the amount of empty grid slots in the container
         */
@@ -242,58 +226,6 @@ namespace LootingBots.Patch.Util
         public static IEnumerable<Item> GetAllLockedItems(CompoundItem itemWithSlots)
         {
             return itemWithSlots.Slots?.Where(slot => slot.Locked).SelectMany(slot => slot.Items);
-        }
-
-        // Custom extension for EFT EquipmentClass.GetPrioritizedGridsForLoot which sorts the tacVest/backpack and reserves a 1x2 grid slot in the tacvest before finding an available grid space for loot
-        public static IEnumerable<StashGridClass> GetPrioritizedGridsForLoot(
-            this InventoryEquipment equipment,
-            Item item
-        )
-        {
-            SearchableItemItemClass tacVest = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
-            SearchableItemItemClass backpack = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
-            SearchableItemItemClass pockets = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.Pockets).ContainedItem;
-            SearchableItemItemClass secureContainer = (SearchableItemItemClass)
-                equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
-
-            StashGridClass[] tacVestGrids = new StashGridClass[0];
-            if (tacVest != null)
-            {
-                var sortedGrids = SortGrids(tacVest.Grids);
-                tacVestGrids = Reserve2x1Slot(sortedGrids);
-            }
-
-            StashGridClass[] backpackGrids =
-                (backpack != null) ? SortGrids(backpack.Grids) : new StashGridClass[0];
-            StashGridClass[] pocketGrids =
-                (pockets != null) ? pockets.Grids : new StashGridClass[0];
-            StashGridClass[] secureContainerGrids =
-                (secureContainer != null) ? secureContainer.Grids : new StashGridClass[0];
-
-            if (item is AmmoItemClass || item is MagazineItemClass)
-            {
-                return tacVestGrids
-                    .Concat(pocketGrids)
-                    .Concat(backpackGrids)
-                    .Concat(secureContainerGrids);
-            }
-            else if (item is ThrowWeapItemClass)
-            {
-                return pocketGrids
-                    .Concat(tacVestGrids)
-                    .Concat(backpackGrids)
-                    .Concat(secureContainerGrids);
-            }
-            else
-            {
-                return backpackGrids
-                    .Concat(tacVestGrids)
-                    .Concat(pocketGrids)
-                    .Concat(secureContainerGrids);
-            }
         }
     }
 }
