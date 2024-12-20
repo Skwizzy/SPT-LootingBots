@@ -64,27 +64,24 @@ namespace LootingBots.Patch.Util
                     return;
                 }
 
-                // Look through the entries in the disctionary and remove any that match the specified bot owner
-                foreach (
-                    var item in ActiveLoot
-                        .Where(keyValue =>
-                        {
-                            // Check to make sure the BotOwner saved in the dictionary has a valid name before comparing
-                            if (keyValue.Value == null || keyValue.Value.name == null)
-                            {
-                                if (LootingBots.LootLog.ErrorEnabled)
-                                {
-                                    LootingBots.LootLog.LogError("Bot in loot cache has no name?");
-                                }
-                                return false;
-                            }
-
-                            return keyValue.Value.name == botOwner.name;
-                        })
-                        .ToList()
-                )
+                // Look through the entries in the dictionary and remove any that match the specified bot owner
+                foreach (KeyValuePair<string, BotOwner> keyValue in ActiveLoot.ToList())
                 {
-                    ActiveLoot.Remove(item.Key);
+                    // Check to make sure the BotOwner saved in the dictionary has a valid name before comparing
+                    if (keyValue.Value == null || keyValue.Value.name == null)
+                    {
+                        if (LootingBots.LootLog.ErrorEnabled)
+                        {
+                            LootingBots.LootLog.LogError("Bot in loot cache has no name?");
+                        }
+                        continue;
+                    }
+
+                    // If the bot's name matches, remove the item
+                    if (keyValue.Value.name == botOwner.name)
+                    {
+                        ActiveLoot.Remove(keyValue.Key);
+                    }
                 }
             }
             catch (Exception e)
