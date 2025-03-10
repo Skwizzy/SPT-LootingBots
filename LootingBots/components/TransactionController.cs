@@ -131,7 +131,7 @@ namespace LootingBots.Patch.Components
 
                         if (location != null)
                         {
-                            GStruct446<GClass3136> result = container.AddItemWithoutRestrictions(ammo, location);
+                            GStruct455<GClass3207> result = container.AddItemWithoutRestrictions(ammo, location);
                             if (result.Succeeded)
                             {
                                 ammoAdded += ammo.StackObjectsCount;
@@ -263,7 +263,7 @@ namespace LootingBots.Patch.Components
 
                 if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is AmmoItemClass))
                 {
-                    AddExtraAmmo(weapon);
+                    //AddExtraAmmo(weapon);
                 }
 
                 if (_log.DebugEnabled)
