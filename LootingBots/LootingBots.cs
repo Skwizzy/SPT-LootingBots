@@ -134,7 +134,7 @@ namespace LootingBots
             DetectContainerDistance = Config.Bind(
                 "Loot Finder",
                 "Detect container distance",
-                75f,
+                150f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
                     null,
@@ -165,7 +165,7 @@ namespace LootingBots
             DetectItemDistance = Config.Bind(
                 "Loot Finder",
                 "Detect item distance",
-                75f,
+                150f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect an item",
                     null,
