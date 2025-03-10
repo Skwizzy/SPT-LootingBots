@@ -6,7 +6,7 @@ using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Patch.Util;
 
-using InventoryControllerResultStruct = GStruct445;
+using InventoryControllerResultStruct = GStruct454;
 
 namespace LootingBots.Patch.Components
 {

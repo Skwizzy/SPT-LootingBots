@@ -21,7 +21,7 @@ namespace LootingBots.Brain.Logics
             _log = new BotLog(LootingBots.LootLog, botOwner);
         }
 
-        public override void Update()
+        public override void Update(CustomLayer.ActionData data)
         {
             // Trigger a scan if one is not running already
             if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
