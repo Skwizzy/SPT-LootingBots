@@ -103,7 +103,7 @@ namespace LootingBots
             DetectCorpseDistance = Config.Bind(
                 "Loot Finder",
                 "Detect corpse distance",
-                75f,
+                150f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a corpse",
                     null,
