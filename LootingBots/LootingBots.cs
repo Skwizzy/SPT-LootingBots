@@ -22,7 +22,7 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.4.1";
+        private const string MOD_VERSION = "1.5.0";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -103,7 +103,7 @@ namespace LootingBots
             DetectCorpseDistance = Config.Bind(
                 "Loot Finder",
                 "Detect corpse distance",
-                75f,
+                125f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a corpse",
                     null,
@@ -134,7 +134,7 @@ namespace LootingBots
             DetectContainerDistance = Config.Bind(
                 "Loot Finder",
                 "Detect container distance",
-                75f,
+                125f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect a container",
                     null,
@@ -165,7 +165,7 @@ namespace LootingBots
             DetectItemDistance = Config.Bind(
                 "Loot Finder",
                 "Detect item distance",
-                75f,
+                125f,
                 new ConfigDescription(
                     "Distance (in meters) a bot is able to detect an item",
                     null,
