@@ -11,7 +11,6 @@ using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
-using LootingBots.Patch.DisableBotLooting;
 using LootingBots.patches.DisableBotLooting;
 
 namespace LootingBots
