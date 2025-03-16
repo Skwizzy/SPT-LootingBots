@@ -11,18 +11,17 @@ using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
-using LootingBots.patches.DisableBotLooting;
 
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "1.0.0")]
+    [BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.5.0";
+        private const string MOD_VERSION = "1.5.1";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -428,7 +427,6 @@ namespace LootingBots
 
             new SettingsAndCachePatch().Enable();
             new RemoveComponent().Enable();
-            new AICoreStrategyAbstractClass_method_0_Patch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
@@ -443,6 +441,16 @@ namespace LootingBots
                     "SectantWarrior"
                 }
             );
+
+            // Remove BSG's own looting layer
+            BrainManager.RemoveLayer(
+                "LootPatrol",
+                [
+                    "Assault",
+                    "PMC",
+                ]
+            );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
                 new List<string>()
