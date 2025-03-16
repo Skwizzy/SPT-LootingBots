@@ -15,7 +15,7 @@ using DrakiaXYZ.BigBrain.Brains;
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "1.0.0")]
+    [BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
