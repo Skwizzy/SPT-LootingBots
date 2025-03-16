@@ -11,7 +11,6 @@ using LootingBots.Patch;
 using LootingBots.Brain;
 
 using DrakiaXYZ.BigBrain.Brains;
-using LootingBots.patches.DisableBotLooting;
 
 namespace LootingBots
 {
@@ -428,7 +427,6 @@ namespace LootingBots
 
             new SettingsAndCachePatch().Enable();
             new RemoveComponent().Enable();
-            new AICoreStrategyAbstractClass_method_0_Patch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
@@ -443,6 +441,16 @@ namespace LootingBots
                     "SectantWarrior"
                 }
             );
+
+            // Remove BSG's own looting layer
+            BrainManager.RemoveLayer(
+                "LootPatrol",
+                [
+                    "Assault",
+                    "PMC",
+                ]
+            );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
                 new List<string>()
