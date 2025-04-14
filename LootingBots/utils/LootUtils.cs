@@ -1,11 +1,7 @@
-using System;
-using System.Reflection;
-using System.Collections.Generic;
-using System.Linq;
-using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
+
 using UnityEngine;
 
 namespace LootingBots.Patch.Util
@@ -216,7 +212,7 @@ namespace LootingBots.Patch.Util
         {
             List<Item> resultItems = new();
 
-            if(itemWithSlots.Slots == null)
+            if (itemWithSlots.Slots == null)
             {
                 return resultItems;
             }

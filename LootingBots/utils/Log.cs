@@ -1,5 +1,3 @@
-using System;
-
 using EFT;
 
 namespace LootingBots.Patch.Util

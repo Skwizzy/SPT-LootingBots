@@ -1,12 +1,11 @@
-﻿using BepInEx.Bootstrap;
+﻿using System.Reflection;
+
+using BepInEx.Bootstrap;
 
 using EFT;
 using EFT.Interactive;
 
 using HarmonyLib;
-
-using System;
-using System.Reflection;
 
 namespace LootingBots
 {

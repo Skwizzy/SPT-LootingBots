@@ -1,7 +1,5 @@
 using System.Reflection;
 
-using SPT.Reflection.Patching;
-
 using Comfort.Common;
 
 using EFT;
@@ -10,6 +8,8 @@ using EFT.UI;
 
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
+
+using SPT.Reflection.Patching;
 
 namespace LootingBots.Patch
 {
@@ -98,7 +98,7 @@ namespace LootingBots.Patch
         }
     }
 
-    
+
     /** Patch to mark any lootable interacted with by the player as active loot. Any bot that is currently pathing to that lootable should have their looting brain reset and will ignore the lootable until the player stops looting */
     public class ClearCacheOnDeath : ModulePatch
     {
@@ -115,7 +115,7 @@ namespace LootingBots.Patch
         {
             if (LootingBots.LootLog.DebugEnabled)
                 LootingBots.LootLog.LogDebug("Cleanup on ActiveLootCache");
-    
+
             ActiveLootCache.Cleanup(__instance);
             ActiveBotCache.Remove(__instance);
         }

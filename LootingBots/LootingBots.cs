@@ -3,14 +3,14 @@ using BepInEx.Configuration;
 
 using Comfort.Common;
 
+using DrakiaXYZ.BigBrain.Brains;
+
 using EFT;
 
+using LootingBots.Brain;
+using LootingBots.Patch;
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
-using LootingBots.Patch;
-using LootingBots.Brain;
-
-using DrakiaXYZ.BigBrain.Brains;
 
 namespace LootingBots
 {
@@ -26,7 +26,7 @@ namespace LootingBots
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
-        public const EquipmentType CanPickupEquipmentDefaults = 
+        public const EquipmentType CanPickupEquipmentDefaults =
             EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
 
         // Loot Finder Settings
