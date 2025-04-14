@@ -430,16 +430,18 @@ namespace LootingBots
 
             BrainManager.RemoveLayer(
                 "Utility peace",
-                new List<string>()
-                {
+                [
                     "Assault",
                     "ExUsec",
                     "BossSanitar",
                     "CursAssault",
                     "PMC",
+                    "PmcUsec",
+                    "PmcBear",
+                    "ExUsec",
                     "ArenaFighter",
                     "SectantWarrior"
-                }
+                ]
             );
 
             // Remove BSG's own looting layer
@@ -453,50 +455,54 @@ namespace LootingBots
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>()
-                {
+                [
                     "Assault",
                     "CursAssault",
                     "BossSanitar",
                     "BossKojaniy",
                     "BossGluhar",
+                    "BossPartisan",
+                    "BossKolontay",
                     "BirdEye",
                     "BigPipe",
                     "Knight",
-                    "BossZryachiy",
                     "Tagilla",
                     "Killa",
                     "BossSanitar",
                     "BossBully",
                     "BossBoar",
-                    "BoarSniper",
                     "FollowerGluharScout",
                     "FollowerGluharProtect",
                     "FollowerGluharAssault",
                     "Fl_Zraychiy",
                     "TagillaFollower",
+                    "KolonSec",
                     "FollowerSanitar",
                     "FollowerBully",
                     "FlBoar"
-                },
+                ],
                 2
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "PMC", "ExUsec", "ArenaFighter" },
+                ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"],
                 3
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "SectantWarrior" },
+                ["SectantWarrior"],
                 13
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "SectantPriest" },
+                ["SectantPriest"],
                 12
             );
-            BrainManager.AddCustomLayer(typeof(LootingLayer), new List<string>() { "Obdolbs" }, 11);
+
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["Obdolbs"], 11);
         }
 
         public void Update()
