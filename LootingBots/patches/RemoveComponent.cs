@@ -1,8 +1,10 @@
-﻿using SPT.Reflection.Patching;
+﻿using System.Reflection;
+
 using EFT;
+
 using LootingBots.Patch.Components;
-using System.Reflection;
-using UnityEngine;
+
+using SPT.Reflection.Patching;
 
 namespace LootingBots.Patch
 {

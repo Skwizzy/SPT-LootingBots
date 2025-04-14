@@ -83,7 +83,8 @@ namespace LootingBots.Patch.Util
             return equipmentType.HasFlag(EquipmentType.ArmorPlate);
         }
 
-        public static bool HasDogtag(this EquipmentType equipmentType) {
+        public static bool HasDogtag(this EquipmentType equipmentType)
+        {
             return equipmentType.HasFlag(EquipmentType.Dogtag);
         }
 
@@ -120,7 +121,8 @@ namespace LootingBots.Patch.Util
                 return allowedGear.HasArmorPlate();
             }
 
-            if (IsDogtag(item)) {
+            if (IsDogtag(item))
+            {
                 return allowedGear.HasDogtag();
             }
 
@@ -177,7 +179,8 @@ namespace LootingBots.Patch.Util
             return isArmorPlate;
         }
 
-        public static bool IsDogtag(Item item) {
+        public static bool IsDogtag(Item item)
+        {
             return item is OtherItemClass;
         }
     }

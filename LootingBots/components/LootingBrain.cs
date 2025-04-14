@@ -1,8 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 using EFT;
 using EFT.Interactive;
@@ -153,7 +149,7 @@ namespace LootingBots.Patch.Components
                 {
                     if (_log.WarningEnabled)
                         _log.LogWarning(
-                            $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                            $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
                         );
                     _isDisabledForPerformance = true;
                 }
@@ -203,7 +199,7 @@ namespace LootingBots.Patch.Components
 
                             if (_log.WarningEnabled)
                                 _log.LogWarning(
-                                    $"Looting disabled! Enabled bots: {ActiveBotCache.getSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                                    $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
                                 );
                         }
 
@@ -213,13 +209,13 @@ namespace LootingBots.Patch.Components
                             Time.time
                             + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
                     }
-                    
+
                     if (IsBrainEnabled)
                     {
                         if (InventoryController.ShouldSort)
                         {
                             // Sort items in tacVest for better space management
-                           StartCoroutine(InventoryController.SortTacVest());
+                            StartCoroutine(InventoryController.SortTacVest());
                         }
 
                         // If a player picks up an item that was marked as active by a bot, its ItemOwner?.RootItem will be null. In this case cleanup the active item

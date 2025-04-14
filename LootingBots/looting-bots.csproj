@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net471</TargetFramework>
+        <TargetFramework>net48</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <LangVersion>latest</LangVersion>
@@ -11,7 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Core" Version="5.*" />
-        <PackageReference Include="UnityEngine.Modules" Version="2019.4.39" IncludeAssets="compile" />
+        <PackageReference Include="UnityEngine.Modules" Version="2022.3.43" IncludeAssets="compile" />
     </ItemGroup>
 
     <ItemGroup>
@@ -38,9 +38,6 @@
             <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
         </Reference>
         <Reference Include="System" />
-        <Reference Include="UnityEngine">
-            <HintPath>..\References\UnityEngine.dll</HintPath>
-        </Reference>
         <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
     </ItemGroup>
 

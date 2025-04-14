@@ -1,9 +1,8 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Comfort.Common;
+
 using EFT;
 using EFT.InventoryLogic;
+
 using LootingBots.Patch.Util;
 
 using InventoryControllerResultStruct = GStruct454;

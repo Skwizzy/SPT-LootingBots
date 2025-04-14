@@ -3,14 +3,14 @@ using BepInEx.Configuration;
 
 using Comfort.Common;
 
+using DrakiaXYZ.BigBrain.Brains;
+
 using EFT;
 
+using LootingBots.Brain;
+using LootingBots.Patch;
 using LootingBots.Patch.Components;
 using LootingBots.Patch.Util;
-using LootingBots.Patch;
-using LootingBots.Brain;
-
-using DrakiaXYZ.BigBrain.Brains;
 
 namespace LootingBots
 {
@@ -21,12 +21,12 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.5.1";
+        private const string MOD_VERSION = "1.5.2";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
-        public const EquipmentType CanPickupEquipmentDefaults = 
+        public const EquipmentType CanPickupEquipmentDefaults =
             EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
 
         // Loot Finder Settings
@@ -430,16 +430,18 @@ namespace LootingBots
 
             BrainManager.RemoveLayer(
                 "Utility peace",
-                new List<string>()
-                {
+                [
                     "Assault",
                     "ExUsec",
                     "BossSanitar",
                     "CursAssault",
                     "PMC",
+                    "PmcUsec",
+                    "PmcBear",
+                    "ExUsec",
                     "ArenaFighter",
                     "SectantWarrior"
-                }
+                ]
             );
 
             // Remove BSG's own looting layer
@@ -453,50 +455,54 @@ namespace LootingBots
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>()
-                {
+                [
                     "Assault",
                     "CursAssault",
                     "BossSanitar",
                     "BossKojaniy",
                     "BossGluhar",
+                    "BossPartisan",
+                    "BossKolontay",
                     "BirdEye",
                     "BigPipe",
                     "Knight",
-                    "BossZryachiy",
                     "Tagilla",
                     "Killa",
                     "BossSanitar",
                     "BossBully",
                     "BossBoar",
-                    "BoarSniper",
                     "FollowerGluharScout",
                     "FollowerGluharProtect",
                     "FollowerGluharAssault",
                     "Fl_Zraychiy",
                     "TagillaFollower",
+                    "KolonSec",
                     "FollowerSanitar",
                     "FollowerBully",
                     "FlBoar"
-                },
+                ],
                 2
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "PMC", "ExUsec", "ArenaFighter" },
+                ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"],
                 3
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "SectantWarrior" },
+                ["SectantWarrior"],
                 13
             );
+
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
-                new List<string>() { "SectantPriest" },
+                ["SectantPriest"],
                 12
             );
-            BrainManager.AddCustomLayer(typeof(LootingLayer), new List<string>() { "Obdolbs" }, 11);
+
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["Obdolbs"], 11);
         }
 
         public void Update()

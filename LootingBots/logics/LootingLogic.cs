@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-
 using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
@@ -90,9 +87,10 @@ namespace LootingBots.Brain.Logics
                         BotOwner.SetPose(1f);
                         BotOwner.Steering.LookToMovingDirection();
                     }
-                    
+
                     // Stop the bot from sprinting when approaching lootable
-                    if (slowDown) {
+                    if (slowDown)
+                    {
                         BotOwner.Mover.Sprint(false);
                     }
                 }

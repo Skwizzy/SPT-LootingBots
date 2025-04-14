@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using EFT;
 
 namespace LootingBots.Patch.Util
@@ -16,17 +15,17 @@ namespace LootingBots.Patch.Util
 
         public static bool IsAbleToCache
         {
-            get { return getSize() < LootingBots.MaxActiveLootingBots.Value; }
+            get { return GetSize() < LootingBots.MaxActiveLootingBots.Value; }
         }
 
         public static bool IsOverCapacity
         {
-            get { return getSize() > LootingBots.MaxActiveLootingBots.Value; }
+            get { return GetSize() > LootingBots.MaxActiveLootingBots.Value; }
         }
 
         public static void Reset()
         {
-            ActiveBots = new List<BotOwner>();
+            ActiveBots = [];
         }
 
         public static void Add(BotOwner botOwner)
@@ -54,7 +53,7 @@ namespace LootingBots.Patch.Util
                 );
         }
 
-        public static int getSize()
+        public static int GetSize()
         {
             return ActiveBots.Count;
         }
