@@ -314,7 +314,7 @@ namespace LootingBots.Patch.Components
                         _log.LogInfo($"Loot found: {item.Name.Localized()} ({CurrentItemPrice}₽)");
 
                     // Ignore magazines that a bot cannot actively use
-                    if (item is MagazineItemClass mag && !IsUsableMag(mag))
+                    if (item is MagazineClass mag && !IsUsableMag(mag))
                     {
                         if (_log.DebugEnabled)
                             _log.LogDebug($"Cannot use mag: {item.Name.Localized()}. Skipping");
@@ -537,12 +537,12 @@ namespace LootingBots.Patch.Components
             return action;
         }
 
-        public bool IsUsableMag(MagazineItemClass mag)
+        public bool IsUsableMag(MagazineClass mag)
         {
             return mag != null && HasAcceptableMagazineSlot(_botInventoryController.Inventory.Equipment, mag);
 
         }
-        private bool HasAcceptableMagazineSlot(InventoryEquipment equipment, MagazineItemClass mag)
+        private bool HasAcceptableMagazineSlot(EquipmentClass equipment, MagazineClass mag)
         {
             EquipmentSlot[] slotsToCheck = [
                 EquipmentSlot.FirstPrimaryWeapon,
@@ -590,14 +590,14 @@ namespace LootingBots.Patch.Components
                 _botInventoryController.Inventory.Equipment
                     .GetSlot(EquipmentSlot.Holster)
                     .ContainedItem;
-            List<MagazineItemClass> mags = new List<MagazineItemClass>();
+            List<MagazineClass> mags = new List<MagazineClass>();
             _botInventoryController.GetReachableItemsOfTypeNonAlloc(mags);
 
             if (_log.DebugEnabled)
                 _log.LogDebug($"Cleaning up old mags...");
 
             int reservedCount = 0;
-            foreach (MagazineItemClass mag in mags)
+            foreach (MagazineClass mag in mags)
             {
                 bool fitsInThrown =
                     thrownWeapon.GetMagazineSlot() != null
@@ -861,7 +861,7 @@ namespace LootingBots.Patch.Components
             }
 
             // If the parentItem is an item that has slots such as armor, find any slots that are locked and return the list of items in those slots to use later
-            IEnumerable<Item> lockedItems = parentItem is CompoundItem itemWithSlots
+            IEnumerable<Item> lockedItems = parentItem is LootItemClass itemWithSlots
                 ? LootUtils.GetAllLockedItems(itemWithSlots)
                 : null;
 
@@ -940,10 +940,10 @@ namespace LootingBots.Patch.Components
             bool pickupNotRestricted = isPMC
                 ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem)
                 : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem);
-            bool isMoney = lootItem.Template is MoneyTemplateClass;
+            bool isMoney = lootItem.Template is MoneyClass;
 
             // All usable mags and money should be considered eligible to loot. Otherwise all other items fall subject to the mod settings for restricting pickup and loot value thresholds
-            return IsUsableMag(lootItem as MagazineItemClass)
+            return IsUsableMag(lootItem as MagazineClass)
                 || isMoney
                 || (
                     pickupNotRestricted

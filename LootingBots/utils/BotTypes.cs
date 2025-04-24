@@ -159,7 +159,6 @@ namespace LootingBots.Patch.Util
                 WildSpawnType.bossZryachiy,
                 WildSpawnType.bossBoar,
                 WildSpawnType.bossKolontay,
-                WildSpawnType.bossPartisan
             };
             return bosses.Contains(wildSpawnType);
         }

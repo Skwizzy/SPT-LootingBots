@@ -38,7 +38,7 @@ namespace LootingBots.Brain.Logics
             _lootingBrain = botOwner.GetPlayer.gameObject.GetComponent<LootingBrain>();
         }
 
-        public override void Update(CustomLayer.ActionData data)
+        public override void Update()
         {
             // Kick off looting logic
             if (_shouldUpdate)

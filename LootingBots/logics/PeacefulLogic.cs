@@ -2,8 +2,8 @@
 
 using EFT;
 
-//Check in CreateNode(BotLogicDecision type, BotOwner bot) (GClass522 on 3.11 to set this)
-using PeacefulNodeClass = GClass259;
+//Check in CreateNode(BotLogicDecision type, BotOwner bot) (GClass212 on 3.9 to set this)
+using PeacefulNodeClass = GClass212;
 
 namespace LootingBots.Brain.Logics
 {
@@ -17,9 +17,9 @@ namespace LootingBots.Brain.Logics
             _baseLogic = new PeacefulNodeClass(botOwner);
         }
 
-        public override void Update(CustomLayer.ActionData data)
+        public override void Update()
         {
-            _baseLogic.UpdateNodeByBrain(data);
+            _baseLogic.Update();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace LootingBots.Patch.Util
 
         public static InventoryController GetBotInventoryController(Player targetBot)
         {
-            return targetBot.InventoryController;
+            return targetBot.InventoryControllerClass;
         }
 
         /** Calculate the size of a container */
@@ -27,7 +27,7 @@ namespace LootingBots.Patch.Util
 
             foreach (StashGridClass grid in grids)
             {
-                gridSize += grid.GridHeight * grid.GridWidth;
+                gridSize += grid.GridHeight.Value * grid.GridWidth.Value;
             }
 
             return gridSize;
@@ -63,7 +63,7 @@ namespace LootingBots.Patch.Util
             // Loop through each grid and calculate the free spaces
             foreach (StashGridClass grid in grids)
             {
-                int gridSize = grid.GridHeight * grid.GridWidth;
+                int gridSize = grid.GridHeight.Value * grid.GridWidth.Value;
                 int containedItemSize = grid.GetSizeOfContainedItems();
                 freeSpaces += gridSize - containedItemSize;
             }
@@ -126,6 +126,27 @@ namespace LootingBots.Patch.Util
             }
 
             return mergeTarget;
+        }
+
+        // Custom extension for EFT InventoryControllerClass.FindGridToPickUp that uses a custom method for choosing the grid slot to place a loot item
+        public static ItemAddressClass FindGridToPickUp(
+            this InventoryControllerClass controller,
+            Item item,
+            IEnumerable<StashGridClass> grids = null
+        )
+        {
+            var prioritzedGrids =
+                grids ?? controller.Inventory.Equipment.GetPrioritizedGridsForLoot(item);
+            foreach (var grid in prioritzedGrids)
+            {
+                var address = grid.FindFreeSpace(item);
+                if (address != null)
+                {
+                    return new ItemAddressClass(grid, address);
+                }
+            }
+
+            return null;
         }
 
         /**
@@ -208,7 +229,7 @@ namespace LootingBots.Patch.Util
         }
 
         /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
-        public static IEnumerable<Item> GetAllLockedItems(CompoundItem itemWithSlots)
+        public static IEnumerable<Item> GetAllLockedItems(LootItemClass itemWithSlots)
         {
             List<Item> resultItems = new();
 

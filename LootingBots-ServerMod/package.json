@@ -1,10 +1,10 @@
 {
     "name": "LootingBots-ServerMod",
-    "version": "1.5.2",
+    "version": "1.5.2-legacy-SPT3.9",
     "main": "src/mod.js",
     "license": "MIT",
     "author": "Skwizzy",
-    "sptVersion": "~3.11",
+    "sptVersion": "~3.9",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"

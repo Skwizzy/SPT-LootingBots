@@ -15,13 +15,13 @@ using LootingBots.Patch.Util;
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
+    [BepInDependency("xyz.drakia.bigbrain", "1.1.0")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.5.2";
+        private const string MOD_VERSION = "1.5.2.398";
 
         public const BotType SettingsDefaults =
             BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
@@ -417,6 +417,8 @@ namespace LootingBots
 
         public void Awake()
         {
+            Logger.LogWarning("This is a Looting Bots Legacy-SPT 3.9 release, no support should be given outside of the legacy-SPT Discord server!");
+
             LootFinderSettings();
             LootSettings();
             PerformanceSettings();
@@ -441,15 +443,6 @@ namespace LootingBots
                     "ExUsec",
                     "ArenaFighter",
                     "SectantWarrior"
-                ]
-            );
-
-            // Remove BSG's own looting layer
-            BrainManager.RemoveLayer(
-                "LootPatrol",
-                [
-                    "Assault",
-                    "PMC",
                 ]
             );
 

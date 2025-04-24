@@ -21,13 +21,12 @@ namespace LootingBots.Brain.Logics
             _log = new BotLog(LootingBots.LootLog, botOwner);
         }
 
-        public override void Update(CustomLayer.ActionData data)
+        public override void Update()
         {
             // Trigger a scan if one is not running already
             if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
             {
-                if (_log.DebugEnabled)
-                {
+                if (_log.DebugEnabled) {
                     _log.LogDebug($"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}");
                 }
                 _lootFinder.BeginSearch();
