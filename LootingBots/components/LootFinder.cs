@@ -4,7 +4,7 @@ using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
 
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 using UnityEngine;
 using UnityEngine.AI;
@@ -128,7 +128,10 @@ namespace LootingBots.Patch.Components
                     colliderList.Insert(insertIndex, collider);
                     count++;
 
-                    if (count == hits) break;
+                    if (count == hits)
+                    {
+                        break;
+                    }
                 }
 
                 // Optional logging if DebugEnabled
@@ -143,14 +146,13 @@ namespace LootingBots.Patch.Components
                 // For each object detected, check to see if it is loot and then calculate its distance from the player
                 foreach (var collider in colliderList)
                 {
-                    if (collider == null || String.IsNullOrEmpty(_botOwner.name))
+                    if (collider == null || string.IsNullOrEmpty(_botOwner.name))
                     {
                         yield return null;
                         continue;
                     }
 
-                    LootableContainer container =
-                        collider.gameObject.GetComponentInParent<LootableContainer>();
+                    LootableContainer container = collider.gameObject.GetComponentInParent<LootableContainer>();
                     LootItem lootItem = collider.gameObject.GetComponentInParent<LootItem>();
                     Player corpse = collider.gameObject.GetComponentInParent<Player>();
                     Item rootItem = container?.ItemOwner?.RootItem ?? lootItem?.ItemOwner?.RootItem;
@@ -207,10 +209,7 @@ namespace LootingBots.Patch.Components
                         Vector3 destination = GetDestination(center);
 
                         // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
-                        if (
-                            IsLootInRange(lootType, destination, out float dist)
-                            && IsLootInSight(lootType, destination)
-                        )
+                        if (IsLootInRange(lootType, destination, out float dist) && IsLootInSight(lootType, destination))
                         {
                             ActiveLootCache.CacheActiveLootId(rootItem.Id, _botOwner);
 
@@ -277,9 +276,7 @@ namespace LootingBots.Patch.Components
             {
                 if (_botOwner?.Mover == null && _log.WarningEnabled)
                 {
-                    _log.LogWarning(
-                        "botOwner.BotMover is null! Cannot perform path distance calculations"
-                    );
+                    _log.LogWarning("botOwner.BotMover is null! Cannot perform path distance calculations");
                 }
                 dist = -1f;
                 return false;
@@ -330,7 +327,7 @@ namespace LootingBots.Patch.Components
             return !sightBlocked;
         }
 
-        Vector3 GetDestination(Vector3 center)
+        private Vector3 GetDestination(Vector3 center)
         {
             // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
             Vector3 pointNearbyContainer = NavMesh.SamplePosition(
@@ -338,9 +335,7 @@ namespace LootingBots.Patch.Components
                 out NavMeshHit navMeshAlignedPoint,
                 1f,
                 NavMesh.AllAreas
-            )
-                ? navMeshAlignedPoint.position
-                : Vector3.zero;
+            ) ? navMeshAlignedPoint.position : Vector3.zero;
 
             // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
             // Add a small amount of padding by pushing the point away from the nearbyPoint
@@ -354,9 +349,7 @@ namespace LootingBots.Patch.Components
                 out navMeshAlignedPoint,
                 1f,
                 navMeshAlignedPoint.mask
-            )
-                ? navMeshAlignedPoint.position
-                : pointNearbyContainer;
+            ) ? navMeshAlignedPoint.position : pointNearbyContainer;
 
             if (LootingBots.DebugLootNavigation.Value)
             {

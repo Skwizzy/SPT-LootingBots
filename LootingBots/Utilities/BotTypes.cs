@@ -2,7 +2,7 @@ using EFT;
 
 using LootingBots.Patch.Components;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     [Flags]
     public enum BotType

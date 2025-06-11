@@ -2,19 +2,21 @@ using Comfort.Common;
 
 using EFT;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
-    // Cached used to keep track of what lootable are currently being targeted by a bot so that multiple bots
-    // dont try and path to the same lootable
+    /// <summary>
+    /// Tracks lootable objects currently targeted by bots to prevent multiple bots
+    /// from navigating to the same lootable simultaneously.
+    /// </summary>
     public static class ActiveLootCache
     {
         // Id of container/corpse that the player is currently looting
-        public static string PlayerLootId;
+        public static string PlayerLootId { get; set; }
 
         // Handle to the players intance for use in friendly checks
-        public static Player MainPlayer;
+        public static Player MainPlayer { get; set; }
 
-        public static Dictionary<string, BotOwner> ActiveLoot = new Dictionary<string, BotOwner>();
+        public static Dictionary<string, BotOwner> ActiveLoot { get; private set; } = [];
 
         public static void Init()
         {
@@ -26,7 +28,7 @@ namespace LootingBots.Patch.Util
 
         public static void Reset()
         {
-            ActiveLoot = new Dictionary<string, BotOwner>();
+            ActiveLoot = [];
             PlayerLootId = "";
             MainPlayer = null;
         }
@@ -42,7 +44,7 @@ namespace LootingBots.Patch.Util
         public static bool IsLootInUse(string lootId, BotOwner botOwner)
         {
             bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(MainPlayer);
-            return (isFriendly && lootId == PlayerLootId)
+            return isFriendly && lootId == PlayerLootId
                 || ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 

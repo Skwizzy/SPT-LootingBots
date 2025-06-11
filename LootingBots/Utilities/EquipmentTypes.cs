@@ -1,6 +1,6 @@
 using EFT.InventoryLogic;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     [Flags]
     public enum EquipmentType

@@ -7,7 +7,7 @@ using EFT.InventoryLogic;
 using EFT.UI;
 
 using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 using SPT.Reflection.Patching;
 

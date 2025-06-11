@@ -1,6 +1,6 @@
 using EFT;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     [Flags]
     public enum LogLevel
@@ -11,7 +11,7 @@ namespace LootingBots.Patch.Util
         None = 0,
 
         /// <summary>
-        ///     An error has occured, but can be recovered from.
+        ///     An error has occurred, but can be recovered from.
         /// </summary>
         Error = 2,
 
@@ -91,7 +91,7 @@ namespace LootingBots.Patch.Util
                 _log.LogInfo(FormatMessage(msg));
         }
 
-        public void LogWarning(object msg)
+        public void LogWarning(object msg) 
         {
             if (_isLogShown)
                 _log.LogWarning(FormatMessage(msg));
