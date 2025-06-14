@@ -133,17 +133,17 @@ namespace LootingBots.Patch
         private static void PatchPostfix(
             BotLocationModifier modifier,
             ref BotDifficultySettingsClass __instance,
-            ref WildSpawnType ___wildSpawnType_0
+            ref WildSpawnType ___WildSpawnType_0
         )
         {
             bool corpseLootEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
-                ___wildSpawnType_0
+                ___WildSpawnType_0
             );
             bool containerLootEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                ___wildSpawnType_0
+                ___WildSpawnType_0
             );
             bool itemLootEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                ___wildSpawnType_0
+                ___WildSpawnType_0
             );
 
             if (corpseLootEnabled || containerLootEnabled || itemLootEnabled)

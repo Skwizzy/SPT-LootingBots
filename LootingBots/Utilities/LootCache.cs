@@ -13,16 +13,31 @@ namespace LootingBots.Utilities
         // Id of container/corpse that the player is currently looting
         public static string PlayerLootId { get; set; }
 
-        // Handle to the players intance for use in friendly checks
-        public static Player MainPlayer { get; set; }
+        // Handle to the players instance for use in friendly checks
+        public static List<IPlayer> ActivePlayers { get; private set; } = [];
 
         public static Dictionary<string, BotOwner> ActiveLoot { get; private set; } = [];
 
         public static void Init()
         {
-            if (!MainPlayer)
+            if (ActivePlayers.Count > 0)
             {
-                MainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+                return;
+            }
+
+            foreach(var player in Singleton<GameWorld>.Instance.RegisteredPlayers)
+            {
+                if (player.IsAI)
+                {
+                    continue;
+                }
+
+                if (!player.HealthController.IsAlive)
+                {
+                    continue;
+                }
+
+                ActivePlayers.Add(player);
             }
         }
 
@@ -30,7 +45,7 @@ namespace LootingBots.Utilities
         {
             ActiveLoot = [];
             PlayerLootId = "";
-            MainPlayer = null;
+            ActivePlayers = [];
         }
 
         public static void CacheActiveLootId(string containerId, BotOwner botOwner)
@@ -43,7 +58,14 @@ namespace LootingBots.Utilities
 
         public static bool IsLootInUse(string lootId, BotOwner botOwner)
         {
-            bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(MainPlayer);
+            IPlayer closestPlayer = ActivePlayers.GetClosestPlayer(botOwner);
+
+            if (closestPlayer == null)
+            {
+                return false;
+            }
+
+            bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(closestPlayer);
             return isFriendly && lootId == PlayerLootId
                 || ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }

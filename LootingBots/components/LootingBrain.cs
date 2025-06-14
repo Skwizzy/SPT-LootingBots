@@ -129,7 +129,14 @@ namespace LootingBots.Patch.Components
         {
             get
             {
-                return (BotOwner.Position - ActiveLootCache.MainPlayer.Position).sqrMagnitude;
+                IPlayer closestPlayer = ActiveLootCache.ActivePlayers.GetClosestPlayer(BotOwner);
+
+                if (closestPlayer == null)
+                {
+                    return float.MaxValue;
+                }
+
+                return (BotOwner.Position - closestPlayer.Position).sqrMagnitude;
             }
         }
 

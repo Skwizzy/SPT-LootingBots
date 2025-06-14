@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SPTarkov.Common" Version="4.0.0-prerelease11" />
+        <PackageReference Include="SPTarkov.DI" Version="4.0.0-prerelease11" />
+        <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-prerelease11" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Config\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Config\config.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+</Project>
