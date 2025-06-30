@@ -239,9 +239,9 @@ namespace LootingBots.Brain.Logics
                 _lootingBrain.DistanceToLoot = distance;
             }
 
-            if (isCloseEnough && _log.WarningEnabled)
+            if (isCloseEnough && _log.DebugEnabled)
             {
-                _log.LogWarning($"Bot is close enough to loot. {distance}. height diff: {y}");
+                _log.LogDebug($"Bot is close enough to loot. {dist}. height diff: {y}");
             }
 
             return isCloseEnough;
