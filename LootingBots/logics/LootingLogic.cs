@@ -241,7 +241,7 @@ namespace LootingBots.Brain.Logics
 
             if (isCloseEnough && _log.DebugEnabled)
             {
-                _log.LogDebug($"Bot is close enough to loot. {dist}. height diff: {y}");
+                _log.LogDebug($"Bot is close enough to loot. {distance}. height diff: {y}");
             }
 
             return isCloseEnough;
