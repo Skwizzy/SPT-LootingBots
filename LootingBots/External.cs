@@ -2,7 +2,7 @@
 using EFT.InventoryLogic;
 
 using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 namespace LootingBots
 {

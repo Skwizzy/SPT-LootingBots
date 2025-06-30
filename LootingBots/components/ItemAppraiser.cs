@@ -4,7 +4,7 @@ using EFT;
 using EFT.HandBook;
 using EFT.InventoryLogic;
 
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 namespace LootingBots.Patch.Components
 {

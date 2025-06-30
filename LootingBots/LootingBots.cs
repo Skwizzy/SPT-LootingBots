@@ -10,7 +10,7 @@ using EFT;
 using LootingBots.Brain;
 using LootingBots.Patch;
 using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 namespace LootingBots
 {
@@ -71,11 +71,11 @@ namespace LootingBots
 
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
         public static Log ItemAppraiserLog;
-        public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
+        public static ItemAppraiser ItemAppraiser { get; private set; } = new ItemAppraiser();
 
         // Performance Settings
         public static ConfigEntry<int> MaxActiveLootingBots;
-        public static ConfigEntry<int> LimitDistnaceFromPlayer;
+        public static ConfigEntry<int> LimitDistanceFromPlayer;
 
         public void LootFinderSettings()
         {
@@ -403,7 +403,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 11 }
                 )
             );
-            LimitDistnaceFromPlayer = Config.Bind(
+            LimitDistanceFromPlayer = Config.Bind(
                 "Performance",
                 "Limit looting by distance to player",
                 0,
