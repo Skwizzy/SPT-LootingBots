@@ -159,7 +159,16 @@ namespace LootingBots.Patch.Components
             InventoryController = new LootingInventoryController(BotOwner, this);
             IgnoredLootIds = new List<string> { };
             NonNavigableLootIds = new List<string> { };
-            IsPlayerScav = botOwner.Profile.Nickname.Contains(" (");
+        }
+
+        /*
+        * Automatically called as this MonoBehaviour begins running.
+        * 
+        * IMPORTANT: IsPlayerScav MUST be updated after Init() because SPT changes the WildSpawnType for player Scavs after that method is called.
+        */
+        public void Start()
+        {
+            IsPlayerScav = WillBeAPlayerScav(BotOwner.Profile);
             _performanceTimer = Time.time + PeformanceTimerInterval;
             ActiveLootCache.Init();
 
@@ -168,7 +177,7 @@ namespace LootingBots.Patch.Components
                 // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
                 if (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer))
                 {
-                    ActiveBotCache.Add(botOwner);
+                    ActiveBotCache.Add(BotOwner);
                 }
                 else
                 {
@@ -550,6 +559,21 @@ namespace LootingBots.Patch.Components
 
             ActiveLootCache.Cleanup(BotOwner);
             ActiveCorpse = null;
+        }
+
+        /**
+        * Determines if the bot with the given profile will be a player Scav
+        */
+        public bool WillBeAPlayerScav(Profile profile)
+        {
+            // Handle the old version of creating player Scavs
+            if (profile.Info.Nickname.Contains(" ("))
+            {
+                return true;
+            }
+
+            // Check for player Scavs created by SPT
+            return profile.Info.Settings.Role == WildSpawnType.assault && !string.IsNullOrEmpty(profile.Info.MainProfileNickname);
         }
     }
 }
