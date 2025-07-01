@@ -117,11 +117,6 @@ namespace LootingBots.Patch.Components
                     bool success = await MoveItem(new LootingMoveAction(item, ableToEquip));
                     return success;
                 }
-
-                if (log.DebugEnabled)
-                {
-                    log.LogDebug($"Cannot equip: {item.Name.Localized()}");
-                }
             }
             catch (Exception e)
             {
