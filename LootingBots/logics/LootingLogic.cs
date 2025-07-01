@@ -112,8 +112,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                if (_log.ErrorEnabled)
-                    _log.LogError(e);
+                _log.LogError(e);
             }
         }
 
@@ -206,10 +205,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                if (_log.ErrorEnabled)
-                {
-                    _log.LogError(e);
-                }
+                _log.LogError(e);
             }
 
             return canMove;

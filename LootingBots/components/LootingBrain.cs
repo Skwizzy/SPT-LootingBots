@@ -248,10 +248,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (_log.ErrorEnabled)
-                {
-                    _log.LogError(e);
-                }
+                _log.LogError(e);
             }
         }
 

@@ -92,8 +92,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                    log.LogError(e);
+                log.LogError(e);
             }
 
             return false;
@@ -120,10 +119,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                {
-                    log.LogError(e);
-                }
+                log.LogError(e);
             }
 
             return false;
@@ -172,10 +168,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                {
-                    log.LogError(e);
-                }
+                log.LogError(e);
             }
             return false;
         }
@@ -250,10 +243,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                {
-                    log.LogError(e);
-                }
+                log.LogError(e);
             }
 
             return true;
@@ -328,10 +318,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                {
-                    log.LogError(e);
-                }
+                log.LogError(e);
             }
 
             return true;
@@ -388,10 +375,7 @@ namespace LootingBots.Patch.Components
             }
             catch (Exception e)
             {
-                if (log.ErrorEnabled)
-                {
-                    log.LogError(e);
-                }
+                log.LogError(e);
             }
 
             return false;
