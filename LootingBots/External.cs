@@ -82,9 +82,7 @@ namespace LootingBots
                 BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
-                    log.LogDebug(
-                        $"Getting Net Loot Value for {bot.name} which is {lootingBrain.Stats.NetLootValue}"
-                    );
+                    log.LogDebug($"Getting Net Loot Value for {bot.name} which is {lootingBrain.Stats.NetLootValue}");
 
                 return lootingBrain.Stats.NetLootValue;
             }
@@ -96,16 +94,10 @@ namespace LootingBots
          */
         public static float GetItemPrice(Item item)
         {
-            return LootingBots.ItemAppraiser != null
-                ? LootingBots.ItemAppraiser.GetItemPrice(item)
-                : 0;
+            return LootingBots.ItemAppraiser != null ? LootingBots.ItemAppraiser.GetItemPrice(item) : 0;
         }
 
-        private static bool GetAllComponents(
-            BotOwner bot,
-            out LootingBrain lootingBrain,
-            out LootFinder lootFinder
-        )
+        private static bool GetAllComponents(BotOwner bot, out LootingBrain lootingBrain, out LootFinder lootFinder)
         {
             bool hasLootFinder = GetLootFinder(bot, out lootFinder);
             bool hasLootingBrain = GetLootingBrain(bot, out lootingBrain);

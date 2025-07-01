@@ -23,8 +23,8 @@ namespace LootingBots.Patch.Components
             if (LootingBots.UseMarketPrices.Value)
             {
                 // Initialize ragfair prices from the BE session
-                Singleton<ClientApplication<ISession>>.Instance
-                    .GetClientBackEndSession()
+                Singleton<ClientApplication<ISession>>
+                    .Instance.GetClientBackEndSession()
                     .RagfairGetPrices(
                         new Callback<Dictionary<string, float>>(
                             (Result<Dictionary<string, float>> result) => MarketData = result.Value
@@ -35,9 +35,7 @@ namespace LootingBots.Patch.Components
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary(
-                    (item) => item.Id
-                );
+                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary((item) => item.Id);
             }
         }
 

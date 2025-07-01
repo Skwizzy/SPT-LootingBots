@@ -36,8 +36,7 @@ namespace LootingBots.Brain
         public override bool IsActive()
         {
             bool isBotActive = BotOwner.BotState == EBotState.Active;
-            bool isNotHealing =
-                !BotOwner.Medecine.FirstAid.Have2Do && !BotOwner.Medecine.SurgicalKit.HaveWork;
+            bool isNotHealing = !BotOwner.Medecine.FirstAid.Have2Do && !BotOwner.Medecine.SurgicalKit.HaveWork;
             return isBotActive
                 && isNotHealing
                 && _lootingBrain.IsBrainEnabled
@@ -115,19 +114,12 @@ namespace LootingBots.Brain
             }
 
             debugPanel.AppendLine(
-                _lootingBrain.LootTaskRunning
-                    ? "Looting in progress..."
-                    : _lootFinder.IsScanRunning
-                        ? "Scan in progress..."
-                        : "",
+                _lootingBrain.LootTaskRunning ? "Looting in progress..."
+                    : _lootFinder.IsScanRunning ? "Scan in progress..."
+                    : "",
                 Color.green
             );
-            debugPanel.AppendLabeledValue(
-                $"Target Loot",
-                $" {lootableName} ({category})",
-                Color.yellow,
-                Color.yellow
-            );
+            debugPanel.AppendLabeledValue($"Target Loot", $" {lootableName} ({category})", Color.yellow, Color.yellow);
 
             debugPanel.AppendLabeledValue(
                 $"Distance to Loot",

@@ -16,7 +16,7 @@ namespace LootingBots
 
             foreach (var player in players)
             {
-                if(!player.HealthController.IsAlive)
+                if (!player.HealthController.IsAlive)
                 {
                     continue;
                 }

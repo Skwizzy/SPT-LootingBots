@@ -2,8 +2,12 @@
 
 namespace LootingBots.Actions
 {
-    public class LootingSwapAction(Item toThrow = null, Item toEquip = null,
-        ActionCallback callback = null, ActionCallback onComplete = null)
+    public class LootingSwapAction(
+        Item toThrow = null,
+        Item toEquip = null,
+        ActionCallback callback = null,
+        ActionCallback onComplete = null
+    )
     {
         public Item ToThrow { get; private set; } = toThrow;
         public Item ToEquip { get; private set; } = toEquip;

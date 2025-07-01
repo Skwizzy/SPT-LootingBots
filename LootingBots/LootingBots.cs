@@ -23,11 +23,17 @@ namespace LootingBots
         private const string MOD_NAME = "LootingBots";
         private const string MOD_VERSION = "1.5.2";
 
-        public const BotType SettingsDefaults =
-            BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
+        public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
         public const EquipmentType CanPickupEquipmentDefaults =
-            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
+            EquipmentType.ArmoredRig
+            | EquipmentType.ArmorVest
+            | EquipmentType.Backpack
+            | EquipmentType.Grenade
+            | EquipmentType.Helmet
+            | EquipmentType.TacticalRig
+            | EquipmentType.Weapon
+            | EquipmentType.Dogtag;
 
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
@@ -440,18 +446,12 @@ namespace LootingBots
                     "PmcBear",
                     "ExUsec",
                     "ArenaFighter",
-                    "SectantWarrior"
+                    "SectantWarrior",
                 ]
             );
 
             // Remove BSG's own looting layer
-            BrainManager.RemoveLayer(
-                "LootPatrol",
-                [
-                    "Assault",
-                    "PMC",
-                ]
-            );
+            BrainManager.RemoveLayer("LootPatrol", ["Assault", "PMC"]);
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
@@ -479,7 +479,7 @@ namespace LootingBots
                     "KolonSec",
                     "FollowerSanitar",
                     "FollowerBully",
-                    "FlBoar"
+                    "FlBoar",
                 ],
                 2
             );
@@ -490,17 +490,9 @@ namespace LootingBots
                 3
             );
 
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                ["SectantWarrior"],
-                13
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantWarrior"], 13);
 
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                ["SectantPriest"],
-                12
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantPriest"], 12);
 
             BrainManager.AddCustomLayer(typeof(LootingLayer), ["Obdolbs"], 11);
         }

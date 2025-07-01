@@ -15,16 +15,7 @@ namespace LootingBots.Utilities
         Dogtag = 128,
         ArmorPlate = 256,
 
-        All =
-            Backpack
-            | TacticalRig
-            | ArmoredRig
-            | ArmorVest
-            | Weapon
-            | Helmet
-            | Grenade
-            | Dogtag
-            | ArmorPlate
+        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade | Dogtag | ArmorPlate,
     }
 
     [Flags]
@@ -38,7 +29,7 @@ namespace LootingBots.Utilities
         Grenade = EquipmentType.Grenade,
         Helmet = EquipmentType.Helmet,
 
-        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade
+        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade,
     }
 
     public static class EquipmentTypeUtils

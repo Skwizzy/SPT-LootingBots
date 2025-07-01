@@ -12,7 +12,10 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(BotsController).GetMethod(nameof(BotsController.Init), BindingFlags.Public | BindingFlags.Instance);
+            return typeof(BotsController).GetMethod(
+                nameof(BotsController.Init),
+                BindingFlags.Public | BindingFlags.Instance
+            );
         }
 
         [PatchPostfix]

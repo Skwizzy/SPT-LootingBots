@@ -29,10 +29,7 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GameWorld).GetMethod(
-                "Dispose",
-                BindingFlags.Public | BindingFlags.Instance
-            );
+            return typeof(GameWorld).GetMethod("Dispose", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
@@ -51,10 +48,7 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(InventoryScreen).GetMethod(
-                "Close",
-                BindingFlags.Public | BindingFlags.Instance
-            );
+            return typeof(InventoryScreen).GetMethod("Close", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
@@ -72,10 +66,7 @@ namespace LootingBots.Patch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player).GetMethod(
-                "Interact",
-                BindingFlags.Public | BindingFlags.Instance
-            );
+            return typeof(Player).GetMethod("Interact", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
@@ -98,16 +89,12 @@ namespace LootingBots.Patch
         }
     }
 
-
     /** Patch to mark any lootable interacted with by the player as active loot. Any bot that is currently pathing to that lootable should have their looting brain reset and will ignore the lootable until the player stops looting */
     public class ClearCacheOnDeath : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(BotOwner).GetMethod(
-                "Dispose",
-                BindingFlags.Public | BindingFlags.Instance
-            );
+            return typeof(BotOwner).GetMethod("Dispose", BindingFlags.Public | BindingFlags.Instance);
         }
 
         [PatchPrefix]
@@ -136,15 +123,9 @@ namespace LootingBots.Patch
             ref WildSpawnType ___WildSpawnType_0
         )
         {
-            bool corpseLootEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(
-                ___WildSpawnType_0
-            );
-            bool containerLootEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(
-                ___WildSpawnType_0
-            );
-            bool itemLootEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(
-                ___WildSpawnType_0
-            );
+            bool corpseLootEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
+            bool containerLootEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
+            bool itemLootEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
 
             if (corpseLootEnabled || containerLootEnabled || itemLootEnabled)
             {

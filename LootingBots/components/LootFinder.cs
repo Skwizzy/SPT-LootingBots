@@ -2,7 +2,6 @@ using System.Collections;
 
 using EFT;
 using EFT.Interactive;
-using EFT.InventoryLogic;
 
 using LootingBots.Utilities;
 
@@ -41,7 +40,7 @@ namespace LootingBots.Patch.Components
         {
             Corpse = 0,
             Container = 1,
-            Item = 2
+            Item = 2,
         }
 
         public bool IsScanRunning;
@@ -157,19 +156,27 @@ namespace LootingBots.Patch.Components
                     continue;
                 }
 
-                bool canLootContainer = containerLootingEnabled
+                bool canLootContainer =
+                    containerLootingEnabled
                     && container != null // Container exists
                     && container.isActiveAndEnabled // Container is marked as active and enabled
                     && container.DoorState != EDoorState.Locked; // Container is not locked
 
-                bool canLootItem = itemLootingEnabled
+                bool canLootItem =
+                    itemLootingEnabled
                     && !(lootItem is Corpse) // Item is not a corpse
                     && !rootItem.QuestItem // Item is not a quest item
-                    && (rootItem is SearchableItemItemClass // If the item is something that can be searched, consider it lootable
-                        || (rootItem is ArmoredEquipmentItemClass armor && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(armor))
-                        || (_lootingBrain.IsValuableEnough(rootItem) && availableGridSpaces > rootItem.GetItemSize())); 
+                    && (
+                        rootItem is SearchableItemItemClass // If the item is something that can be searched, consider it lootable
+                        || (
+                            rootItem is ArmoredEquipmentItemClass armor
+                            && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(armor)
+                        )
+                        || (_lootingBrain.IsValuableEnough(rootItem) && availableGridSpaces > rootItem.GetItemSize())
+                    );
 
-                bool canLootCorpse = corpseLootingEnabled
+                bool canLootCorpse =
+                    corpseLootingEnabled
                     && corpse != null // Corpse exists
                     && corpse.GetPlayer != null; // Corpse is a bot corpse and not a static "Dead scav" corpse
 
@@ -183,7 +190,10 @@ namespace LootingBots.Patch.Components
                 var center = new Vector3(bounds.center.x, bounds.center.y - bounds.extents.y - 0.4f, bounds.center.z);
                 var destination = GetDestination(center);
 
-                LootType lootType = container != null ? LootType.Container : lootItem != null ? LootType.Item : LootType.Corpse;
+                LootType lootType =
+                    container != null ? LootType.Container
+                    : lootItem != null ? LootType.Item
+                    : LootType.Corpse;
 
                 // Check if loot is in range and sight
                 if (!IsLootInRange(lootType, destination, out float dist) || !IsLootInSight(lootType, destination))
@@ -269,9 +279,7 @@ namespace LootingBots.Patch.Components
             {
                 if (_botOwner?.LookSensor == null && _log.WarningEnabled)
                 {
-                    _log.LogWarning(
-                        "botOwner.LookSensor is null! Cannot perform line of sight check"
-                    );
+                    _log.LogWarning("botOwner.LookSensor is null! Cannot perform line of sight check");
                 }
                 return true;
             }
@@ -297,7 +305,9 @@ namespace LootingBots.Patch.Components
                 out NavMeshHit navMeshAlignedPoint,
                 1f,
                 NavMesh.AllAreas
-            ) ? navMeshAlignedPoint.position : Vector3.zero;
+            )
+                ? navMeshAlignedPoint.position
+                : Vector3.zero;
 
             // Since SamplePosition always snaps to the closest point on the NavMesh, sometimes this point is a little too close to the loot and causes the bot to shake violently while looting.
             // Add a small amount of padding by pushing the point away from the nearbyPoint
@@ -311,7 +321,9 @@ namespace LootingBots.Patch.Components
                 out navMeshAlignedPoint,
                 1f,
                 navMeshAlignedPoint.mask
-            ) ? navMeshAlignedPoint.position : pointNearbyContainer;
+            )
+                ? navMeshAlignedPoint.position
+                : pointNearbyContainer;
 
             if (LootingBots.DebugLootNavigation.Value)
             {

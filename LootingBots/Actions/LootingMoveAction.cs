@@ -2,9 +2,13 @@
 
 namespace LootingBots.Actions
 {
-    public class LootingMoveAction(Item toMove = null, ItemAddress place = null, Item toItem = null,
-        ActionCallback callback = null, ActionCallback onComplete = null
-        )
+    public class LootingMoveAction(
+        Item toMove = null,
+        ItemAddress place = null,
+        Item toItem = null,
+        ActionCallback callback = null,
+        ActionCallback onComplete = null
+    )
     {
         public Item ToMove { get; private set; } = toMove;
         public ItemAddress Place { get; private set; } = place;

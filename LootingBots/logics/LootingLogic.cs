@@ -25,7 +25,9 @@ namespace LootingBots.Brain.Logics
         {
             get
             {
-                return !_lootingBrain.LootTaskRunning && _lootingBrain.HasActiveLootable && BotOwner.BotState == EBotState.Active;
+                return !_lootingBrain.LootTaskRunning
+                    && _lootingBrain.HasActiveLootable
+                    && BotOwner.BotState == EBotState.Active;
             }
         }
 
@@ -62,7 +64,6 @@ namespace LootingBots.Brain.Logics
                 if (_closeEnoughTimer < Time.time)
                 {
                     _closeEnoughTimer = Time.time + 2f;
-
 
                     bool isCloseEnough = IsCloseEnough();
 
@@ -124,11 +125,16 @@ namespace LootingBots.Brain.Logics
         {
             Vector3 rayDirection = _lootingBrain.LootObjectPosition - _destination;
 
-            if (Physics.Raycast(_destination, rayDirection, out RaycastHit hit) && hit.collider.gameObject.layer == LootUtils.LowPolyMask)
+            if (
+                Physics.Raycast(_destination, rayDirection, out RaycastHit hit)
+                && hit.collider.gameObject.layer == LootUtils.LowPolyMask
+            )
             {
                 if (_log.ErrorEnabled)
                 {
-                    _log.LogError($"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}");
+                    _log.LogError(
+                        $"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}"
+                    );
                     return false;
                 }
             }
@@ -148,7 +154,8 @@ namespace LootingBots.Brain.Logics
                 //Increment navigation attempt counter
                 _navigationAttempts++;
 
-                string lootableName = _lootingBrain.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
+                string lootableName =
+                    _lootingBrain.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
                     ?? _lootingBrain.ActiveItem?.Name.Localized()
                     ?? _lootingBrain.ActiveCorpse?.GetPlayer.name.Localized();
 
@@ -168,13 +175,7 @@ namespace LootingBots.Brain.Logics
 
                     if (_navigationAttempts == 1)
                     {
-                        NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
-                            _destination,
-                            true,
-                            -1f,
-                            false,
-                            false
-                        );
+                        NavMeshPathStatus pathStatus = BotOwner.GoToPoint(_destination, true, -1f, false, false);
 
                         if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
@@ -196,7 +197,9 @@ namespace LootingBots.Brain.Logics
                     }
                     else if (_log.ErrorEnabled)
                     {
-                        _log.LogError($"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring");
+                        _log.LogError(
+                            $"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
+                        );
                     }
                     canMove = false;
                 }

@@ -9,9 +9,7 @@ namespace LootingBots.Utilities
     public static class LootUtils
     {
         public static LayerMask LowPolyMask = LayerMask.GetMask(["LowPolyCollider"]);
-        public static LayerMask LootMask = LayerMask.GetMask(
-            ["Interactive", "Loot", "Deadbody"]
-        );
+        public static LayerMask LootMask = LayerMask.GetMask(["Interactive", "Loot", "Deadbody"]);
         public static int RESERVED_SLOT_COUNT = 2;
 
         public static InventoryController GetBotInventoryController(Player targetBot)
@@ -133,26 +131,19 @@ namespace LootingBots.Utilities
        */
         public static IEnumerable<Slot> GetPrioritySlots(InventoryController targetInventory)
         {
-            bool hasBackpack = targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem != null;
-            bool hasTacVest = targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem != null;
+            bool hasBackpack =
+                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem != null;
+            bool hasTacVest =
+                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem != null;
 
             IEnumerable<EquipmentSlot> prioritySlots = [];
             IEnumerable<EquipmentSlot> weaponSlots = GetUnlockedEquipmentSlots(
                 targetInventory,
-                [
-                    EquipmentSlot.Holster,
-                    EquipmentSlot.FirstPrimaryWeapon,
-                    EquipmentSlot.SecondPrimaryWeapon
-                ]
+                [EquipmentSlot.Holster, EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon]
             );
             IEnumerable<EquipmentSlot> storageSlots = GetUnlockedEquipmentSlots(
                 targetInventory,
-                [
-                    EquipmentSlot.Backpack,
-                    EquipmentSlot.ArmorVest,
-                    EquipmentSlot.TacticalVest,
-                    EquipmentSlot.Pockets
-                ]
+                [EquipmentSlot.Backpack, EquipmentSlot.ArmorVest, EquipmentSlot.TacticalVest, EquipmentSlot.Pockets]
             );
 
             IEnumerable<EquipmentSlot> otherSlots = GetUnlockedEquipmentSlots(
@@ -162,13 +153,14 @@ namespace LootingBots.Utilities
                     EquipmentSlot.Earpiece,
                     EquipmentSlot.Dogtag,
                     EquipmentSlot.Scabbard,
-                    EquipmentSlot.FaceCover
+                    EquipmentSlot.FaceCover,
                 ]
             );
 
-            prioritySlots = hasBackpack || hasTacVest
-                ? prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray()
-                : prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+            prioritySlots =
+                hasBackpack || hasTacVest
+                    ? prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray()
+                    : prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
 
             prioritySlots = prioritySlots.Concat(otherSlots).ToArray();
 
@@ -176,7 +168,10 @@ namespace LootingBots.Utilities
         }
 
         /** Given a list of slots, return all slots that are not flagged as Locked */
-        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(InventoryController targetInventory, EquipmentSlot[] desiredSlots)
+        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(
+            InventoryController targetInventory,
+            EquipmentSlot[] desiredSlots
+        )
         {
             List<EquipmentSlot> unlockedSlots = new();
 

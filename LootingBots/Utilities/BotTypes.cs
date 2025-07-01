@@ -16,7 +16,7 @@ namespace LootingBots.Utilities
         Follower = 64,
         Bloodhound = 128,
 
-        All = Scav | Pmc | PlayerScav | Raider | Cultist | Boss | Follower | Bloodhound
+        All = Scav | Pmc | PlayerScav | Raider | Cultist | Boss | Follower | Bloodhound,
     }
 
     public static class BotTypeUtils
@@ -140,8 +140,7 @@ namespace LootingBots.Utilities
 
         public static bool IsScav(WildSpawnType wildSpawnType)
         {
-            return wildSpawnType == WildSpawnType.assault
-                || wildSpawnType == WildSpawnType.assaultGroup;
+            return wildSpawnType == WildSpawnType.assault || wildSpawnType == WildSpawnType.assaultGroup;
         }
 
         public static bool IsBoss(WildSpawnType wildSpawnType)
@@ -159,7 +158,7 @@ namespace LootingBots.Utilities
                 WildSpawnType.bossZryachiy,
                 WildSpawnType.bossBoar,
                 WildSpawnType.bossKolontay,
-                WildSpawnType.bossPartisan
+                WildSpawnType.bossPartisan,
             };
             return bosses.Contains(wildSpawnType);
         }

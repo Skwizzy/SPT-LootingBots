@@ -33,7 +33,7 @@ namespace LootingBots.Utilities
         /// <summary>
         ///     All log levels.
         /// </summary>
-        All = Error | Warning | Info | Debug
+        All = Error | Warning | Info | Debug,
     }
 
     public class BotLog
@@ -49,10 +49,7 @@ namespace LootingBots.Utilities
 
         private bool _isLogShown
         {
-            get
-            {
-                return _currentBotFilter == "0" || _botOwner.name.Equals("Bot" + _currentBotFilter);
-            }
+            get { return _currentBotFilter == "0" || _botOwner.name.Equals("Bot" + _currentBotFilter); }
         }
 
         public bool DebugEnabled
@@ -91,7 +88,7 @@ namespace LootingBots.Utilities
                 _log.LogInfo(FormatMessage(msg));
         }
 
-        public void LogWarning(object msg) 
+        public void LogWarning(object msg)
         {
             if (_isLogShown)
                 _log.LogWarning(FormatMessage(msg));
@@ -114,10 +111,7 @@ namespace LootingBots.Utilities
         public BepInEx.Logging.ManualLogSource Logger;
         public BepInEx.Configuration.ConfigEntry<LogLevel> LogLevels;
 
-        public Log(
-            BepInEx.Logging.ManualLogSource logger,
-            BepInEx.Configuration.ConfigEntry<LogLevel> logLevels
-        )
+        public Log(BepInEx.Logging.ManualLogSource logger, BepInEx.Configuration.ConfigEntry<LogLevel> logLevels)
         {
             Logger = logger;
             LogLevels = logLevels;

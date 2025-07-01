@@ -31,9 +31,7 @@ namespace LootingBots
             if (!_LootingBotsLoadedChecked)
             {
                 _LootingBotsLoadedChecked = true;
-                _IsLootingBotsLoaded = Chainloader.PluginInfos.ContainsKey(
-                    "me.skwizzy.lootingbots"
-                );
+                _IsLootingBotsLoaded = Chainloader.PluginInfos.ContainsKey("me.skwizzy.lootingbots");
             }
 
             return _IsLootingBotsLoaded;
@@ -52,33 +50,19 @@ namespace LootingBots
             {
                 _LootingBotsInteropInited = true;
 
-                _LootingBotsExternalType = Type.GetType(
-                    "LootingBots.External, skwizzy.LootingBots"
-                );
+                _LootingBotsExternalType = Type.GetType("LootingBots.External, skwizzy.LootingBots");
 
                 // Only try to get the methods if we have the type
                 if (_LootingBotsExternalType != null)
                 {
-                    _ForceBotToScanLootMethod = AccessTools.Method(
-                        _LootingBotsExternalType,
-                        "ForceBotToScanLoot"
-                    );
+                    _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "ForceBotToScanLoot");
                     _PreventBotFromLootingMethod = AccessTools.Method(
                         _LootingBotsExternalType,
                         "PreventBotFromLooting"
                     );
-                    _CheckIfInventoryFullMethod = AccessTools.Method(
-                        _LootingBotsExternalType,
-                        "CheckIfInventoryFull"
-                    );
-                    _GetNetLootValueMethod = AccessTools.Method(
-                        _LootingBotsExternalType,
-                        "GetNetLootValue"
-                    );
-                    _GetItemPriceMethod = AccessTools.Method(
-                        _LootingBotsExternalType,
-                        "GetItemPrice"
-                    );
+                    _CheckIfInventoryFullMethod = AccessTools.Method(_LootingBotsExternalType, "CheckIfInventoryFull");
+                    _GetNetLootValueMethod = AccessTools.Method(_LootingBotsExternalType, "GetNetLootValue");
+                    _GetItemPriceMethod = AccessTools.Method(_LootingBotsExternalType, "GetItemPrice");
                 }
             }
 
@@ -109,8 +93,7 @@ namespace LootingBots
             if (_PreventBotFromLootingMethod == null)
                 return false;
 
-            return (bool)
-                _PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
+            return (bool)_PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
         }
 
         /**
@@ -123,8 +106,7 @@ namespace LootingBots
             if (_CheckIfInventoryFullMethod == null)
                 return false;
 
-            return (bool)
-                _CheckIfInventoryFullMethod.Invoke(null, new object[] { botOwner });
+            return (bool)_CheckIfInventoryFullMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
@@ -137,8 +119,7 @@ namespace LootingBots
             if (_GetNetLootValueMethod == null)
                 return 0f;
 
-            return (float)
-                _GetNetLootValueMethod.Invoke(null, new object[] { botOwner });
+            return (float)_GetNetLootValueMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
@@ -151,8 +132,7 @@ namespace LootingBots
             if (_GetItemPriceMethod == null)
                 return 0f;
 
-            return (float)
-                _GetItemPriceMethod.Invoke(null, new object[] { item });
+            return (float)_GetItemPriceMethod.Invoke(null, new object[] { item });
         }
     }
 }

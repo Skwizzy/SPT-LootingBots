@@ -1,7 +1,6 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
-
 //Check in CreateNode(BotLogicDecision type, BotOwner bot) (GClass538 on 4.0 to set this)
 using PeacefulNodeClass = GClass263;
 
@@ -12,7 +11,8 @@ namespace LootingBots.Brain.Logics
         private readonly PeacefulNodeClass _baseLogic;
 
         // PatrolAssault peaceful logic
-        public PeacefulLogic(BotOwner botOwner) : base(botOwner)
+        public PeacefulLogic(BotOwner botOwner)
+            : base(botOwner)
         {
             _baseLogic = new PeacefulNodeClass(botOwner);
         }

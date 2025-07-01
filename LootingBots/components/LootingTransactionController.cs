@@ -20,18 +20,18 @@ namespace LootingBots.Patch.Components
             try
             {
                 SearchableItemItemClass secureContainer = (SearchableItemItemClass)
-                    inventoryController.Inventory.Equipment
-                        .GetSlot(EquipmentSlot.SecuredContainer)
-                        .ContainedItem;
+                    inventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
 
                 StashGridClass container = secureContainer.Grids.FirstOrDefault();
 
                 // Try to get the current ammo used by the weapon by checking the contents of the magazine. If its empty, try to create an instance of the ammo using the Weapon's CurrentAmmoTemplate
-                Item ammoToAdd = weapon.GetCurrentMagazine()?.FirstRealAmmo() ?? Singleton<ItemFactoryClass>.Instance.CreateItem(
+                Item ammoToAdd =
+                    weapon.GetCurrentMagazine()?.FirstRealAmmo()
+                    ?? Singleton<ItemFactoryClass>.Instance.CreateItem(
                         MongoID.Generate(),
                         weapon.CurrentAmmoTemplate._id,
                         null
-                        );
+                    );
 
                 // Check to see if there already is ammo that meets the weapon's caliber in the secure container
                 bool alreadyHasAmmo = false;
@@ -69,24 +69,18 @@ namespace LootingBots.Patch.Components
                             }
                             else if (log.ErrorEnabled)
                             {
-                                log.LogError(
-                                    $"Failed to add {ammo.Name.Localized()} to secure container"
-                                );
+                                log.LogError($"Failed to add {ammo.Name.Localized()} to secure container");
                             }
                         }
                         else if (log.ErrorEnabled)
                         {
-                            log.LogError(
-                                $"Cannot find location in secure container for {ammo.Name.Localized()}"
-                            );
+                            log.LogError($"Cannot find location in secure container for {ammo.Name.Localized()}");
                         }
                     }
 
                     if (ammoAdded > 0 && log.DebugEnabled)
                     {
-                        log.LogDebug(
-                            $"Successfully added {ammoAdded} round of {ammoToAdd.Name.Localized()}"
-                        );
+                        log.LogDebug($"Successfully added {ammoAdded} round of {ammoToAdd.Name.Localized()}");
                     }
                 }
                 else if (log.DebugEnabled)
@@ -116,7 +110,9 @@ namespace LootingBots.Patch.Components
                 {
                     if (log.WarningEnabled)
                     {
-                        log.LogWarning($"Equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]");
+                        log.LogWarning(
+                            $"Equipping: {item.Name.Localized()} [place: {ableToEquip.Container.ID.Localized()}]"
+                        );
                     }
                     bool success = await MoveItem(new LootingMoveAction(item, ableToEquip));
                     return success;
@@ -159,11 +155,16 @@ namespace LootingBots.Patch.Components
                 // Otherwise, find an empty grid slot to put the item in
                 var gridAddress = inventoryController.FindGridToPickUp(item);
 
-                if (gridAddress != null && !gridAddress.GetRootItem().Parent.Container.ID.ToLower().Equals("securedcontainer"))
+                if (
+                    gridAddress != null
+                    && !gridAddress.GetRootItem().Parent.Container.ID.ToLower().Equals("securedcontainer")
+                )
                 {
                     if (log.WarningEnabled)
                     {
-                        log.LogWarning($"Picking up: {item.Name.Localized()} [place: {gridAddress.GetRootItem().Name.Localized()}]");
+                        log.LogWarning(
+                            $"Picking up: {item.Name.Localized()} [place: {gridAddress.GetRootItem().Name.Localized()}]"
+                        );
                     }
 
                     return await MoveItem(new LootingMoveAction(item, gridAddress));
@@ -215,7 +216,9 @@ namespace LootingBots.Patch.Components
                 {
                     if (log.ErrorEnabled)
                     {
-                        log.LogError($"Failed to move {moveAction.ToMove.Name.Localized()} to {moveAction.Place.Container.ID.Localized()}");
+                        log.LogError(
+                            $"Failed to move {moveAction.ToMove.Name.Localized()} to {moveAction.Place.Container.ID.Localized()}"
+                        );
                     }
                     return false;
                 }
@@ -239,8 +242,7 @@ namespace LootingBots.Patch.Components
                                 await moveAction.Callback();
                             }
                             promise.TrySetResult(result);
-                        }
-                        )
+                        })
                     );
 
                     await promise.Task;
@@ -257,7 +259,6 @@ namespace LootingBots.Patch.Components
                 {
                     log.LogError(e);
                 }
-
             }
 
             return true;
@@ -275,7 +276,9 @@ namespace LootingBots.Patch.Components
 
                 if (log.DebugEnabled)
                 {
-                    log.LogDebug($"Merging {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})");
+                    log.LogDebug(
+                        $"Merging {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})"
+                    );
                 }
 
                 var value = InteractionsHandlerClass.Merge(
@@ -289,7 +292,9 @@ namespace LootingBots.Patch.Components
                 {
                     if (log.ErrorEnabled)
                     {
-                        log.LogError($"Failed to merge {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})");
+                        log.LogError(
+                            $"Failed to merge {moveAction?.ToMove?.Name?.Localized()} (Stack Size: {moveAction?.ToMove?.StackObjectsCount}) with: {moveAction?.ToItem?.Name?.Localized()} (Stack Size: {moveAction?.ToItem?.StackObjectsCount})"
+                        );
                     }
                     return false;
                 }
@@ -355,8 +360,11 @@ namespace LootingBots.Patch.Components
                     log.LogWarning($"Throwing item: {toThrow.Name.Localized()}");
                 }
 
-                inventoryController.ThrowItem(toThrow, false,
-                    new Callback(async (IResult result) =>
+                inventoryController.ThrowItem(
+                    toThrow,
+                    false,
+                    new Callback(
+                        async (IResult result) =>
                         {
                             if (result.Succeed && swapAction.Callback != null)
                             {
@@ -394,7 +402,10 @@ namespace LootingBots.Patch.Components
             return false;
         }
 
-        public Task<IResult> TryRunNetworkTransaction(InventoryControllerResultStruct operationResult, Callback callback = null)
+        public Task<IResult> TryRunNetworkTransaction(
+            InventoryControllerResultStruct operationResult,
+            Callback callback = null
+        )
         {
             return inventoryController.TryRunNetworkTransaction(operationResult, callback);
         }

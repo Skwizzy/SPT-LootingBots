@@ -25,7 +25,7 @@ namespace LootingBots.Utilities
                 return;
             }
 
-            foreach(var player in Singleton<GameWorld>.Instance.RegisteredPlayers)
+            foreach (var player in Singleton<GameWorld>.Instance.RegisteredPlayers)
             {
                 if (player.IsAI)
                 {
@@ -66,8 +66,7 @@ namespace LootingBots.Utilities
             }
 
             bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(closestPlayer);
-            return isFriendly && lootId == PlayerLootId
-                || ActiveLoot.TryGetValue(lootId, out BotOwner _);
+            return isFriendly && lootId == PlayerLootId || ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 
         public static void Cleanup(BotOwner botOwner)
