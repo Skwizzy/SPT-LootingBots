@@ -481,18 +481,18 @@ namespace LootingBots
                     "FollowerBully",
                     "FlBoar",
                 ],
-                2
+                4
             );
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
                 ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"],
-                3
+                5
             );
 
             BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantWarrior"], 13);
 
-            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantPriest"], 12);
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantPriest"], 13);
 
             BrainManager.AddCustomLayer(typeof(LootingLayer), ["Obdolbs"], 11);
         }
