@@ -337,7 +337,7 @@ namespace LootingBots.Patch.Components
             return true;
         }
 
-        /** Method used when we want the bot the throw an item and then equip an item immidiately afterwards */
+        /** Method used when we want the bot the throw an item and then equip an item immediately afterwards */
         public async Task<bool> ThrowAndEquip(LootingSwapAction swapAction)
         {
             if (IsLootingInterrupted())
