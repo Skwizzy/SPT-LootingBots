@@ -321,7 +321,8 @@ namespace LootingBots.Patch.Components
                         continue;
                     }
 
-                    // Try to pick up any nested items before trying to pick up the item. This helps when looting rigs to transfer ammo to the bots active rig
+                    // Try to pick up any nested items before trying to pick up the item.
+                    // This helps when looting rigs to transfer ammo to the bots active rig
                     if (item is SearchableItemItemClass)
                     {
                         bool success = await LootNestedItems((SearchableItemItemClass)item);
