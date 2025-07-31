@@ -154,7 +154,7 @@ namespace LootingBots.Brain.Logics
                 _navigationAttempts++;
 
                 string lootableName =
-                    _lootingBrain.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
+                    _lootingBrain.ActiveContainer?.ItemOwner.Items.GetFirstItem().Name.Localized()
                     ?? _lootingBrain.ActiveItem?.Name.Localized()
                     ?? _lootingBrain.ActiveCorpse?.GetPlayer.name.Localized();
 

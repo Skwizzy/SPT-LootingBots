@@ -336,7 +336,7 @@ namespace LootingBots.Patch.Components
             watch.Start();
             LootTaskRunning = true;
 
-            Item item = ActiveContainer.ItemOwner.Items.ToArray()[0];
+            Item item = ActiveContainer.ItemOwner.Items.GetFirstItem();
 
             if (_log.DebugEnabled)
             {
