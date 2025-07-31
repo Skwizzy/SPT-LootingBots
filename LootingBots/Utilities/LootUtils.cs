@@ -12,6 +12,27 @@ namespace LootingBots.Utilities
         public static LayerMask LootMask = LayerMask.GetMask(["Interactive", "Loot", "Deadbody"]);
         public static int RESERVED_SLOT_COUNT = 2;
 
+        private static readonly EquipmentSlot[] WeaponSlots = [
+            EquipmentSlot.Holster,
+            EquipmentSlot.FirstPrimaryWeapon,
+            EquipmentSlot.SecondPrimaryWeapon
+        ];
+
+        private static readonly EquipmentSlot[] StorageSlots = [
+            EquipmentSlot.Backpack,
+            EquipmentSlot.ArmorVest,
+            EquipmentSlot.TacticalVest,
+            EquipmentSlot.Pockets
+        ];
+
+        private static readonly EquipmentSlot[] OtherSlots = [
+            EquipmentSlot.Headwear,
+            EquipmentSlot.Earpiece,
+            EquipmentSlot.Dogtag,
+            EquipmentSlot.Scabbard,
+            EquipmentSlot.FaceCover
+        ];
+
         /** Calculate the size of a container */
         public static int GetContainerSize(this SearchableItemItemClass container)
         {
@@ -137,62 +158,38 @@ namespace LootingBots.Utilities
        */
         public static IEnumerable<Slot> GetPrioritySlots(InventoryController targetInventory)
         {
-            bool hasBackpack =
-                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem != null;
-            bool hasTacVest =
-                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem != null;
+            var equipment = targetInventory.Inventory.Equipment;
+            bool hasBackpack = equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem != null;
+            bool hasTacVest = equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem != null;
 
-            IEnumerable<EquipmentSlot> prioritySlots = [];
-            IEnumerable<EquipmentSlot> weaponSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                [EquipmentSlot.Holster, EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon]
-            );
-            IEnumerable<EquipmentSlot> storageSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                [EquipmentSlot.Backpack, EquipmentSlot.ArmorVest, EquipmentSlot.TacticalVest, EquipmentSlot.Pockets]
-            );
+            var prioritySlots = new List<EquipmentSlot>(13);
 
-            IEnumerable<EquipmentSlot> otherSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                [
-                    EquipmentSlot.Headwear,
-                    EquipmentSlot.Earpiece,
-                    EquipmentSlot.Dogtag,
-                    EquipmentSlot.Scabbard,
-                    EquipmentSlot.FaceCover,
-                ]
-            );
-
-            prioritySlots =
-                hasBackpack || hasTacVest
-                    ? prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray()
-                    : prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
-
-            prioritySlots = prioritySlots.Concat(otherSlots).ToArray();
-
-            return targetInventory.Inventory.Equipment.GetSlotsByName(prioritySlots);
-        }
-
-        /** Given a list of slots, return all slots that are not flagged as Locked */
-        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(
-            InventoryController targetInventory,
-            EquipmentSlot[] desiredSlots
-        )
-        {
-            List<EquipmentSlot> unlockedSlots = new();
-
-            // Loop through each desired slot
-            foreach (EquipmentSlot slot in desiredSlots)
+            // Add slots in priority order
+            if (hasBackpack || hasTacVest)
             {
-                // Check if the slot is unlocked
-                if (targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false)
-                {
-                    // Add the unlocked slot to the result list
-                    unlockedSlots.Add(slot);
-                }
+                AddUnlockedSlots(equipment, prioritySlots, WeaponSlots);
+                AddUnlockedSlots(equipment, prioritySlots, StorageSlots);
+            }
+            else
+            {
+                AddUnlockedSlots(equipment, prioritySlots, StorageSlots);
+                AddUnlockedSlots(equipment, prioritySlots, WeaponSlots);
             }
 
-            return unlockedSlots;
+            AddUnlockedSlots(equipment, prioritySlots, OtherSlots);
+
+            return equipment.GetSlotsByName(prioritySlots);
+        }
+
+        private static void AddUnlockedSlots(InventoryEquipment equipment, List<EquipmentSlot> targetList, EquipmentSlot[] slots)
+        {
+            foreach (var slot in slots)
+            {
+                if (!equipment.GetSlot(slot).Locked)
+                {
+                    targetList.Add(slot);
+                }
+            }
         }
 
         /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
