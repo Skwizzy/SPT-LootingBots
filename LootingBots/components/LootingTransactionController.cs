@@ -185,6 +185,7 @@ namespace LootingBots.Patch.Components
 
                 if (moveAction.ToMove is Weapon weapon && !(moveAction.ToMove is AmmoItemClass))
                 {
+                    //Todo: Doesn't work on Fika for obvious reasons
                     //AddExtraAmmo(weapon);
                 }
 
@@ -296,7 +297,7 @@ namespace LootingBots.Patch.Components
                     await inventoryController.TryRunNetworkTransaction(
                         value,
                         new Callback(
-                            async (IResult result) =>
+                            async result =>
                             {
                                 if (result.Succeed)
                                 {
@@ -346,7 +347,7 @@ namespace LootingBots.Patch.Components
                     toThrow,
                     false,
                     new Callback(
-                        async (IResult result) =>
+                        async result =>
                         {
                             if (result.Succeed && swapAction.Callback != null)
                             {

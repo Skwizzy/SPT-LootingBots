@@ -10,9 +10,6 @@ namespace LootingBots.Utilities
     /// </summary>
     public static class ActiveLootCache
     {
-        // Id of container/corpse that the player is currently looting
-        public static string PlayerLootId { get; set; }
-
         // Handle to the players instance for use in friendly checks
         public static List<IPlayer> ActivePlayers { get; private set; } = [];
 
@@ -44,7 +41,6 @@ namespace LootingBots.Utilities
         public static void Reset()
         {
             ActiveLoot = [];
-            PlayerLootId = "";
             ActivePlayers = [];
         }
 
@@ -56,17 +52,9 @@ namespace LootingBots.Utilities
             }
         }
 
-        public static bool IsLootInUse(string lootId, BotOwner botOwner)
+        public static bool IsLootInUse(string lootId)
         {
-            IPlayer closestPlayer = ActivePlayers.GetClosestPlayer(botOwner);
-
-            if (closestPlayer == null)
-            {
-                return false;
-            }
-
-            bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(closestPlayer);
-            return isFriendly && lootId == PlayerLootId || ActiveLoot.TryGetValue(lootId, out BotOwner _);
+            return ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 
         public static void Cleanup(BotOwner botOwner)
@@ -107,11 +95,6 @@ namespace LootingBots.Utilities
 
                 foreach(string key in keysToRemove)
                 {
-                    if (LootingBots.LootLog.DebugEnabled)
-                    {
-                        LootingBots.LootLog.LogDebug($"Removing {keysToRemove.Count} items out of LootCache");
-                    }
-
                     ActiveLoot.Remove(key);
                 }
             }

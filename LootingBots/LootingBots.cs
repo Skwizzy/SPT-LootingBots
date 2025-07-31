@@ -10,6 +10,7 @@ using EFT;
 using LootingBots.Brain;
 using LootingBots.Patch;
 using LootingBots.Patch.Components;
+using LootingBots.Patches;
 using LootingBots.Utilities;
 
 namespace LootingBots
@@ -431,8 +432,9 @@ namespace LootingBots
             InteropLog = new Log(Logger, InteropLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
-            new SettingsAndCachePatch().Enable();
-            new RemoveComponent().Enable();
+            new RemoveLootingBrainPatch().Enable();
+            new CleanCacheOnRaidEndPatch().Enable();
+            new EnableWeaponSwitchingPatch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
