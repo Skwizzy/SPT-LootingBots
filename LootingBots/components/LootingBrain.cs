@@ -107,13 +107,13 @@ namespace LootingBots.Patch.Components
         const float PeformanceTimerInterval = 3f;
 
         // Max distance from the player a bot can be before their looting brain is disabled
-        private double _distanceLimit
+        private double DistanceLimit
         {
             get { return Math.Pow(LootingBots.LimitDistanceFromPlayer.Value, 2); }
         }
 
         // Current distance to the player
-        private float _distanceToPlayer
+        private float DistanceToPlayer
         {
             get
             {
@@ -129,10 +129,11 @@ namespace LootingBots.Patch.Components
         }
 
         // Bot will be considered close enough to the player if the distanceLimit is 0, otherwise the distance from the player must be <= the limit
-        private bool _isCloseToPlayer
+        private bool IsCloseToPlayer
         {
-            get { return _distanceLimit == 0 || _distanceToPlayer <= _distanceLimit; }
+            get { return DistanceLimit == 0 || DistanceToPlayer <= DistanceLimit; }
         }
+
         private bool _isDisabledForPerformance = false;
         private float _performanceTimer = 0f;
         private BotLog _log;
@@ -160,7 +161,7 @@ namespace LootingBots.Patch.Components
             if (ActiveBotCache.IsCacheActive)
             {
                 // If there is space in the BotCache, add the bot to the cache. Otherwise disable the looting brain until there is space available in the cache
-                if (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && _isCloseToPlayer))
+                if (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && IsCloseToPlayer))
                 {
                     ActiveBotCache.Add(BotOwner);
                 }
@@ -168,7 +169,7 @@ namespace LootingBots.Patch.Components
                 {
                     if (_log.WarningEnabled)
                         _log.LogWarning(
-                            $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                            $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(DistanceToPlayer)}."
                         );
                     _isDisabledForPerformance = true;
                 }
@@ -186,7 +187,7 @@ namespace LootingBots.Patch.Components
                 {
                     if (ActiveBotCache.IsCacheActive && _performanceTimer < Time.time)
                     {
-                        bool closeEnoughToPlayer = _isCloseToPlayer;
+                        bool closeEnoughToPlayer = IsCloseToPlayer;
                         // For a disabled bot to be allowed to loot they must meet the following criteria:
                         // 1. The bot has been manually flagged for looting
                         //              OR
@@ -216,7 +217,7 @@ namespace LootingBots.Patch.Components
                             if (_log.WarningEnabled)
                             {
                                 _log.LogWarning(
-                                    $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(_distanceToPlayer)}."
+                                    $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(DistanceToPlayer)}."
                                 );
                             }
                         }
@@ -287,7 +288,7 @@ namespace LootingBots.Patch.Components
                     _log.LogInfo($"Trying to loot corpse");
 
                 // Initialize corpse inventory controller
-                InventoryController corpseInventoryController = LootUtils.GetBotInventoryController(ActiveCorpse);
+                InventoryController corpseInventoryController = ActiveCorpse.InventoryController;
 
                 // Get items to loot from the corpse in a priority order based off the slots
                 IEnumerable<Slot> prioritySlots = LootUtils.GetPrioritySlots(corpseInventoryController);
