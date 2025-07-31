@@ -151,7 +151,7 @@ namespace LootingBots.Patch.Components
                 _itemAppraiser = LootingBots.ItemAppraiser;
 
                 // Initialize bot inventory controller
-                _botInventoryController = LootUtils.GetBotInventoryController(botOwner.GetPlayer);
+                _botInventoryController = botOwner.GetPlayer.InventoryController;
                 _botOwner = botOwner;
                 _transactionController = new LootingTransactionController(_botOwner, _botInventoryController, _log);
 
@@ -264,7 +264,7 @@ namespace LootingBots.Patch.Components
         */
         public async Task<bool> TryAddItemsToBot(IEnumerable<Item> items)
         {
-            foreach (Item item in items.ToList())
+            foreach (Item item in items)
             {
                 if (item != null && item.Name != null)
                 {
@@ -322,9 +322,9 @@ namespace LootingBots.Patch.Components
 
                     // Try to pick up any nested items before trying to pick up the item.
                     // This helps when looting rigs to transfer ammo to the bots active rig
-                    if (item is SearchableItemItemClass)
+                    if (item is SearchableItemItemClass searchableItem)
                     {
-                        bool success = await LootNestedItems((SearchableItemItemClass)item);
+                        bool success = await LootNestedItems(searchableItem);
 
                         if (!success)
                         {
@@ -818,7 +818,7 @@ namespace LootingBots.Patch.Components
                     nestedItem.Id != parentItem.Id
                     && !nestedItem.QuestItem
                     && !isItemLocked
-                    && !LootUtils.IsSingleUseKey(nestedItem)
+                    && !nestedItem.IsSingleUseKey()
                 )
                 {
                     items.Add(nestedItem);
