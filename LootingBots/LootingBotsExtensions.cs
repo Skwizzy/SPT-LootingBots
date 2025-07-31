@@ -4,9 +4,9 @@ namespace LootingBots
 {
     public static class LootingBotsExtensions
     {
-        public static IPlayer GetClosestPlayer(this List<IPlayer> players, BotOwner botOwner)
+        public static IPlayer GetClosestPlayer(this IEnumerable<IPlayer> players, BotOwner botOwner)
         {
-            if (players == null || players.Count == 0)
+            if (players == null || !players.Any())
             {
                 return null;
             }
