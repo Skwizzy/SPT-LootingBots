@@ -83,8 +83,10 @@ namespace LootingBots.Utilities
                     return;
                 }
 
+                List<string> keysToRemove = [];
+
                 // Look through the entries in the dictionary and remove any that match the specified bot owner
-                foreach (KeyValuePair<string, BotOwner> keyValue in ActiveLoot.ToList())
+                foreach (KeyValuePair<string, BotOwner> keyValue in ActiveLoot)
                 {
                     // Check to make sure the BotOwner saved in the dictionary has a valid name before comparing
                     if (keyValue.Value == null || keyValue.Value.name == null)
@@ -99,8 +101,18 @@ namespace LootingBots.Utilities
                     // If the bot's name matches, remove the item
                     if (keyValue.Value.name == botOwner.name)
                     {
-                        ActiveLoot.Remove(keyValue.Key);
+                        keysToRemove.Add(keyValue.Key);
                     }
+                }
+
+                foreach(string key in keysToRemove)
+                {
+                    if (LootingBots.LootLog.DebugEnabled)
+                    {
+                        LootingBots.LootLog.LogDebug($"Removing {keysToRemove.Count} items out of LootCache");
+                    }
+
+                    ActiveLoot.Remove(key);
                 }
             }
             catch (Exception e)
