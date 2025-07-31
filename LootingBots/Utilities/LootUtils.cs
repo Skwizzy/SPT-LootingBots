@@ -12,13 +12,8 @@ namespace LootingBots.Utilities
         public static LayerMask LootMask = LayerMask.GetMask(["Interactive", "Loot", "Deadbody"]);
         public static int RESERVED_SLOT_COUNT = 2;
 
-        public static InventoryController GetBotInventoryController(Player targetBot)
-        {
-            return targetBot.InventoryController;
-        }
-
         /** Calculate the size of a container */
-        public static int GetContainerSize(SearchableItemItemClass container)
+        public static int GetContainerSize(this SearchableItemItemClass container)
         {
             StashGridClass[] grids = container.Grids;
             int gridSize = 0;
@@ -31,8 +26,12 @@ namespace LootingBots.Utilities
             return gridSize;
         }
 
-        // Prevents bots from looting single use quest keys like "Unknown Key"
-        public static bool IsSingleUseKey(Item item)
+        /// <summary>
+        /// Checks if a key is a Single Use Item like the "Unknown Key"
+        /// </summary>
+        /// <param name="item">The item to check</param>
+        /// <returns>returns true if it's single use, false otherwise</returns>
+        public static bool IsSingleUseKey(this Item item)
         {
             KeyComponent key = item.GetItemComponent<KeyComponent>();
             return key != null && key.Template.MaximumNumberOfUsage == 1;
@@ -69,7 +68,11 @@ namespace LootingBots.Utilities
             return freeSpaces;
         }
 
-        /** Return the amount of spaces taken up by all the items in a given grid slot */
+        /// <summary>
+        /// returns the amount of space taken up by all the items in a given grid slot
+        /// </summary>
+        /// <param name="grid">The grid to calculate the amount of space taken up for</param>
+        /// <returns>Returns the item size as an integer</returns>
         public static int GetSizeOfContainedItems(this StashGridClass grid)
         {
             int containedItemSize = 0;
@@ -83,7 +86,10 @@ namespace LootingBots.Utilities
             return containedItemSize;
         }
 
-        /** Gets the size of an item in a grid */
+        /// <summary>
+        /// Get the size of an item in a grid
+        /// </summary>
+        /// <param name="item">The item to get the size for</param>
         public static int GetItemSize(this Item item)
         {
             var dimensions = item.CalculateCellSize();
