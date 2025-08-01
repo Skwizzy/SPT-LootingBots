@@ -8,7 +8,7 @@ using LootingBots.Utilities;
 
 using UnityEngine;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     // Debug spheres from DrakiaXYZ Waypoints https://github.com/DrakiaXYZ/SPT-Waypoints/blob/master/Helpers/GameObjectHelper.cs
     public class GameObjectHelper

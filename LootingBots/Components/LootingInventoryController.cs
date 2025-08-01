@@ -9,7 +9,7 @@ using LootingBots.Utilities;
 
 using UnityEngine;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     public class GearValue
     {

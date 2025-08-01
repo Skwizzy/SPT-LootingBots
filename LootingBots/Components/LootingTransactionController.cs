@@ -8,7 +8,7 @@ using LootingBots.Utilities;
 
 using InventoryControllerResultStruct = GStruct454;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     public class LootingTransactionController(BotOwner botOwner, InventoryController inventoryController, BotLog log)
     {

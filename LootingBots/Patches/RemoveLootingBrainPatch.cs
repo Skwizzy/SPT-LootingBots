@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using EFT;
-using LootingBots.Patch.Components;
+using LootingBots.Components;
 using LootingBots.Utilities;
 using SPT.Reflection.Patching;
 

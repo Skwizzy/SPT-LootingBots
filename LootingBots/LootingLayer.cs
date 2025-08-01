@@ -4,8 +4,8 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Brain.Logics;
-using LootingBots.Patch.Components;
+using LootingBots.Logic;
+using LootingBots.Components;
 
 using UnityEngine;
 

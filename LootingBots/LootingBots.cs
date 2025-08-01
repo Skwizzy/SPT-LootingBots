@@ -8,8 +8,7 @@ using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 
 using LootingBots.Brain;
-using LootingBots.Patch;
-using LootingBots.Patch.Components;
+using LootingBots.Components;
 using LootingBots.Patches;
 using LootingBots.Utilities;
 

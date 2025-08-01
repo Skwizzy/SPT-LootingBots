@@ -2,10 +2,10 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Patch.Components;
+using LootingBots.Components;
 using LootingBots.Utilities;
 
-namespace LootingBots.Brain.Logics
+namespace LootingBots.Logic
 {
     internal class FindLootLogic : CustomLogic
     {

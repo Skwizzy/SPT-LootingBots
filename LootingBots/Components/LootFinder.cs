@@ -9,7 +9,7 @@ using LootingBots.Utilities;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     public class LootFinder : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 using EFT;
 
-using LootingBots.Patch.Components;
+using LootingBots.Components;
 
 namespace LootingBots.Utilities
 {

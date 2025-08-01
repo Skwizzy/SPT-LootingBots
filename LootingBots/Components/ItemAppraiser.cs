@@ -6,7 +6,7 @@ using EFT.InventoryLogic;
 
 using LootingBots.Utilities;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     public class ItemAppraiser
     {

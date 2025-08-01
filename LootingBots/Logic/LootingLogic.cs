@@ -2,13 +2,13 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Patch.Components;
+using LootingBots.Components;
 using LootingBots.Utilities;
 
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LootingBots.Brain.Logics
+namespace LootingBots.Logic
 {
     internal class LootingLogic : CustomLogic
     {

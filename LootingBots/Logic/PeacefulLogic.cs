@@ -4,7 +4,7 @@ using EFT;
 //Check in CreateNode(BotLogicDecision type, BotOwner bot) (GClass522 on 3.11 to set this)
 using PeacefulNodeClass = GClass259;
 
-namespace LootingBots.Brain.Logics
+namespace LootingBots.Logic
 {
     internal class PeacefulLogic : CustomLogic
     {
