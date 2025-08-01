@@ -10,7 +10,7 @@ using InventoryControllerResultStruct = GStruct454;
 
 namespace LootingBots.Components
 {
-    public class LootingTransactionController(BotOwner botOwner, InventoryController inventoryController, BotLog log)
+    public class LootingTransactionController(InventoryController inventoryController, BotLog log)
     {
         public bool Enabled;
 

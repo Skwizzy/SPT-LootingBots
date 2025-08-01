@@ -153,7 +153,7 @@ namespace LootingBots.Components
                 // Initialize bot inventory controller
                 _botInventoryController = botOwner.GetPlayer.InventoryController;
                 _botOwner = botOwner;
-                _transactionController = new LootingTransactionController(_botOwner, _botInventoryController, _log);
+                _transactionController = new LootingTransactionController(_botInventoryController, _log);
 
                 CalculateGearValue();
                 UpdateGridStats();
