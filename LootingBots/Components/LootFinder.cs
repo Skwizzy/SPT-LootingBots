@@ -1,15 +1,15 @@
+using System.Buffers;
 using System.Collections;
 
 using EFT;
 using EFT.Interactive;
-using EFT.InventoryLogic;
 
-using LootingBots.Patch.Util;
+using LootingBots.Utilities;
 
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LootingBots.Patch.Components
+namespace LootingBots.Components
 {
     public class LootFinder : MonoBehaviour
     {
@@ -18,6 +18,8 @@ namespace LootingBots.Patch.Components
         BotLog _log;
         public float ScanTimer;
         public bool LockUntilNextScan;
+
+        private static readonly ArrayPool<Collider> ColliderPool = ArrayPool<Collider>.Shared;
 
         public bool IsScheduledScan
         {
@@ -41,7 +43,7 @@ namespace LootingBots.Patch.Components
         {
             Corpse = 0,
             Container = 1,
-            Item = 2
+            Item = 2,
         }
 
         public bool IsScanRunning;
@@ -66,7 +68,7 @@ namespace LootingBots.Patch.Components
         public void BeginSearch()
         {
             IsScanRunning = true;
-            StartCoroutine(FindLootable());
+            StartCoroutine(FindLootCoroutine());
             LockUntilNextScan = false;
         }
 
@@ -83,77 +85,76 @@ namespace LootingBots.Patch.Components
             LockUntilNextScan = true;
         }
 
-        public IEnumerator FindLootable()
+        public IEnumerator FindLootCoroutine()
         {
             IsScanRunning = true;
-            // Use the largest detection radius specified in the settings as the main Sphere radius
-            float detectionRadius = Mathf.Max(
-                DetectItemDistance,
-                DetectContainerDistance,
-                DetectCorpseDistance
-            );
 
-            // Cast a sphere on the bot, detecting any Interacive world objects that collide with the sphere
-            Collider[] colliders = new Collider[3000];
+            Collider[] colliders = ColliderPool.Rent(3000);
 
-            var hits = Physics.OverlapSphereNonAlloc(
-                _botOwner.Position,
-                detectionRadius,
-                colliders,
-                LootUtils.LootMask,
-                QueryTriggerInteraction.Ignore
-            );
-
-            yield return null;
-
-            // If we have some hits from the sphere overlap, process the results
-            if (hits > 0)
+            try
             {
-                List<Collider> colliderList = new(hits);
-                int count = 0;
+                // Use the largest detection radius specified in the settings as the main Sphere radius
+                float detectionRadius = Mathf.Max(DetectItemDistance, DetectContainerDistance, DetectCorpseDistance);
+                var botPosition = _botOwner.Position;
 
-                // Collect the first 'hits' colliders
-                foreach (Collider collider in colliders.Take(hits))
+                // Cast a sphere on the bot, detecting any Interactive world objects that collide with the sphere
+                var hits = Physics.OverlapSphereNonAlloc(
+                    _botOwner.Position,
+                    detectionRadius,
+                    colliders,
+                    LootUtils.LootMask,
+                    QueryTriggerInteraction.Ignore
+                );
+
+                yield return null;
+
+                if (hits == 0)
                 {
-                    float distance = Vector3.Distance(collider.bounds.center, _botOwner.Position);
-
-                    // Insert in sorted order using a simple insertion sort
-                    int insertIndex = 0;
-                    while (insertIndex < count && Vector3.Distance(colliderList[insertIndex].bounds.center, _botOwner.Position) < distance)
+                    if (_log.DebugEnabled)
                     {
-                        insertIndex++;
+                        _log.LogDebug("No loot in range");
                     }
-
-                    // Insert the collider in the appropriate position, nearest should be first.
-                    colliderList.Insert(insertIndex, collider);
-                    count++;
-
-                    if (count == hits) break;
+                    IsScanRunning = false;
+                    yield break;
                 }
 
-                // Optional logging if DebugEnabled
+                // Sort colliders by distance
+                Array.Sort(colliders, 0, hits, new ColliderDistanceComparer(botPosition));
+
                 if (_log.DebugEnabled)
                 {
-                    _log.LogDebug($"Scan results: {colliderList.Count}");
+                    _log.LogDebug($"Scan results: {hits}");
                 }
 
                 yield return null;
 
                 int rangeCalculations = 0;
-                // For each object detected, check to see if it is loot and then calculate its distance from the player
-                foreach (var collider in colliderList)
+                int maxRangeCalculations = 3;
+
+                // Cache these values to avoid repeated property access
+                var containerLootingEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_lootingBrain);
+                var itemLootingEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_lootingBrain);
+                var corpseLootingEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_lootingBrain);
+                var availableGridSpaces = _lootingBrain.Stats.AvailableGridSpaces;
+                var botName = _botOwner.name;
+
+                // Process sorted colliders
+                for (int i = 0; i < hits; i++)
                 {
-                    if (collider == null || String.IsNullOrEmpty(_botOwner.name))
+                    var collider = colliders[i];
+
+                    if (collider is null || string.IsNullOrEmpty(botName))
                     {
                         yield return null;
                         continue;
                     }
 
-                    LootableContainer container =
-                        collider.gameObject.GetComponentInParent<LootableContainer>();
-                    LootItem lootItem = collider.gameObject.GetComponentInParent<LootItem>();
-                    Player corpse = collider.gameObject.GetComponentInParent<Player>();
-                    Item rootItem = container?.ItemOwner?.RootItem ?? lootItem?.ItemOwner?.RootItem;
+                    // Get components once and reuse
+                    var container = collider.gameObject.GetComponentInParent<LootableContainer>();
+                    var lootItem = collider.gameObject.GetComponentInParent<LootItem>();
+                    var corpse = collider.gameObject.GetComponentInParent<Player>();
+                    var rootItem = container?.ItemOwner?.RootItem ?? lootItem?.ItemOwner?.RootItem;
+
                     // If object has been ignored, skip to the next object detected
                     if (_lootingBrain.IsLootIgnored(rootItem?.Id))
                     {
@@ -162,106 +163,88 @@ namespace LootingBots.Patch.Components
                     }
 
                     bool canLootContainer =
-                        LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(_lootingBrain)
+                        containerLootingEnabled
                         && container != null // Container exists
                         && container.isActiveAndEnabled // Container is marked as active and enabled
                         && container.DoorState != EDoorState.Locked; // Container is not locked
 
                     bool canLootItem =
-                        LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(_lootingBrain)
-                        && !(lootItem is Corpse) // Item is not a corpse
+                        itemLootingEnabled
+                        && lootItem is not null
+                        && lootItem is not Corpse // Item is not a corpse
+                        && rootItem is not null
                         && !rootItem.QuestItem // Item is not a quest item
                         && (
-                            lootItem?.ItemOwner?.RootItem is SearchableItemItemClass // If the item is something that can be searched, consider it lootable
+                            rootItem is SearchableItemItemClass // If the item is something that can be searched, consider it lootable
                             || (
-                                lootItem?.ItemOwner?.RootItem is ArmoredEquipmentItemClass newArmor // If the item is some sort of armor, check to see if its better than what is equipped
-                                && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(
-                                    newArmor
-                                )
+                                rootItem is ArmoredEquipmentItemClass armor
+                                && _lootingBrain.InventoryController.IsBetterArmorThanEquipped(armor)
                             )
-                            || (
-                                _lootingBrain.IsValuableEnough(rootItem) // Otherwise, bot must have enough space to pickup and item must meet value the threshold
-                                && _lootingBrain.Stats.AvailableGridSpaces > rootItem.GetItemSize()
-                            )
+                            || (_lootingBrain.IsValuableEnough(rootItem) && availableGridSpaces > rootItem.GetItemSize())
                         );
 
                     bool canLootCorpse =
-                        LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(_lootingBrain)
+                        corpseLootingEnabled
                         && corpse != null // Corpse exists
                         && corpse.GetPlayer != null; // Corpse is a bot corpse and not a static "Dead scav" corpse
 
-                    if (canLootContainer || canLootItem || canLootCorpse)
+                    if (!(canLootContainer || canLootItem || canLootCorpse))
                     {
-                        Vector3 center = collider.bounds.center;
-                        // Push the center point to the lowest y point in the collider. Extend it further down by .3f to help container positions of jackets snap to a valid NavMesh
-                        center.y = collider.bounds.center.y - collider.bounds.extents.y - 0.4f;
+                        yield return null;
+                        continue;
+                    }
 
-                        LootType lootType =
-                            container != null
-                                ? LootType.Container
-                                : lootItem != null
-                                    ? LootType.Item
-                                    : LootType.Corpse;
+                    var bounds = collider.bounds;
+                    var center = new Vector3(bounds.center.x, bounds.center.y - bounds.extents.y - 0.4f, bounds.center.z);
+                    var destination = GetDestination(center);
 
-                        // If we havent already visted the lootable, calculate its distance and save the lootable with the shortest distance
-                        Vector3 destination = GetDestination(center);
+                    LootType lootType =
+                        container != null ? LootType.Container
+                        : lootItem != null ? LootType.Item
+                        : LootType.Corpse;
 
-                        // If we are considering a lootable to be the new closest lootable, make sure the loot is in the detection range specified for the type of loot
-                        if (
-                            IsLootInRange(lootType, destination, out float dist)
-                            && IsLootInSight(lootType, destination)
-                        )
-                        {
-                            ActiveLootCache.CacheActiveLootId(rootItem.Id, _botOwner);
-
-                            if (canLootContainer)
-                            {
-                                _lootingBrain.ActiveContainer = container;
-                                _lootingBrain.LootObjectPosition = container.transform.position;
-                                _lootingBrain.DistanceToLoot = dist;
-                                _lootingBrain.Destination = destination;
-                                break;
-                            }
-                            else if (canLootCorpse)
-                            {
-                                _lootingBrain.ActiveCorpse = corpse;
-                                _lootingBrain.LootObjectPosition = corpse.Transform.position;
-                                _lootingBrain.DistanceToLoot = dist;
-                                _lootingBrain.Destination = destination;
-                                break;
-                            }
-                            else
-                            {
-                                _lootingBrain.ActiveItem = lootItem;
-                                _lootingBrain.LootObjectPosition = lootItem.transform.position;
-                                _lootingBrain.DistanceToLoot = dist;
-                                _lootingBrain.Destination = destination;
-                                break;
-                            }
-                        }
-                        else if (dist != -1)
-                        {
-                            rangeCalculations++;
-                        }
-
-                        if (rangeCalculations == 3)
+                    // Check if loot is in range and sight
+                    if (!IsLootInRange(lootType, destination, out float dist) || !IsLootInSight(lootType, destination))
+                    {
+                        if (dist != -1 && ++rangeCalculations >= maxRangeCalculations)
                         {
                             if (_log.DebugEnabled)
                                 _log.LogDebug("No loot in range");
-
                             break;
                         }
+                        yield return null;
+                        continue;
                     }
 
-                    yield return null;
+                    // Cache the loot and set active target
+                    ActiveLootCache.CacheActiveLootId(rootItem.Id, _botOwner);
+                    _lootingBrain.DistanceToLoot = dist;
+                    _lootingBrain.Destination = destination;
+
+                    if (canLootContainer)
+                    {
+                        _lootingBrain.ActiveContainer = container;
+                        _lootingBrain.LootObjectPosition = container.transform.position;
+                    }
+                    else if (canLootCorpse)
+                    {
+                        _lootingBrain.ActiveCorpse = corpse;
+                        _lootingBrain.LootObjectPosition = corpse.Transform.position;
+                    }
+                    else
+                    {
+                        _lootingBrain.ActiveItem = lootItem;
+                        _lootingBrain.LootObjectPosition = lootItem.transform.position;
+                    }
+
+                    break;
                 }
             }
-            else if (_log.DebugEnabled)
+            finally
             {
-                _log.LogDebug("No loot in range");
+                ColliderPool.Return(colliders, true);
+                IsScanRunning = false;
             }
-
-            IsScanRunning = false;
         }
 
         /**
@@ -277,9 +260,7 @@ namespace LootingBots.Patch.Components
             {
                 if (_botOwner?.Mover == null && _log.WarningEnabled)
                 {
-                    _log.LogWarning(
-                        "botOwner.BotMover is null! Cannot perform path distance calculations"
-                    );
+                    _log.LogWarning("botOwner.BotMover is null! Cannot perform path distance calculations");
                 }
                 dist = -1f;
                 return false;
@@ -310,9 +291,7 @@ namespace LootingBots.Patch.Components
             {
                 if (_botOwner?.LookSensor == null && _log.WarningEnabled)
                 {
-                    _log.LogWarning(
-                        "botOwner.LookSensor is null! Cannot perform line of sight check"
-                    );
+                    _log.LogWarning("botOwner.LookSensor is null! Cannot perform line of sight check");
                 }
                 return true;
             }
@@ -330,7 +309,7 @@ namespace LootingBots.Patch.Components
             return !sightBlocked;
         }
 
-        Vector3 GetDestination(Vector3 center)
+        private Vector3 GetDestination(Vector3 center)
         {
             // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
             Vector3 pointNearbyContainer = NavMesh.SamplePosition(

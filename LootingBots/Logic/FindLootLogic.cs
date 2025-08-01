@@ -2,10 +2,10 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Components;
+using LootingBots.Utilities;
 
-namespace LootingBots.Brain.Logics
+namespace LootingBots.Logic
 {
     internal class FindLootLogic : CustomLogic
     {
@@ -28,7 +28,9 @@ namespace LootingBots.Brain.Logics
             {
                 if (_log.DebugEnabled)
                 {
-                    _log.LogDebug($"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}");
+                    _log.LogDebug(
+                        $"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}"
+                    );
                 }
                 _lootFinder.BeginSearch();
             }

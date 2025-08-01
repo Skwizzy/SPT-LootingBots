@@ -7,10 +7,9 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Brain;
-using LootingBots.Patch;
-using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Components;
+using LootingBots.Patches;
+using LootingBots.Utilities;
 
 namespace LootingBots
 {
@@ -21,13 +20,19 @@ namespace LootingBots
     {
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.5.2";
+        private const string MOD_VERSION = "1.6.0";
 
-        public const BotType SettingsDefaults =
-            BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
+        public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
         public const EquipmentType CanPickupEquipmentDefaults =
-            EquipmentType.ArmoredRig | EquipmentType.ArmorVest | EquipmentType.Backpack | EquipmentType.Grenade | EquipmentType.Helmet | EquipmentType.TacticalRig | EquipmentType.Weapon | EquipmentType.Dogtag;
+            EquipmentType.ArmoredRig
+            | EquipmentType.ArmorVest
+            | EquipmentType.Backpack
+            | EquipmentType.Grenade
+            | EquipmentType.Helmet
+            | EquipmentType.TacticalRig
+            | EquipmentType.Weapon
+            | EquipmentType.Dogtag;
 
         // Loot Finder Settings
         public static ConfigEntry<BotType> CorpseLootingEnabled;
@@ -71,11 +76,11 @@ namespace LootingBots
 
         public static ConfigEntry<LogLevel> ItemAppraiserLogLevels;
         public static Log ItemAppraiserLog;
-        public static ItemAppraiser ItemAppraiser = new ItemAppraiser();
+        public static ItemAppraiser ItemAppraiser { get; private set; } = new ItemAppraiser();
 
         // Performance Settings
         public static ConfigEntry<int> MaxActiveLootingBots;
-        public static ConfigEntry<int> LimitDistnaceFromPlayer;
+        public static ConfigEntry<int> LimitDistanceFromPlayer;
 
         public void LootFinderSettings()
         {
@@ -403,7 +408,7 @@ namespace LootingBots
                     new ConfigurationManagerAttributes { Order = 11 }
                 )
             );
-            LimitDistnaceFromPlayer = Config.Bind(
+            LimitDistanceFromPlayer = Config.Bind(
                 "Performance",
                 "Limit looting by distance to player",
                 0,
@@ -425,8 +430,9 @@ namespace LootingBots
             InteropLog = new Log(Logger, InteropLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
-            new SettingsAndCachePatch().Enable();
-            new RemoveComponent().Enable();
+            new RemoveLootingBrainPatch().Enable();
+            new CleanCacheOnRaidEndPatch().Enable();
+            new EnableWeaponSwitchingPatch().Enable();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
@@ -440,18 +446,12 @@ namespace LootingBots
                     "PmcBear",
                     "ExUsec",
                     "ArenaFighter",
-                    "SectantWarrior"
+                    "SectantWarrior",
                 ]
             );
 
             // Remove BSG's own looting layer
-            BrainManager.RemoveLayer(
-                "LootPatrol",
-                [
-                    "Assault",
-                    "PMC",
-                ]
-            );
+            BrainManager.RemoveLayer("LootPatrol", ["Assault", "PMC"]);
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
@@ -479,28 +479,20 @@ namespace LootingBots
                     "KolonSec",
                     "FollowerSanitar",
                     "FollowerBully",
-                    "FlBoar"
+                    "FlBoar",
                 ],
-                2
+                4
             );
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),
                 ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"],
-                3
+                5
             );
 
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                ["SectantWarrior"],
-                13
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantWarrior"], 13);
 
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                ["SectantPriest"],
-                12
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantPriest"], 13);
 
             BrainManager.AddCustomLayer(typeof(LootingLayer), ["Obdolbs"], 11);
         }

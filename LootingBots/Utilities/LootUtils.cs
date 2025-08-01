@@ -4,23 +4,37 @@ using EFT.InventoryLogic;
 
 using UnityEngine;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     public static class LootUtils
     {
-        public static LayerMask LowPolyMask = LayerMask.GetMask(new string[] { "LowPolyCollider" });
-        public static LayerMask LootMask = LayerMask.GetMask(
-            new string[] { "Interactive", "Loot", "Deadbody" }
-        );
+        public static LayerMask LowPolyMask = LayerMask.GetMask(["LowPolyCollider"]);
+        public static LayerMask LootMask = LayerMask.GetMask(["Interactive", "Loot", "Deadbody"]);
         public static int RESERVED_SLOT_COUNT = 2;
 
-        public static InventoryController GetBotInventoryController(Player targetBot)
-        {
-            return targetBot.InventoryController;
-        }
+        private static readonly EquipmentSlot[] WeaponSlots = [
+            EquipmentSlot.Holster,
+            EquipmentSlot.FirstPrimaryWeapon,
+            EquipmentSlot.SecondPrimaryWeapon
+        ];
+
+        private static readonly EquipmentSlot[] StorageSlots = [
+            EquipmentSlot.Backpack,
+            EquipmentSlot.ArmorVest,
+            EquipmentSlot.TacticalVest,
+            EquipmentSlot.Pockets
+        ];
+
+        private static readonly EquipmentSlot[] OtherSlots = [
+            EquipmentSlot.Headwear,
+            EquipmentSlot.Earpiece,
+            EquipmentSlot.Dogtag,
+            EquipmentSlot.Scabbard,
+            EquipmentSlot.FaceCover
+        ];
 
         /** Calculate the size of a container */
-        public static int GetContainerSize(SearchableItemItemClass container)
+        public static int GetContainerSize(this SearchableItemItemClass container)
         {
             StashGridClass[] grids = container.Grids;
             int gridSize = 0;
@@ -33,8 +47,12 @@ namespace LootingBots.Patch.Util
             return gridSize;
         }
 
-        // Prevents bots from looting single use quest keys like "Unknown Key"
-        public static bool IsSingleUseKey(Item item)
+        /// <summary>
+        /// Checks if a key is a Single Use Item like the "Unknown Key"
+        /// </summary>
+        /// <param name="item">The item to check</param>
+        /// <returns>returns true if it's single use, false otherwise</returns>
+        public static bool IsSingleUseKey(this Item item)
         {
             KeyComponent key = item.GetItemComponent<KeyComponent>();
             return key != null && key.Template.MaximumNumberOfUsage == 1;
@@ -71,7 +89,11 @@ namespace LootingBots.Patch.Util
             return freeSpaces;
         }
 
-        /** Return the amount of spaces taken up by all the items in a given grid slot */
+        /// <summary>
+        /// returns the amount of space taken up by all the items in a given grid slot
+        /// </summary>
+        /// <param name="grid">The grid to calculate the amount of space taken up for</param>
+        /// <returns>Returns the item size as an integer</returns>
         public static int GetSizeOfContainedItems(this StashGridClass grid)
         {
             int containedItemSize = 0;
@@ -85,7 +107,10 @@ namespace LootingBots.Patch.Util
             return containedItemSize;
         }
 
-        /** Gets the size of an item in a grid */
+        /// <summary>
+        /// Get the size of an item in a grid
+        /// </summary>
+        /// <param name="item">The item to get the size for</param>
         public static int GetItemSize(this Item item)
         {
             var dimensions = item.CalculateCellSize();
@@ -133,84 +158,44 @@ namespace LootingBots.Patch.Util
        */
         public static IEnumerable<Slot> GetPrioritySlots(InventoryController targetInventory)
         {
-            bool hasBackpack =
-                targetInventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem
-                != null;
-            bool hasTacVest =
-                targetInventory.Inventory.Equipment
-                    .GetSlot(EquipmentSlot.TacticalVest)
-                    .ContainedItem != null;
+            var equipment = targetInventory.Inventory.Equipment;
+            bool hasBackpack = equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem != null;
+            bool hasTacVest = equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem != null;
 
-            IEnumerable<EquipmentSlot> prioritySlots = new EquipmentSlot[0];
-            IEnumerable<EquipmentSlot> weaponSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Holster,
-                    EquipmentSlot.FirstPrimaryWeapon,
-                    EquipmentSlot.SecondPrimaryWeapon
-                }
-            );
-            IEnumerable<EquipmentSlot> storageSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Backpack,
-                    EquipmentSlot.ArmorVest,
-                    EquipmentSlot.TacticalVest,
-                    EquipmentSlot.Pockets
-                }
-            );
+            var prioritySlots = new List<EquipmentSlot>(13);
 
-            IEnumerable<EquipmentSlot> otherSlots = GetUnlockedEquipmentSlots(
-                targetInventory,
-                new EquipmentSlot[]
-                {
-                    EquipmentSlot.Headwear,
-                    EquipmentSlot.Earpiece,
-                    EquipmentSlot.Dogtag,
-                    EquipmentSlot.Scabbard,
-                    EquipmentSlot.FaceCover
-                }
-            );
-
+            // Add slots in priority order
             if (hasBackpack || hasTacVest)
             {
-                prioritySlots = prioritySlots.Concat(weaponSlots).Concat(storageSlots).ToArray();
+                AddUnlockedSlots(equipment, prioritySlots, WeaponSlots);
+                AddUnlockedSlots(equipment, prioritySlots, StorageSlots);
             }
             else
             {
-                prioritySlots = prioritySlots.Concat(storageSlots).Concat(weaponSlots).ToArray();
+                AddUnlockedSlots(equipment, prioritySlots, StorageSlots);
+                AddUnlockedSlots(equipment, prioritySlots, WeaponSlots);
             }
 
-            prioritySlots = prioritySlots.Concat(otherSlots).ToArray();
+            AddUnlockedSlots(equipment, prioritySlots, OtherSlots);
 
-            return targetInventory.Inventory.Equipment.GetSlotsByName(prioritySlots);
+            return equipment.GetSlotsByName(prioritySlots);
         }
 
-        /** Given a list of slots, return all slots that are not flagged as Locked */
-        private static IEnumerable<EquipmentSlot> GetUnlockedEquipmentSlots(InventoryController targetInventory, EquipmentSlot[] desiredSlots)
+        private static void AddUnlockedSlots(InventoryEquipment equipment, List<EquipmentSlot> targetList, EquipmentSlot[] slots)
         {
-            List<EquipmentSlot> unlockedSlots = new();
-
-            // Loop through each desired slot
-            foreach (EquipmentSlot slot in desiredSlots)
+            foreach (var slot in slots)
             {
-                // Check if the slot is unlocked
-                if (targetInventory.Inventory.Equipment.GetSlot(slot).Locked == false)
+                if (!equipment.GetSlot(slot).Locked)
                 {
-                    // Add the unlocked slot to the result list
-                    unlockedSlots.Add(slot);
+                    targetList.Add(slot);
                 }
             }
-
-            return unlockedSlots;
         }
 
         /** Given a LootItemClass that has slots, return any items that are listed in slots flagged as "Locked" */
         public static IEnumerable<Item> GetAllLockedItems(CompoundItem itemWithSlots)
         {
-            List<Item> resultItems = new();
+            List<Item> resultItems = [];
 
             if (itemWithSlots.Slots == null)
             {

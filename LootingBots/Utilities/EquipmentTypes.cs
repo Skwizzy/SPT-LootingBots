@@ -1,6 +1,6 @@
 using EFT.InventoryLogic;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     [Flags]
     public enum EquipmentType
@@ -15,16 +15,7 @@ namespace LootingBots.Patch.Util
         Dogtag = 128,
         ArmorPlate = 256,
 
-        All =
-            Backpack
-            | TacticalRig
-            | ArmoredRig
-            | ArmorVest
-            | Weapon
-            | Helmet
-            | Grenade
-            | Dogtag
-            | ArmorPlate
+        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade | Dogtag | ArmorPlate,
     }
 
     [Flags]
@@ -38,7 +29,7 @@ namespace LootingBots.Patch.Util
         Grenade = EquipmentType.Grenade,
         Helmet = EquipmentType.Helmet,
 
-        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade
+        All = Backpack | TacticalRig | ArmoredRig | ArmorVest | Weapon | Helmet | Grenade,
     }
 
     public static class EquipmentTypeUtils

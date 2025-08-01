@@ -1,22 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
-        <TargetFramework>net48</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <LangVersion>latest</LangVersion>
         <RootNamespace>LootingBots</RootNamespace>
         <AssemblyName>skwizzy.LootingBots</AssemblyName>
     </PropertyGroup>
-
     <ItemGroup>
         <PackageReference Include="BepInEx.Core" Version="5.*" />
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.43" IncludeAssets="compile" />
     </ItemGroup>
-
     <ItemGroup>
         <Reference Include="DrakiaXYZ-BigBrain">
-          <HintPath>..\References\DrakiaXYZ-BigBrain.dll</HintPath>
+            <HintPath>..\References\DrakiaXYZ-BigBrain.dll</HintPath>
         </Reference>
         <Reference Include="spt-common">
             <HintPath>..\References\spt-common.dll</HintPath>
@@ -37,8 +34,6 @@
             <SpecificVersion>False</SpecificVersion>
             <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
         </Reference>
-        <Reference Include="System" />
         <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
     </ItemGroup>
-
 </Project>

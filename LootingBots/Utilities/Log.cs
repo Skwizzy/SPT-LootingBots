@@ -1,6 +1,6 @@
 using EFT;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
     [Flags]
     public enum LogLevel
@@ -11,7 +11,7 @@ namespace LootingBots.Patch.Util
         None = 0,
 
         /// <summary>
-        ///     An error has occured, but can be recovered from.
+        ///     An error has occurred, but can be recovered from.
         /// </summary>
         Error = 2,
 
@@ -33,7 +33,7 @@ namespace LootingBots.Patch.Util
         /// <summary>
         ///     All log levels.
         /// </summary>
-        All = Error | Warning | Info | Debug
+        All = Error | Warning | Info | Debug,
     }
 
     public class BotLog
@@ -49,10 +49,7 @@ namespace LootingBots.Patch.Util
 
         private bool _isLogShown
         {
-            get
-            {
-                return _currentBotFilter == "0" || _botOwner.name.Equals("Bot" + _currentBotFilter);
-            }
+            get { return _currentBotFilter == "0" || _botOwner.name.Equals("Bot" + _currentBotFilter); }
         }
 
         public bool DebugEnabled
@@ -114,10 +111,7 @@ namespace LootingBots.Patch.Util
         public BepInEx.Logging.ManualLogSource Logger;
         public BepInEx.Configuration.ConfigEntry<LogLevel> LogLevels;
 
-        public Log(
-            BepInEx.Logging.ManualLogSource logger,
-            BepInEx.Configuration.ConfigEntry<LogLevel> logLevels
-        )
+        public Log(BepInEx.Logging.ManualLogSource logger, BepInEx.Configuration.ConfigEntry<LogLevel> logLevels)
         {
             Logger = logger;
             LogLevels = logLevels;

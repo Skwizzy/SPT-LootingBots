@@ -2,33 +2,46 @@ using Comfort.Common;
 
 using EFT;
 
-namespace LootingBots.Patch.Util
+namespace LootingBots.Utilities
 {
-    // Cached used to keep track of what lootable are currently being targeted by a bot so that multiple bots
-    // dont try and path to the same lootable
+    /// <summary>
+    /// Tracks lootable objects currently targeted by bots to prevent multiple bots
+    /// from navigating to the same lootable simultaneously.
+    /// </summary>
     public static class ActiveLootCache
     {
-        // Id of container/corpse that the player is currently looting
-        public static string PlayerLootId;
+        // Handle to the players instance for use in friendly checks
+        public static List<IPlayer> ActivePlayers { get; private set; } = [];
 
-        // Handle to the players intance for use in friendly checks
-        public static Player MainPlayer;
-
-        public static Dictionary<string, BotOwner> ActiveLoot = new Dictionary<string, BotOwner>();
+        public static Dictionary<string, BotOwner> ActiveLoot { get; private set; } = [];
 
         public static void Init()
         {
-            if (!MainPlayer)
+            if (ActivePlayers.Count > 0)
             {
-                MainPlayer = Singleton<GameWorld>.Instance.MainPlayer;
+                return;
+            }
+
+            foreach (var player in Singleton<GameWorld>.Instance.RegisteredPlayers)
+            {
+                if (player.IsAI)
+                {
+                    continue;
+                }
+
+                if (!player.HealthController.IsAlive)
+                {
+                    continue;
+                }
+
+                ActivePlayers.Add(player);
             }
         }
 
         public static void Reset()
         {
-            ActiveLoot = new Dictionary<string, BotOwner>();
-            PlayerLootId = "";
-            MainPlayer = null;
+            ActiveLoot = [];
+            ActivePlayers = [];
         }
 
         public static void CacheActiveLootId(string containerId, BotOwner botOwner)
@@ -39,11 +52,9 @@ namespace LootingBots.Patch.Util
             }
         }
 
-        public static bool IsLootInUse(string lootId, BotOwner botOwner)
+        public static bool IsLootInUse(string lootId)
         {
-            bool isFriendly = !botOwner.BotsGroup.IsPlayerEnemy(MainPlayer);
-            return (isFriendly && lootId == PlayerLootId)
-                || ActiveLoot.TryGetValue(lootId, out BotOwner _);
+            return ActiveLoot.TryGetValue(lootId, out BotOwner _);
         }
 
         public static void Cleanup(BotOwner botOwner)
@@ -60,8 +71,10 @@ namespace LootingBots.Patch.Util
                     return;
                 }
 
+                List<string> keysToRemove = [];
+
                 // Look through the entries in the dictionary and remove any that match the specified bot owner
-                foreach (KeyValuePair<string, BotOwner> keyValue in ActiveLoot.ToList())
+                foreach (KeyValuePair<string, BotOwner> keyValue in ActiveLoot)
                 {
                     // Check to make sure the BotOwner saved in the dictionary has a valid name before comparing
                     if (keyValue.Value == null || keyValue.Value.name == null)
@@ -76,8 +89,13 @@ namespace LootingBots.Patch.Util
                     // If the bot's name matches, remove the item
                     if (keyValue.Value.name == botOwner.name)
                     {
-                        ActiveLoot.Remove(keyValue.Key);
+                        keysToRemove.Add(keyValue.Key);
                     }
+                }
+
+                foreach(string key in keysToRemove)
+                {
+                    ActiveLoot.Remove(key);
                 }
             }
             catch (Exception e)

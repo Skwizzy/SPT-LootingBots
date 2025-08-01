@@ -2,13 +2,13 @@ using DrakiaXYZ.BigBrain.Brains;
 
 using EFT;
 
-using LootingBots.Patch.Components;
-using LootingBots.Patch.Util;
+using LootingBots.Components;
+using LootingBots.Utilities;
 
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace LootingBots.Brain.Logics
+namespace LootingBots.Logic
 {
     internal class LootingLogic : CustomLogic
     {
@@ -65,7 +65,6 @@ namespace LootingBots.Brain.Logics
                 {
                     _closeEnoughTimer = Time.time + 2f;
 
-
                     bool isCloseEnough = IsCloseEnough();
 
                     // If the bot is closer than 4m from the loot, they should slow down and not sprint to prevent powersliding
@@ -113,8 +112,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                if (_log.ErrorEnabled)
-                    _log.LogError(e);
+                _log.LogError(e);
             }
         }
 
@@ -132,10 +130,12 @@ namespace LootingBots.Brain.Logics
             )
             {
                 if (_log.ErrorEnabled)
+                {
                     _log.LogError(
                         $"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}"
                     );
-                return false;
+                    return false;
+                }
             }
 
             return true;
@@ -154,7 +154,7 @@ namespace LootingBots.Brain.Logics
                 _navigationAttempts++;
 
                 string lootableName =
-                    _lootingBrain.ActiveContainer?.ItemOwner.Items.ToArray()[0].Name.Localized()
+                    _lootingBrain.ActiveContainer?.ItemOwner.Items.GetFirstItem().Name.Localized()
                     ?? _lootingBrain.ActiveItem?.Name.Localized()
                     ?? _lootingBrain.ActiveCorpse?.GetPlayer.name.Localized();
 
@@ -174,13 +174,7 @@ namespace LootingBots.Brain.Logics
 
                     if (_navigationAttempts == 1)
                     {
-                        NavMeshPathStatus pathStatus = BotOwner.GoToPoint(
-                            _destination,
-                            true,
-                            -1f,
-                            false,
-                            false
-                        );
+                        NavMeshPathStatus pathStatus = BotOwner.GoToPoint(_destination, true, -1f, false, false);
 
                         if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
@@ -196,9 +190,9 @@ namespace LootingBots.Brain.Logics
                     if (isBotStuck)
                     {
                         if (_log.ErrorEnabled)
-                            _log.LogError(
-                                $"Has been stuck trying to reach: {lootableName}. Ignoring"
-                            );
+                        {
+                            _log.LogError($"Has been stuck trying to reach: {lootableName}. Ignoring");
+                        }
                     }
                     else if (_log.ErrorEnabled)
                     {
@@ -211,8 +205,7 @@ namespace LootingBots.Brain.Logics
             }
             catch (Exception e)
             {
-                if (_log.ErrorEnabled)
-                    _log.LogError(e);
+                _log.LogError(e);
             }
 
             return canMove;
@@ -229,25 +222,25 @@ namespace LootingBots.Brain.Logics
             }
 
             // Calculate distance from bot to destination
-            float dist;
+            float distance;
             Vector3 vector = BotOwner.Position - _destination;
             float y = vector.y;
             vector.y = 0f;
-            dist = vector.sqrMagnitude;
+            distance = vector.sqrMagnitude;
 
-            bool isCloseEnough = dist < 0.85f && Math.Abs(y) < 0.5f;
+            bool isCloseEnough = distance < 0.85f && Math.Abs(y) < 0.5f;
 
             // Check to see if the bot is stuck
-            if (!IsBotStuck(dist))
+            if (!IsBotStuck(distance))
             {
                 // Bot has moved, reset stuckCount and update cached distance to container
                 _stuckCount = 0;
-                _lootingBrain.DistanceToLoot = dist;
+                _lootingBrain.DistanceToLoot = distance;
             }
 
-            if (isCloseEnough && _log.WarningEnabled)
+            if (isCloseEnough && _log.DebugEnabled)
             {
-                _log.LogWarning($"Bot is close enought to loot. {dist}. height diff: {y}");
+                _log.LogDebug($"Bot is close enough to loot. {distance}. height diff: {y}");
             }
 
             return isCloseEnough;
@@ -264,7 +257,7 @@ namespace LootingBots.Brain.Logics
             {
                 if (_log.DebugEnabled)
                     _log.LogDebug(
-                        $"[Stuck: {_stuckCount}] Disance moved since check: {changeInDist}. Dist from loot: {dist}"
+                        $"[Stuck: {_stuckCount}] Distance moved since check: {changeInDist}. Dist from loot: {dist}"
                     );
 
                 // Bot is stuck, update stuck count
