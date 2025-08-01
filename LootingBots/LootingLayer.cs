@@ -9,7 +9,7 @@ using LootingBots.Components;
 
 using UnityEngine;
 
-namespace LootingBots.Brain
+namespace LootingBots
 {
     internal class LootingLayer : CustomLayer
     {
