@@ -243,7 +243,7 @@ namespace LootingBots.Components
                         }
 
                         // Open any nearby door
-                        BotOwner.DoorOpener.Update();
+                        BotOwner.DoorOpener.UpdateDoorInteractionStatus();
                     }
                 }
             }
