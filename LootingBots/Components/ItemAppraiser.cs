@@ -1,9 +1,7 @@
 using Comfort.Common;
-
 using EFT;
 using EFT.HandBook;
 using EFT.InventoryLogic;
-
 using LootingBots.Utilities;
 
 namespace LootingBots.Components
@@ -26,9 +24,7 @@ namespace LootingBots.Components
                 Singleton<ClientApplication<ISession>>
                     .Instance.GetClientBackEndSession()
                     .RagfairGetPrices(
-                        new Callback<Dictionary<string, float>>(
-                            (Result<Dictionary<string, float>> result) => MarketData = result.Value
-                        )
+                        new Callback<Dictionary<string, float>>((Result<Dictionary<string, float>> result) => MarketData = result.Value)
                     );
                 MarketInitialized = true;
             }
@@ -45,20 +41,18 @@ namespace LootingBots.Components
             bool valueFromMods = LootingBots.ValueFromMods.Value;
             if (LootingBots.UseMarketPrices.Value && MarketData != null)
             {
-                return lootItem is Weapon && valueFromMods
-                    ? GetWeaponMarketPrice(lootItem as Weapon)
-                    : GetItemMarketPrice(lootItem);
+                return lootItem is Weapon && valueFromMods ? GetWeaponMarketPrice(lootItem as Weapon) : GetItemMarketPrice(lootItem);
             }
 
             if (HandbookData != null)
             {
-                return lootItem is Weapon && valueFromMods
-                    ? GetWeaponHandbookPrice(lootItem as Weapon)
-                    : GetItemHandbookPrice(lootItem);
+                return lootItem is Weapon && valueFromMods ? GetWeaponHandbookPrice(lootItem as Weapon) : GetItemHandbookPrice(lootItem);
             }
 
             if (Log.DebugEnabled)
+            {
                 Log.LogDebug($"ItemAppraiser data is null");
+            }
 
             return 0;
         }
@@ -69,7 +63,9 @@ namespace LootingBots.Components
         public float GetWeaponHandbookPrice(Weapon lootWeapon)
         {
             if (Log.DebugEnabled)
+            {
                 Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            }
 
             float finalPrice = 0f;
 
@@ -79,9 +75,9 @@ namespace LootingBots.Components
             }
 
             if (Log.DebugEnabled)
-                Log.LogDebug(
-                    $"Final price of attachments: {finalPrice} compared to full item {GetItemHandbookPrice(lootWeapon)}"
-                );
+            {
+                Log.LogDebug($"Final price of attachments: {finalPrice} compared to full item {GetItemHandbookPrice(lootWeapon)}");
+            }
 
             return finalPrice;
         }
@@ -93,7 +89,9 @@ namespace LootingBots.Components
             float price = value?.Price ?? 0;
 
             if (Log.DebugEnabled)
+            {
                 Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
+            }
 
             return price;
         }
@@ -104,7 +102,9 @@ namespace LootingBots.Components
         public float GetWeaponMarketPrice(Weapon lootWeapon)
         {
             if (Log.DebugEnabled)
+            {
                 Log.LogDebug($"Getting value of attachments for {lootWeapon.Name.Localized()}");
+            }
 
             float finalPrice = 0f;
 
@@ -115,9 +115,9 @@ namespace LootingBots.Components
             }
 
             if (Log.DebugEnabled)
-                Log.LogDebug(
-                    $"Final price of attachments: {finalPrice} compared to item template {GetItemMarketPrice(lootWeapon)}"
-                );
+            {
+                Log.LogDebug($"Final price of attachments: {finalPrice} compared to item template {GetItemMarketPrice(lootWeapon)}");
+            }
 
             return finalPrice;
         }
@@ -128,7 +128,9 @@ namespace LootingBots.Components
             float price = MarketData[lootItem.TemplateId];
 
             if (Log.DebugEnabled)
+            {
                 Log.LogDebug($"Price of {lootItem.Name.Localized()} is {price}");
+            }
 
             return price;
         }

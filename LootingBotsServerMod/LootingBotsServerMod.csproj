@@ -1,38 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <ReleaseOutputDir>..\Build\user\mods\Skwizzy-LootingBots-ServerMod\</ReleaseOutputDir>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ReleaseOutputDir>..\Build\user\mods\Skwizzy-LootingBots-ServerMod\</ReleaseOutputDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SPTarkov.Common" Version="4.0.0-prerelease26" />
+    <PackageReference Include="SPTarkov.DI" Version="4.0.0-prerelease26" />
+    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-prerelease26" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Config\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <!-- Build script for release build-->
+  <Target Name="CleanUnwantedFiles" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
-        <PackageReference Include="SPTarkov.Common" Version="4.0.0-prerelease26" />
-        <PackageReference Include="SPTarkov.DI" Version="4.0.0-prerelease26" />
-        <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-prerelease26" />
+      <UnwantedFiles Include="$(OutputPath)*.pdb;$(OutputPath)*.deps.json;$(OutputPath)*.runtimeconfig.*" />
     </ItemGroup>
+    <Delete Files="@(UnwantedFiles)" />
+  </Target>
+  <Target Name="CopyBuildOutput" AfterTargets="CleanUnwantedFiles" Condition="'$(Configuration)' == 'Release'">
+    <MakeDir Directories="$(ReleaseOutputDir)" />
     <ItemGroup>
-        <Folder Include="Config\" />
+      <RemainingFiles Include="$(OutputPath)**\*" />
     </ItemGroup>
-    <ItemGroup>
-        <None Update="Config\config.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-    <!-- Build script for release build-->
-    <Target Name="CleanUnwantedFiles" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
-        <ItemGroup>
-            <UnwantedFiles Include="$(OutputPath)*.pdb;$(OutputPath)*.deps.json;$(OutputPath)*.runtimeconfig.*" />
-        </ItemGroup>
-        <Delete Files="@(UnwantedFiles)" />
-    </Target>
-    <Target Name="CopyBuildOutput" AfterTargets="CleanUnwantedFiles" Condition="'$(Configuration)' == 'Release'">
-        <MakeDir Directories="$(ReleaseOutputDir)" />
-        <ItemGroup>
-            <RemainingFiles Include="$(OutputPath)**\*" />
-        </ItemGroup>
-        <Copy
-            SourceFiles="@(RemainingFiles)"
-            DestinationFiles="@(RemainingFiles-&gt;'$(ReleaseOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
-        />
-    </Target>
+    <Copy
+      SourceFiles="@(RemainingFiles)"
+      DestinationFiles="@(RemainingFiles-&gt;'$(ReleaseOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
+    />
+  </Target>
 </Project>

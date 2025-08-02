@@ -1,11 +1,8 @@
 using System.Collections;
-
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-
 using LootingBots.Utilities;
-
 using UnityEngine;
 
 namespace LootingBots.Components
@@ -168,9 +165,12 @@ namespace LootingBots.Components
                 else
                 {
                     if (_log.WarningEnabled)
+                    {
                         _log.LogWarning(
                             $"Looting disabled! Enabled bots: {ActiveBotCache.GetSize()}. Distance to player: {Math.Sqrt(DistanceToPlayer)}."
                         );
+                    }
+
                     _isDisabledForPerformance = true;
                 }
             }
@@ -193,10 +193,7 @@ namespace LootingBots.Components
                         //              OR
                         // 1. ActiveBotCache is not at capacity
                         // 2. Bot is close enough to the player
-                        if (
-                            _isDisabledForPerformance
-                            && (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && closeEnoughToPlayer))
-                        )
+                        if (_isDisabledForPerformance && (ForceBrainEnabled || (ActiveBotCache.IsAbleToCache && closeEnoughToPlayer)))
                         {
                             ActiveBotCache.Add(BotOwner);
                             _isDisabledForPerformance = false;
@@ -224,8 +221,7 @@ namespace LootingBots.Components
 
                         // The performance check should occur every 3 seconds at the minimum.
                         // If the loot scan interval is faster, we should do the performance check at the loot scan interval
-                        _performanceTimer =
-                            Time.time + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
+                        _performanceTimer = Time.time + Math.Min(PeformanceTimerInterval, LootingBots.LootScanInterval.Value);
                     }
 
                     if (IsBrainEnabled)
@@ -285,7 +281,9 @@ namespace LootingBots.Components
                 LootTaskRunning = true;
 
                 if (_log.InfoEnabled)
+                {
                     _log.LogInfo($"Trying to loot corpse");
+                }
 
                 // Initialize corpse inventory controller
                 InventoryController corpseInventoryController = ActiveCorpse.InventoryController;
@@ -320,9 +318,7 @@ namespace LootingBots.Components
 
                 if (_log.DebugEnabled)
                 {
-                    _log.LogDebug(
-                        $"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
-                    );
+                    _log.LogDebug($"Corpse loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}");
                 }
             }
         }
@@ -354,7 +350,7 @@ namespace LootingBots.Components
             Task delayTask = LootingTransactionController.SimulatePlayerDelay(LootingStartDelay);
             yield return new WaitUntil(() => delayTask.IsCompleted);
 
-            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemItemClass)item);
+            Task<bool> lootTask = InventoryController.LootNestedItems((SearchableItemItemClass) item);
             yield return new WaitUntil(() => lootTask.IsCompleted);
 
             // Close the container if the settings to close containers is checked or if the container was already opened when the bot tried to loot it
@@ -373,9 +369,7 @@ namespace LootingBots.Components
 
             if (_log.DebugEnabled)
             {
-                _log.LogDebug(
-                    $"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}"
-                );
+                _log.LogDebug($"Container loot time: {watch.ElapsedMilliseconds / 1000f}s. Net Worth: {Stats.NetLootValue}");
             }
         }
 
@@ -572,8 +566,7 @@ namespace LootingBots.Components
             }
 
             // Check for player Scavs created by SPT
-            return profile.Info.Settings.Role == WildSpawnType.assault
-                && !string.IsNullOrEmpty(profile.Info.MainProfileNickname);
+            return profile.Info.Settings.Role == WildSpawnType.assault && !string.IsNullOrEmpty(profile.Info.MainProfileNickname);
         }
     }
 }

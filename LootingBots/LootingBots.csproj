@@ -1,63 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>disable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <RootNamespace>LootingBots</RootNamespace>
-        <AssemblyName>skwizzy.LootingBots</AssemblyName>
-        <ReleaseOutputDir>..\Build\BepInEx\plugins\</ReleaseOutputDir>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>LootingBots</RootNamespace>
+    <AssemblyName>skwizzy.LootingBots</AssemblyName>
+    <ReleaseOutputDir>..\Build\BepInEx\plugins\</ReleaseOutputDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.43" IncludeAssets="compile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="DrakiaXYZ-BigBrain">
+      <HintPath>..\References\DrakiaXYZ-BigBrain.dll</HintPath>
+    </Reference>
+    <Reference Include="spt-common">
+      <HintPath>..\References\spt-common.dll</HintPath>
+    </Reference>
+    <Reference Include="spt-reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\spt-reflection.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\hollowed.dll</HintPath>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>..\References\Comfort.dll</HintPath>
+    </Reference>
+    <Reference Include="ItemComponent.Types" HintPath="..\References\ItemComponent.Types.dll" Private="False" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
+  </ItemGroup>
+  <!-- Build script for release build-->
+  <Target Name="CleanUnwantedFiles" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
-        <PackageReference Include="BepInEx.Core" Version="5.*" />
-        <PackageReference Include="UnityEngine.Modules" Version="2022.3.43" IncludeAssets="compile" />
+      <AllFiles Include="$(OutputPath)**\*" />
+      <FilesToKeep Include="$(OutputPath)$(TargetFileName)" />
     </ItemGroup>
     <ItemGroup>
-        <Reference Include="DrakiaXYZ-BigBrain">
-            <HintPath>..\References\DrakiaXYZ-BigBrain.dll</HintPath>
-        </Reference>
-        <Reference Include="spt-common">
-            <HintPath>..\References\spt-common.dll</HintPath>
-        </Reference>
-        <Reference Include="spt-reflection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>..\References\spt-reflection.dll</HintPath>
-        </Reference>
-        <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>..\References\hollowed.dll</HintPath>
-        </Reference>
-        <Reference Include="Comfort">
-            <HintPath>..\References\Comfort.dll</HintPath>
-        </Reference>
-        <Reference Include="ItemComponent.Types" HintPath="..\References\ItemComponent.Types.dll" Private="False" />
-        <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-            <SpecificVersion>False</SpecificVersion>
-            <HintPath>..\References\Newtonsoft.Json.dll</HintPath>
-        </Reference>
-        <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
+      <FilesToDelete Include="@(AllFiles)" Exclude="@(FilesToKeep)" />
     </ItemGroup>
-    <!-- Build script for release build-->
-    <Target Name="CleanUnwantedFiles" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
-        <ItemGroup>
-            <AllFiles Include="$(OutputPath)**\*" />
-            <FilesToKeep Include="$(OutputPath)$(TargetFileName)" />
-        </ItemGroup>
-        
-        <ItemGroup>
-            <FilesToDelete Include="@(AllFiles)" Exclude="@(FilesToKeep)" />
-        </ItemGroup>
-
-        <Delete Files="@(FilesToDelete)" />
-    </Target>
-    <Target Name="CopyBuildOutput" AfterTargets="CleanUnwantedFiles" Condition="'$(Configuration)' == 'Release'">
-        <MakeDir Directories="$(ReleaseOutputDir)" />
-        <ItemGroup>
-            <RemainingFiles Include="$(OutputPath)**\*" />
-        </ItemGroup>
-        <Copy
-            SourceFiles="@(RemainingFiles)"
-            DestinationFiles="@(RemainingFiles-&gt;'$(ReleaseOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
-        />
-    </Target>
+    <Delete Files="@(FilesToDelete)" />
+  </Target>
+  <Target Name="CopyBuildOutput" AfterTargets="CleanUnwantedFiles" Condition="'$(Configuration)' == 'Release'">
+    <MakeDir Directories="$(ReleaseOutputDir)" />
+    <ItemGroup>
+      <RemainingFiles Include="$(OutputPath)**\*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(RemainingFiles)"
+      DestinationFiles="@(RemainingFiles-&gt;'$(ReleaseOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
+    />
+  </Target>
 </Project>

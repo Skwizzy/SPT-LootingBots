@@ -1,12 +1,8 @@
 using BepInEx;
 using BepInEx.Configuration;
-
 using Comfort.Common;
-
 using DrakiaXYZ.BigBrain.Brains;
-
 using EFT;
-
 using LootingBots.Components;
 using LootingBots.Patches;
 using LootingBots.Utilities;
@@ -14,7 +10,7 @@ using LootingBots.Utilities;
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    [BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
+    //[BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
@@ -436,18 +432,7 @@ namespace LootingBots
 
             BrainManager.RemoveLayer(
                 "Utility peace",
-                [
-                    "Assault",
-                    "ExUsec",
-                    "BossSanitar",
-                    "CursAssault",
-                    "PMC",
-                    "PmcUsec",
-                    "PmcBear",
-                    "ExUsec",
-                    "ArenaFighter",
-                    "SectantWarrior",
-                ]
+                ["Assault", "ExUsec", "BossSanitar", "CursAssault", "PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter", "SectantWarrior"]
             );
 
             // Remove BSG's own looting layer
@@ -484,11 +469,7 @@ namespace LootingBots
                 4
             );
 
-            BrainManager.AddCustomLayer(
-                typeof(LootingLayer),
-                ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"],
-                5
-            );
+            BrainManager.AddCustomLayer(typeof(LootingLayer), ["PMC", "PmcUsec", "PmcBear", "ExUsec", "ArenaFighter"], 5);
 
             BrainManager.AddCustomLayer(typeof(LootingLayer), ["SectantWarrior"], 13);
 
@@ -504,11 +485,7 @@ namespace LootingBots
                 || (UseMarketPrices.Value && !ItemAppraiser.MarketInitialized);
 
             // Initialize the itemAppraiser when the BE instance comes online
-            if (
-                Singleton<ClientApplication<ISession>>.Instance != null
-                && Singleton<HandbookClass>.Instance != null
-                && shoultInitAppraiser
-            )
+            if (Singleton<ClientApplication<ISession>>.Instance != null && Singleton<HandbookClass>.Instance != null && shoultInitAppraiser)
             {
                 LootLog.LogInfo($"Initializing item appraiser");
                 ItemAppraiser.Init();

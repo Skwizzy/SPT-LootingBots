@@ -1,6 +1,5 @@
 ﻿using EFT;
 using EFT.InventoryLogic;
-
 using LootingBots.Components;
 using LootingBots.Utilities;
 
@@ -63,9 +62,7 @@ namespace LootingBots
                 BotLog log = CreateInteropLog(bot);
 
                 if (log.DebugEnabled)
-                    log.LogDebug(
-                        $"Checking if {bot.name} has Free Space in their inventory. Result: {lootingBrain.HasFreeSpace}"
-                    );
+                    log.LogDebug($"Checking if {bot.name} has Free Space in their inventory. Result: {lootingBrain.HasFreeSpace}");
 
                 return !lootingBrain.HasFreeSpace;
             }
