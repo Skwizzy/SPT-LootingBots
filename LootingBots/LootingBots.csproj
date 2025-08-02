@@ -6,6 +6,7 @@
         <LangVersion>latest</LangVersion>
         <RootNamespace>LootingBots</RootNamespace>
         <AssemblyName>skwizzy.LootingBots</AssemblyName>
+        <ReleaseOutputDir>..\Build\BepInEx\plugins\</ReleaseOutputDir>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="BepInEx.Core" Version="5.*" />
@@ -36,4 +37,27 @@
         </Reference>
         <Reference Include="DissonanceVoip" HintPath="..\References\DissonanceVoip.dll" Private="False" />
     </ItemGroup>
+    <!-- Build script for release build-->
+    <Target Name="CleanUnwantedFiles" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+        <ItemGroup>
+            <AllFiles Include="$(OutputPath)**\*" />
+            <FilesToKeep Include="$(OutputPath)$(TargetFileName)" />
+        </ItemGroup>
+        
+        <ItemGroup>
+            <FilesToDelete Include="@(AllFiles)" Exclude="@(FilesToKeep)" />
+        </ItemGroup>
+
+        <Delete Files="@(FilesToDelete)" />
+    </Target>
+    <Target Name="CopyBuildOutput" AfterTargets="CleanUnwantedFiles" Condition="'$(Configuration)' == 'Release'">
+        <MakeDir Directories="$(ReleaseOutputDir)" />
+        <ItemGroup>
+            <RemainingFiles Include="$(OutputPath)**\*" />
+        </ItemGroup>
+        <Copy
+            SourceFiles="@(RemainingFiles)"
+            DestinationFiles="@(RemainingFiles-&gt;'$(ReleaseOutputDir)%(RecursiveDir)%(Filename)%(Extension)')"
+        />
+    </Target>
 </Project>
