@@ -1,11 +1,8 @@
 using System.Buffers;
 using System.Collections;
-
 using EFT;
 using EFT.Interactive;
-
 using LootingBots.Utilities;
-
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -209,7 +206,10 @@ namespace LootingBots.Components
                         if (dist != -1 && ++rangeCalculations >= maxRangeCalculations)
                         {
                             if (_log.DebugEnabled)
+                            {
                                 _log.LogDebug("No loot in range");
+                            }
+
                             break;
                         }
                         yield return null;
@@ -299,12 +299,7 @@ namespace LootingBots.Components
             Vector3 start = _botOwner.LookSensor._headPoint;
             Vector3 directionOfLoot = destination - start;
 
-            bool sightBlocked = Physics.Raycast(
-                start,
-                directionOfLoot,
-                directionOfLoot.magnitude,
-                LayerMaskClass.HighPolyWithTerrainMask
-            );
+            bool sightBlocked = Physics.Raycast(start, directionOfLoot, directionOfLoot.magnitude, LayerMaskClass.HighPolyWithTerrainMask);
 
             return !sightBlocked;
         }
@@ -312,12 +307,7 @@ namespace LootingBots.Components
         private Vector3 GetDestination(Vector3 center)
         {
             // Try to snap the desired destination point to the nearest NavMesh to ensure the bot can draw a navigable path to the point
-            Vector3 pointNearbyContainer = NavMesh.SamplePosition(
-                center,
-                out NavMeshHit navMeshAlignedPoint,
-                1f,
-                NavMesh.AllAreas
-            )
+            Vector3 pointNearbyContainer = NavMesh.SamplePosition(center, out NavMeshHit navMeshAlignedPoint, 1f, NavMesh.AllAreas)
                 ? navMeshAlignedPoint.position
                 : Vector3.zero;
 
@@ -328,12 +318,7 @@ namespace LootingBots.Components
             padding.Normalize();
 
             // Make sure the point is still snapped to the NavMesh after its been pushed
-            Vector3 destination = NavMesh.SamplePosition(
-                center - (padding * 1.5f),
-                out navMeshAlignedPoint,
-                1f,
-                navMeshAlignedPoint.mask
-            )
+            Vector3 destination = NavMesh.SamplePosition(center - (padding * 1.5f), out navMeshAlignedPoint, 1f, navMeshAlignedPoint.mask)
                 ? navMeshAlignedPoint.position
                 : pointNearbyContainer;
 

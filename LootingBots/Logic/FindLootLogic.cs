@@ -1,7 +1,5 @@
 using DrakiaXYZ.BigBrain.Brains;
-
 using EFT;
-
 using LootingBots.Components;
 using LootingBots.Utilities;
 
@@ -36,9 +34,7 @@ namespace LootingBots.Logic
             {
                 if (_log.DebugEnabled)
                 {
-                    _log.LogDebug(
-                        $"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}"
-                    );
+                    _log.LogDebug($"Starting scan - free space: {_lootingBrain.HasFreeSpace}. isScanRunning: {_lootFinder.IsScanRunning}");
                 }
                 _lootFinder.BeginSearch();
             }
