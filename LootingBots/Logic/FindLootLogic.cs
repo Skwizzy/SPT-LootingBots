@@ -23,8 +23,16 @@ namespace LootingBots.Logic
 
         public override void Update(CustomLayer.ActionData data)
         {
+            if (!_lootingBrain.HasFreeSpace)
+            {
+                // Need to disable LockUntilNextScan if the bot has no free space to prevent an infinite looting loop
+                _lootFinder.LockUntilNextScan = false;
+
+                return;
+            }
+
             // Trigger a scan if one is not running already
-            if (_lootingBrain.HasFreeSpace && !_lootFinder.IsScanRunning)
+            if (!_lootFinder.IsScanRunning)
             {
                 if (_log.DebugEnabled)
                 {
