@@ -31,7 +31,7 @@ namespace LootingBotsServerMod
         {
             if (!_config.PmcSpawnWithLoot)
             {
-                EmptyInventory(["usec", "bear"]);
+                EmptyInventory(["usec", "pmcusec", "bear", "pmcbear"]);
 
                 // Do not allow weapons to spawn in PMC bags
                 _PmcConfig.LooseWeaponInBackpackLootMinMax.Max = 0;

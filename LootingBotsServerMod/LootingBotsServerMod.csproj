@@ -6,9 +6,9 @@
     <ReleaseOutputDir>..\Build\user\mods\Skwizzy-LootingBots-ServerMod\</ReleaseOutputDir>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="SPTarkov.Common" Version="4.0.0-prerelease26" />
-    <PackageReference Include="SPTarkov.DI" Version="4.0.0-prerelease26" />
-    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-prerelease26" />
+    <PackageReference Include="SPTarkov.Common" Version="4.0.0-prerelease29" />
+    <PackageReference Include="SPTarkov.DI" Version="4.0.0-prerelease29" />
+    <PackageReference Include="SPTarkov.Server.Core" Version="4.0.0-prerelease29" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Config\" />
