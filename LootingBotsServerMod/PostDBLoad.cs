@@ -53,7 +53,7 @@ namespace LootingBotsServerMod
 
             logger.Info("[LootingBots-ServerMod] Marking items with DiscardLimits as InsuranceDisabled");
 
-            foreach ((string itemId, TemplateItem template) in databaseServer.GetTables().Templates.Items)
+            foreach ((_, TemplateItem template) in databaseServer.GetTables().Templates.Items)
             {
                 /**
                * When we set DiscardLimitsEnabled to false further down, this will cause some items to be able to be insured when they normally should not be.
