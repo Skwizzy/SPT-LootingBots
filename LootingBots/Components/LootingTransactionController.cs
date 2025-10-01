@@ -3,7 +3,7 @@ using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Actions;
 using LootingBots.Utilities;
-using InventoryControllerResultStruct = GStruct458;
+using InventoryControllerResultStruct = GStruct153;
 
 namespace LootingBots.Components
 {
@@ -57,7 +57,7 @@ namespace LootingBots.Components
 
                         if (location != null)
                         {
-                            GStruct459<GClass3284> result = container.AddItemWithoutRestrictions(ammo, location);
+                            GStruct154<GClass3415> result = container.AddItemWithoutRestrictions(ammo, location);
                             if (result.Succeeded)
                             {
                                 ammoAdded += ammo.StackObjectsCount;

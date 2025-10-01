@@ -296,7 +296,7 @@ namespace LootingBots.Components
                 return true;
             }
 
-            Vector3 start = _botOwner.LookSensor._headPoint;
+            Vector3 start = _botOwner.LookSensor.HeadPoint;
             Vector3 directionOfLoot = destination - start;
 
             bool sightBlocked = Physics.Raycast(start, directionOfLoot, directionOfLoot.magnitude, LayerMaskClass.HighPolyWithTerrainMask);
