@@ -1,0 +1,114 @@
+name: Build LootingBots
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Setup NuGet sources
+      run: |
+        dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+        
+    - name: Restore NuGet packages
+      run: dotnet restore LootingBots.sln
+      
+    - name: Build Client Mod (LootingBots)
+      run: dotnet build LootingBots/LootingBots.csproj -c Release --no-restore
+      continue-on-error: true
+      
+    - name: Build Server Mod (LootingBotsServerMod)
+      run: dotnet build LootingBotsServerMod/LootingBotsServerMod.csproj -c Release --no-restore
+      
+    - name: Upload Client Mod Artifact
+      uses: actions/upload-artifact@v4
+      if: success() || failure()
+      with:
+        name: LootingBots-Client
+        path: LootingBots/bin/Release/netstandard2.1/
+        if-no-files-found: warn
+        
+    - name: Upload Server Mod Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LootingBots-Server
+        path: LootingBotsServerMod/bin/Release/**/
+        if-no-files-found: error
+        
+  create-release:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Client Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: LootingBots-Client
+        path: release/BepInEx/plugins/
+        
+    - name: Download Server Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: LootingBots-Server
+        path: release/server-temp/
+        
+    - name: Organize Server Files
+      shell: pwsh
+      run: |
+        # Find the actual output directory
+        $serverDir = Get-ChildItem -Path "release/server-temp" -Directory -Recurse | Where-Object { $_.Name -like "*LootingBotsServerMod" } | Select-Object -First 1
+        
+        if ($serverDir) {
+          # Create target directory
+          New-Item -ItemType Directory -Force -Path "release/user/mods/LootingBotsServerMod-2.0.0"
+          
+          # Copy server mod files
+          Copy-Item -Path "$($serverDir.FullName)/*" -Destination "release/user/mods/LootingBotsServerMod-2.0.0/" -Recurse -Force
+        }
+        
+        # Clean up temp directory
+        Remove-Item -Path "release/server-temp" -Recurse -Force
+        
+    - name: Copy Documentation
+      shell: pwsh
+      run: |
+        Copy-Item -Path "README.md" -Destination "release/"
+        Copy-Item -Path "CHANGELOG.md" -Destination "release/"
+        Copy-Item -Path "MIGRATION_GUIDE.md" -Destination "release/"
+        Copy-Item -Path "QUICKSTART.md" -Destination "release/"
+        
+    - name: Create Release Archive
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref_name }}"
+        Compress-Archive -Path "release/*" -DestinationPath "LootingBots-$version.zip"
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: LootingBots-*.zip
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

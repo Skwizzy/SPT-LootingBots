@@ -1,0 +1,60 @@
+name: Question
+description: Ask a question about LootingBots
+title: "[Question]: "
+labels: ["question"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? Please check the [README](../README.md), [Quick Start Guide](../QUICKSTART.md), and [Migration Guide](../MIGRATION_GUIDE.md) first!
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: How do I...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: documentation-check
+    attributes:
+      label: Documentation Check
+      description: Have you checked the documentation?
+      options:
+        - label: I have read the README.md
+          required: false
+        - label: I have read the QUICKSTART.md
+          required: false
+        - label: I have read the MIGRATION_GUIDE.md (if upgrading)
+          required: false
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What is your question about?
+      options:
+        - Installation
+        - Configuration
+        - Bot Behavior
+        - Compatibility
+        - Performance
+        - Development/Building
+        - Other
+
+  - type: input
+    id: version
+    attributes:
+      label: Version Information
+      description: What versions are you using?
+      placeholder: "LootingBots 2.0.0, SPT 4.0.5"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any additional context that might help answer your question
+      placeholder: Any additional information...

@@ -6,6 +6,9 @@
         <LangVersion>latest</LangVersion>
         <RootNamespace>LootingBots</RootNamespace>
         <AssemblyName>skwizzy.LootingBots</AssemblyName>
+        <Version>2.0.0</Version>
+        <Authors>Skwizzy</Authors>
+        <Description>LootingBots client-side mod for SPT 4.0</Description>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="BepInEx.Core" Version="5.*" />

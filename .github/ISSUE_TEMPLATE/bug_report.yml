@@ -1,0 +1,118 @@
+name: Bug Report
+description: Report a bug or issue with LootingBots
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees:
+  - bjx8970
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below.
+
+  - type: checkboxes
+    id: version-check
+    attributes:
+      label: Version Check
+      description: Please confirm you're using the correct version
+      options:
+        - label: I am using LootingBots 2.0.0 or later with SPT 4.0+
+          required: true
+        - label: I have checked that this issue hasn't been reported before
+          required: true
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: LootingBots Version
+      description: What version of LootingBots are you using?
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: spt-version
+    attributes:
+      label: SPT Version
+      description: What version of SPT are you using?
+      placeholder: "4.0.5"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe the issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe expected behavior...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log Output
+      description: Please paste relevant log output from SPT_Data/Server/user/logs/ or BepInEx console
+      render: shell
+      placeholder: Paste logs here...
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Your LootingBots configuration (Config/config.json and F12 settings)
+      render: json
+      placeholder: Paste config here...
+
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other Mods Installed
+      description: List other mods you have installed
+      placeholder: |
+        - BigBrain 1.3.2
+        - Another Mod 1.0.0
+
+  - type: dropdown
+    id: bot-type
+    attributes:
+      label: Bot Type Affected
+      description: Which bot types are experiencing the issue?
+      multiple: true
+      options:
+        - PMC
+        - Scav
+        - Raider
+        - Boss
+        - Cultist
+        - All types
+        - Unknown
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Any additional information...

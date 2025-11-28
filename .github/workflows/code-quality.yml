@@ -1,0 +1,56 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore LootingBots.sln
+      
+    - name: Build for analysis
+      run: dotnet build LootingBots.sln -c Debug --no-restore
+      
+    - name: Run code analysis
+      run: dotnet format LootingBots.sln --verify-no-changes --verbosity diagnostic
+      continue-on-error: true
+      
+  dependency-check:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: List outdated packages
+      run: |
+        dotnet list LootingBotsServerMod/LootingBotsServerMod.csproj package --outdated
+      continue-on-error: true
+      
+    - name: Check for vulnerable packages
+      run: |
+        dotnet list LootingBotsServerMod/LootingBotsServerMod.csproj package --vulnerable
+      continue-on-error: true

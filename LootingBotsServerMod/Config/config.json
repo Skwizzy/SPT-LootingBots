@@ -1,4 +1,4 @@
 {
-  "PmcSpawnWithLoot": true,
+  "PmcSpawnWithLoot": false,
   "ScavSpawnWithLoot": true
 }

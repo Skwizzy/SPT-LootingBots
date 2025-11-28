@@ -1,13 +1,28 @@
-[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=dowloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.4.1-spt-3.10)
-[![Beta release downloads](https://img.shields.io/github/downloads/Skwizzy/SPT-LootingBots/v1.3.3-aki-3.8.0-beta/total)](https://github.com/Skwizzy/SPT-LootingBots/releases/tag/v1.3.3-aki-3.8.0-beta)
-
+[![Build Status](https://github.com/bjx8970/SPT-LootingBots/actions/workflows/build.yml/badge.svg)](https://github.com/bjx8970/SPT-LootingBots/actions)
+[![Latest release downloads](https://img.shields.io/github/downloads/skwizzy/SPT-LootingBots/latest/total?label=downloads%40latest)](https://github.com/Skwizzy/SPT-LootingBots/releases)
+[![GitHub release](https://img.shields.io/github/v/release/skwizzy/SPT-LootingBots)](https://github.com/Skwizzy/SPT-LootingBots/releases/latest)
+[![License](https://img.shields.io/github/license/skwizzy/SPT-LootingBots)](LICENSE)
 
 # SPT-LootingBots
 
-This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid. 
+This mod aims to add a bit more life to the bots by enhancing some of the base EFT looting behaviors, allowing bots to pick up loot in the current raid.
+
+## ⚠️ Version 2.0.0 - Major Update
+
+**Current Version**: 2.0.0 (SPT 4.0+)
+
+> **IMPORTANT**: This is a **complete rewrite** for SPT 4.0 with breaking changes!
+> 
+> - ✅ **SPT 4.0+** - Use version 2.0.0
+> - ❌ **SPT 3.x** - Use version 1.6.1 or earlier
+> 
+> The server mod has been migrated from **TypeScript to C#** for better performance and to align with SPT 4.0's new architecture.
+> 
+> **See**: [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for upgrade instructions | [CHANGELOG.md](CHANGELOG.md) for full changes
 
 ## Dependencies
 **SPT-BigBrain**: https://github.com/DrakiaXYZ/SPT-BigBrain/releases
+**.NET 9 SDK** (for building from source): https://dotnet.microsoft.com/download/dotnet/9.0
 
 ## Behavior
 
@@ -78,15 +93,15 @@ This mod aims to add a bit more life to the bots by enhancing some of the base E
 - `Maximum looting bots` - Limits the amount of bots that are able to simultaneously run looting logic. A value of 0 represents no limit
 - `Limit looting by distance to player` - Any bot farther than the specified distance in meters will not run any looting logic. A value of 0 represents no limit
 
-## Server Mod Settings (LootingBots-ServerMod/config/config.json)
-- `pmcSpawnWithLoot` - When set to `true`, PMCs will spawn with loot in their bags/pockets (default SPT behavior)
-- `scavSpawnWithLoot` - When set to `true`, Scavs will spawn with loot in the bags/pockets (default SPT behavior)
+## Server Mod Settings (LootingBotsServerMod/Config/config.json)
+- `PmcSpawnWithLoot` - When set to `true`, PMCs will spawn with loot in their bags/pockets (default SPT behavior)
+- `ScavSpawnWithLoot` - When set to `true`, Scavs will spawn with loot in the bags/pockets (default SPT behavior)
 
   Default config: 
-  ```
+  ```json
   {
-      "pmcSpawnWithLoot": false,
-      "scavSpawnWithLoot": true
+      "PmcSpawnWithLoot": false,
+      "ScavSpawnWithLoot": true
   }
 
 ## Conflicts
@@ -108,9 +123,26 @@ This mod will conflict with any server mod that sets the `globals.config.Discard
 - [x] Customizable params in mod settings
 
 ## Package Contents
-- `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new corpse looting logic
-- `user/mods/Skwizzy-LootingBots-ServerMod` - Provide the option to clear out the loot that PMC/Scav bots start with in their backpacks. This does not include meds, ammo, grenades ect. These options can be found in the `Skwizzy-LootingBots-ServerMod/config/config.json`.
+- `BepInEx/plugins/skwizzy.LootingBots.dll` - Client plugin responsible for all the new looting logic
+- `user/mods/LootingBotsServerMod-2.0.0/` - C# server mod that configures bot spawn loot and disables discard limits. Configuration can be found in `Config/config.json`.
 
-## Install instructions
+## Install Instructions
 Simply extract the contents of the .zip file into your SPT directory.
+
+## Building From Source
+
+### Prerequisites
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) / [Rider](https://www.jetbrains.com/rider/) / [VS Code](https://code.visualstudio.com/)
+- References to SPT assemblies (place in `/References` folder)
+
+### Build Steps
+1. Clone the repository
+2. Place required SPT DLL files in the `References/` folder:
+   - For client mod: `hollowed.dll`, `spt-common.dll`, `spt-reflection.dll`, `DrakiaXYZ-BigBrain.dll`, etc.
+3. Run `npm install` (if needed)
+4. Run `npm run build` to build both client and server mods
+5. Built files will be in:
+   - Client: `LootingBots/bin/Release/`
+   - Server: `LootingBotsServerMod/bin/Release/`
     

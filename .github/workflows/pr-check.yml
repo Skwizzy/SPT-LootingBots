@@ -1,0 +1,62 @@
+name: CI - Pull Request Check
+
+on:
+  pull_request:
+    branches: [ master, main ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore LootingBots.sln
+      
+    - name: Check code formatting
+      run: dotnet format LootingBots.sln --verify-no-changes --verbosity diagnostic
+      continue-on-error: true
+      
+    - name: Build Solution
+      run: dotnet build LootingBots.sln -c Release --no-restore
+      
+    - name: Run tests (if any)
+      run: dotnet test LootingBots.sln -c Release --no-build --verbosity normal
+      continue-on-error: true
+      
+  security-scan:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run security scan
+      uses: securego/gosec@master
+      continue-on-error: true
+      
+  comment-pr:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Comment PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const status = '${{ needs.validate.result }}' === 'success' ? '✅ Build successful!' : '❌ Build failed!';
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `${status}\n\nCheck the Actions tab for details.`
+          })

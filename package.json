@@ -1,22 +1,19 @@
 {
   "name": "LootingBots",
+  "version": "2.0.0",
   "license": "MIT",
   "author": "Skwizzy",
-  "akiVersion": "~3.6",
+  "description": "Enhanced looting behavior for bots in SPT 4.0",
+  "sptVersion": "~4.0.0",
   "scripts": {
       "build": "npm run build:server && npm run build:client",
-      "build:server": "cd ./LootingBots-ServerMod && npm run build",
-      "build:client": "cd ./LootingBots && dotnet build"
+      "build:server": "cd ./LootingBotsServerMod && dotnet build -c Release",
+      "build:client": "cd ./LootingBots && dotnet build -c Release",
+      "clean": "npm run clean:server && npm run clean:client",
+      "clean:server": "cd ./LootingBotsServerMod && dotnet clean",
+      "clean:client": "cd ./LootingBots && dotnet clean"
   },
   "devDependencies": {
-      "@types/node": "^16.18.18",
-      "@typescript-eslint/eslint-plugin": "5.46.1",
-      "@typescript-eslint/parser": "5.46.1",
-      "bestzip": "2.2.1",
-      "eslint": "8.30.0",
-      "fs-extra": "11.1.0",
-      "glob": "8.0.3",
-      "tsyringe": "4.7.0",
-      "typescript": "4.9.4"
+      "@types/node": "^16.18.18"
   }
 }

@@ -1,0 +1,112 @@
+name: Pre-Release Build
+
+on:
+  push:
+    branches:
+      - develop
+      - beta
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Pre-release version (e.g., 2.0.0-beta.1)'
+        required: true
+        default: '2.0.0-beta'
+
+jobs:
+  build-prerelease:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Get version
+      id: version
+      shell: pwsh
+      run: |
+        if ("${{ github.event.inputs.version }}" -ne "") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = "2.0.0-dev.${{ github.run_number }}"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Building version: $version"
+        
+    - name: Restore dependencies
+      run: dotnet restore LootingBots.sln
+      
+    - name: Build Client Mod
+      run: dotnet build LootingBots/LootingBots.csproj -c Release --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
+      continue-on-error: true
+      
+    - name: Build Server Mod
+      run: dotnet build LootingBotsServerMod/LootingBotsServerMod.csproj -c Release --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
+      
+    - name: Create Pre-release Package
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        
+        # Create release structure
+        New-Item -ItemType Directory -Force -Path "prerelease/BepInEx/plugins"
+        New-Item -ItemType Directory -Force -Path "prerelease/user/mods/LootingBotsServerMod-$version"
+        
+        # Copy client mod
+        if (Test-Path "LootingBots/bin/Release/netstandard2.1/skwizzy.LootingBots.dll") {
+          Copy-Item "LootingBots/bin/Release/netstandard2.1/skwizzy.LootingBots.dll" -Destination "prerelease/BepInEx/plugins/"
+        }
+        
+        # Copy server mod
+        $serverDir = Get-ChildItem -Path "LootingBotsServerMod/bin/Release" -Directory -Recurse | Where-Object { $_.Name -like "*LootingBotsServerMod" } | Select-Object -First 1
+        if ($serverDir) {
+          Copy-Item -Path "$($serverDir.FullName)/*" -Destination "prerelease/user/mods/LootingBotsServerMod-$version/" -Recurse -Force
+        }
+        
+        # Copy docs
+        Copy-Item "README.md" -Destination "prerelease/"
+        Copy-Item "CHANGELOG.md" -Destination "prerelease/"
+        
+        # Create zip
+        Compress-Archive -Path "prerelease/*" -DestinationPath "LootingBots-$version.zip"
+        
+    - name: Upload Pre-release Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LootingBots-PreRelease-${{ steps.version.outputs.VERSION }}
+        path: LootingBots-*.zip
+        
+    - name: Create Pre-release on GitHub
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: LootingBots-*.zip
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        name: Pre-release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## ⚠️ Pre-release Build
+          
+          This is a pre-release version for testing purposes.
+          
+          **Version**: ${{ steps.version.outputs.VERSION }}
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.ref_name }}
+          
+          ### Installation
+          1. Backup your current installation
+          2. Extract to SPT root directory
+          3. Test thoroughly before using in production
+          
+          ### Reporting Issues
+          Please report any issues on the [Issues page](https://github.com/${{ github.repository }}/issues)
+          
+          ---
+          Built from commit: ${{ github.sha }}
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
