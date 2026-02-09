@@ -7,16 +7,20 @@ using LootingBots.Components;
 using LootingBots.Patches;
 using LootingBots.Utilities;
 
+using SPT.Reflection.Patching;
+
 namespace LootingBots
 {
     [BepInPlugin(MOD_GUID, MOD_NAME, MOD_VERSION)]
-    //[BepInDependency("xyz.drakia.bigbrain", "1.3.2")]
+    [BepInDependency("xyz.drakia.bigbrain", "1.4.0")]
     [BepInProcess("EscapeFromTarkov.exe")]
     public class LootingBots : BaseUnityPlugin
     {
+        private PatchManager _patchManager;
+
         private const string MOD_GUID = "me.skwizzy.lootingbots";
         private const string MOD_NAME = "LootingBots";
-        private const string MOD_VERSION = "1.6.1";
+        private const string MOD_VERSION = "1.6.2";
 
         public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
@@ -418,6 +422,8 @@ namespace LootingBots
 
         public void Awake()
         {
+            _patchManager = new(this, true);
+
             LootFinderSettings();
             LootSettings();
             PerformanceSettings();
@@ -426,9 +432,7 @@ namespace LootingBots
             InteropLog = new Log(Logger, InteropLogLevels);
             ItemAppraiserLog = new Log(Logger, ItemAppraiserLogLevels);
 
-            new RemoveLootingBrainPatch().Enable();
-            new CleanCacheOnRaidEndPatch().Enable();
-            new EnableWeaponSwitchingPatch().Enable();
+            _patchManager.EnablePatches();
 
             BrainManager.RemoveLayer(
                 "Utility peace",
@@ -436,7 +440,7 @@ namespace LootingBots
             );
 
             // Remove BSG's own looting layer
-            BrainManager.RemoveLayer("LootPatrol", ["Assault", "PMC"]);
+            BrainManager.RemoveLayer("LootPatrol", ["Assault", "PmcUsec", "PmcBear"]);
 
             BrainManager.AddCustomLayer(
                 typeof(LootingLayer),

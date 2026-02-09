@@ -11,7 +11,7 @@ using SPTarkov.Server.Core.Utils;
 
 namespace LootingBotsServerMod
 {
-    [Injectable(TypePriority = OnLoadOrder.PostDBModLoader)]
+    [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
     public class PostDBLoad(
         DatabaseServer databaseServer,
         ConfigServer configServer,
