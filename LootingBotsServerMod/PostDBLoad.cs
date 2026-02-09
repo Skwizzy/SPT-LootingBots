@@ -11,7 +11,7 @@ using SPTarkov.Server.Core.Utils;
 
 namespace LootingBotsServerMod
 {
-    [Injectable(TypePriority = OnLoadOrder.PostDBModLoader)]
+    [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
     public class PostDBLoad(
         DatabaseServer databaseServer,
         ConfigServer configServer,
@@ -22,11 +22,7 @@ namespace LootingBotsServerMod
     {
         private readonly ConfigModel _config =
             jsonUtil.DeserializeFromFile<ConfigModel>(
-                System.IO.Path.Join(
-                    modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly()),
-                    "config",
-                    "config.json"
-                )
+                System.IO.Path.Join(modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly()), "config", "config.json")
             ) ?? new();
         private readonly PmcConfig _PmcConfig = configServer.GetConfig<PmcConfig>();
         private readonly BotConfig _BotConfig = configServer.GetConfig<BotConfig>();
@@ -35,7 +31,7 @@ namespace LootingBotsServerMod
         {
             if (!_config.PmcSpawnWithLoot)
             {
-                EmptyInventory(["usec", "bear"]);
+                EmptyInventory(["usec", "pmcusec", "bear", "pmcbear"]);
 
                 // Do not allow weapons to spawn in PMC bags
                 _PmcConfig.LooseWeaponInBackpackLootMinMax.Max = 0;
@@ -55,13 +51,9 @@ namespace LootingBotsServerMod
                 EmptyInventory(["assault"]);
             }
 
-            logger.Info(
-                "[LootingBots-ServerMod] Marking items with DiscardLimits as InsuranceDisabled"
-            );
+            logger.Info("[LootingBots-ServerMod] Marking items with DiscardLimits as InsuranceDisabled");
 
-            foreach (
-                (string itemId, TemplateItem template) in databaseServer.GetTables().Templates.Items
-            )
+            foreach ((_, TemplateItem template) in databaseServer.GetTables().Templates.Items)
             {
                 /**
                * When we set DiscardLimitsEnabled to false further down, this will cause some items to be able to be insured when they normally should not be.
@@ -69,10 +61,7 @@ namespace LootingBotsServerMod
                * For items that have a DiscardLimit >= 0, we need to manually flag them as InsuranceDisabled to make sure they still cannot be insured by the player.
                * Do not disable insurance if the item is marked as always available for insurance.
                */
-                if (
-                    template.Properties.DiscardLimit >= 0
-                    && template.Properties.IsAlwaysAvailableForInsurance == false
-                )
+                if (template.Properties.DiscardLimit >= 0 && template.Properties.IsAlwaysAvailableForInsurance == false)
                 {
                     template.Properties.InsuranceDisabled = true;
                 }
@@ -89,18 +78,9 @@ namespace LootingBotsServerMod
             foreach (var botType in botTypes)
             {
                 logger.Info($"[LootingBots-ServerMod] Removing loot from {botType}");
-                var backpackWeights = databaseServer
-                    .GetTables()
-                    .Bots.Types[botType]
-                    .BotGeneration.Items.BackpackLoot.Weights;
-                var vestWeights = databaseServer
-                    .GetTables()
-                    .Bots.Types[botType]
-                    .BotGeneration.Items.VestLoot.Weights;
-                var pocketLootWeights = databaseServer
-                    .GetTables()
-                    .Bots.Types[botType]
-                    .BotGeneration.Items.PocketLoot.Weights;
+                var backpackWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.BackpackLoot.Weights;
+                var vestWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.VestLoot.Weights;
+                var pocketLootWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.PocketLoot.Weights;
 
                 ClearWeights(backpackWeights);
                 ClearWeights(vestWeights);

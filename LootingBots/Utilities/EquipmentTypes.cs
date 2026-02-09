@@ -165,7 +165,7 @@ namespace LootingBots.Utilities
         public static bool IsArmorPlate(Item item, out ArmorPlateItemClass plate)
         {
             bool isArmorPlate = item is ArmorPlateItemClass;
-            plate = isArmorPlate ? (ArmorPlateItemClass)item : null;
+            plate = isArmorPlate ? (ArmorPlateItemClass) item : null;
 
             return isArmorPlate;
         }

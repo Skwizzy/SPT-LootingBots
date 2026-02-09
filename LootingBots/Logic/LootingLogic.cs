@@ -1,10 +1,7 @@
 using DrakiaXYZ.BigBrain.Brains;
-
 using EFT;
-
 using LootingBots.Components;
 using LootingBots.Utilities;
-
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -23,12 +20,7 @@ namespace LootingBots.Logic
         // Run looting logic only when the bot is not looting and when the bot has an active item to loot
         private bool _shouldUpdate
         {
-            get
-            {
-                return !_lootingBrain.LootTaskRunning
-                    && _lootingBrain.HasActiveLootable
-                    && BotOwner.BotState == EBotState.Active;
-            }
+            get { return !_lootingBrain.LootTaskRunning && _lootingBrain.HasActiveLootable && BotOwner.BotState == EBotState.Active; }
         }
 
         public LootingLogic(BotOwner botOwner)
@@ -124,16 +116,11 @@ namespace LootingBots.Logic
         {
             Vector3 rayDirection = _lootingBrain.LootObjectPosition - _destination;
 
-            if (
-                Physics.Raycast(_destination, rayDirection, out RaycastHit hit)
-                && hit.collider.gameObject.layer == LootUtils.LowPolyMask
-            )
+            if (Physics.Raycast(_destination, rayDirection, out RaycastHit hit) && hit.collider.gameObject.layer == LootUtils.LowPolyMask)
             {
                 if (_log.ErrorEnabled)
                 {
-                    _log.LogError(
-                        $"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}"
-                    );
+                    _log.LogError($"NO LOS: LowPolyCollider hit {hit.collider.gameObject.layer} {hit.collider.gameObject.name}");
                     return false;
                 }
             }
@@ -179,7 +166,9 @@ namespace LootingBots.Logic
                         if (pathStatus != NavMeshPathStatus.PathComplete)
                         {
                             if (_log.WarningEnabled)
+                            {
                                 _log.LogWarning($"No valid path to: {lootableName}. Ignoring");
+                            }
 
                             canMove = false;
                         }
@@ -196,9 +185,7 @@ namespace LootingBots.Logic
                     }
                     else if (_log.ErrorEnabled)
                     {
-                        _log.LogError(
-                            $"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring"
-                        );
+                        _log.LogError($"Has exceeded the navigation limit (30) trying to reach: {lootableName}. Ignoring");
                     }
                     canMove = false;
                 }
@@ -256,9 +243,9 @@ namespace LootingBots.Logic
             if (isStuck)
             {
                 if (_log.DebugEnabled)
-                    _log.LogDebug(
-                        $"[Stuck: {_stuckCount}] Distance moved since check: {changeInDist}. Dist from loot: {dist}"
-                    );
+                {
+                    _log.LogDebug($"[Stuck: {_stuckCount}] Distance moved since check: {changeInDist}. Dist from loot: {dist}");
+                }
 
                 // Bot is stuck, update stuck count
                 _stuckCount++;

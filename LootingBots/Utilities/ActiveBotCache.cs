@@ -33,9 +33,7 @@ namespace LootingBots.Utilities
             ActiveBots.Add(botOwner);
 
             if (LootingBots.LootLog.DebugEnabled)
-                LootingBots.LootLog.LogDebug(
-                    $"{botOwner.name.Localized()} looting enabled  (total: {ActiveBots.Count})"
-                );
+                LootingBots.LootLog.LogDebug($"{botOwner.name.Localized()} looting enabled  (total: {ActiveBots.Count})");
         }
 
         public static bool Has(BotOwner botOwner)
@@ -48,9 +46,7 @@ namespace LootingBots.Utilities
             ActiveBots.Remove(botOwner);
 
             if (LootingBots.LootLog.DebugEnabled)
-                LootingBots.LootLog.LogDebug(
-                    $"{botOwner.name.Localized()} looting disabled (total: {ActiveBots.Count})"
-                );
+                LootingBots.LootLog.LogDebug($"{botOwner.name.Localized()} looting disabled (total: {ActiveBots.Count})");
         }
 
         public static int GetSize()

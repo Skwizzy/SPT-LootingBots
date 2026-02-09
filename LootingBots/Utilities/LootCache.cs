@@ -1,5 +1,4 @@
 using Comfort.Common;
-
 using EFT;
 
 namespace LootingBots.Utilities
@@ -93,7 +92,7 @@ namespace LootingBots.Utilities
                     }
                 }
 
-                foreach(string key in keysToRemove)
+                foreach (string key in keysToRemove)
                 {
                     ActiveLoot.Remove(key);
                 }

@@ -1,12 +1,8 @@
 using System.Text;
-
 using DrakiaXYZ.BigBrain.Brains;
-
 using EFT;
-
-using LootingBots.Logic;
 using LootingBots.Components;
-
+using LootingBots.Logic;
 using UnityEngine;
 
 namespace LootingBots
@@ -133,9 +129,7 @@ namespace LootingBots
 
         public bool EndLooting()
         {
-            return _lootingBrain.ActiveContainer == null
-                && _lootingBrain.ActiveCorpse == null
-                && _lootingBrain.ActiveItem == null;
+            return _lootingBrain.ActiveContainer == null && _lootingBrain.ActiveCorpse == null && _lootingBrain.ActiveItem == null;
         }
     }
 }

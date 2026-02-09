@@ -1,7 +1,6 @@
 using EFT;
 using EFT.Interactive;
 using EFT.InventoryLogic;
-
 using UnityEngine;
 
 namespace LootingBots.Utilities
@@ -12,25 +11,28 @@ namespace LootingBots.Utilities
         public static LayerMask LootMask = LayerMask.GetMask(["Interactive", "Loot", "Deadbody"]);
         public static int RESERVED_SLOT_COUNT = 2;
 
-        private static readonly EquipmentSlot[] WeaponSlots = [
+        private static readonly EquipmentSlot[] WeaponSlots =
+        [
             EquipmentSlot.Holster,
             EquipmentSlot.FirstPrimaryWeapon,
-            EquipmentSlot.SecondPrimaryWeapon
+            EquipmentSlot.SecondPrimaryWeapon,
         ];
 
-        private static readonly EquipmentSlot[] StorageSlots = [
+        private static readonly EquipmentSlot[] StorageSlots =
+        [
             EquipmentSlot.Backpack,
             EquipmentSlot.ArmorVest,
             EquipmentSlot.TacticalVest,
-            EquipmentSlot.Pockets
+            EquipmentSlot.Pockets,
         ];
 
-        private static readonly EquipmentSlot[] OtherSlots = [
+        private static readonly EquipmentSlot[] OtherSlots =
+        [
             EquipmentSlot.Headwear,
             EquipmentSlot.Earpiece,
             EquipmentSlot.Dogtag,
             EquipmentSlot.Scabbard,
-            EquipmentSlot.FaceCover
+            EquipmentSlot.FaceCover,
         ];
 
         /** Calculate the size of a container */

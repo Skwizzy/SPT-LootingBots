@@ -1,5 +1,4 @@
 using EFT;
-
 using LootingBots.Components;
 
 namespace LootingBots.Utilities

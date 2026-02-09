@@ -1,10 +1,7 @@
 ﻿using System.Reflection;
-
 using BepInEx.Bootstrap;
-
 using EFT;
 using EFT.Interactive;
-
 using HarmonyLib;
 
 namespace LootingBots
@@ -56,10 +53,7 @@ namespace LootingBots
                 if (_LootingBotsExternalType != null)
                 {
                     _ForceBotToScanLootMethod = AccessTools.Method(_LootingBotsExternalType, "ForceBotToScanLoot");
-                    _PreventBotFromLootingMethod = AccessTools.Method(
-                        _LootingBotsExternalType,
-                        "PreventBotFromLooting"
-                    );
+                    _PreventBotFromLootingMethod = AccessTools.Method(_LootingBotsExternalType, "PreventBotFromLooting");
                     _CheckIfInventoryFullMethod = AccessTools.Method(_LootingBotsExternalType, "CheckIfInventoryFull");
                     _GetNetLootValueMethod = AccessTools.Method(_LootingBotsExternalType, "GetNetLootValue");
                     _GetItemPriceMethod = AccessTools.Method(_LootingBotsExternalType, "GetItemPrice");
@@ -80,7 +74,7 @@ namespace LootingBots
             if (_ForceBotToScanLootMethod == null)
                 return false;
 
-            return (bool)_ForceBotToScanLootMethod.Invoke(null, new object[] { botOwner });
+            return (bool) _ForceBotToScanLootMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
@@ -93,7 +87,7 @@ namespace LootingBots
             if (_PreventBotFromLootingMethod == null)
                 return false;
 
-            return (bool)_PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
+            return (bool) _PreventBotFromLootingMethod.Invoke(null, new object[] { botOwner, duration });
         }
 
         /**
@@ -106,7 +100,7 @@ namespace LootingBots
             if (_CheckIfInventoryFullMethod == null)
                 return false;
 
-            return (bool)_CheckIfInventoryFullMethod.Invoke(null, new object[] { botOwner });
+            return (bool) _CheckIfInventoryFullMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
@@ -119,7 +113,7 @@ namespace LootingBots
             if (_GetNetLootValueMethod == null)
                 return 0f;
 
-            return (float)_GetNetLootValueMethod.Invoke(null, new object[] { botOwner });
+            return (float) _GetNetLootValueMethod.Invoke(null, new object[] { botOwner });
         }
 
         /**
@@ -132,7 +126,7 @@ namespace LootingBots
             if (_GetItemPriceMethod == null)
                 return 0f;
 
-            return (float)_GetItemPriceMethod.Invoke(null, new object[] { item });
+            return (float) _GetItemPriceMethod.Invoke(null, new object[] { item });
         }
     }
 }
