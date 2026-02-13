@@ -61,9 +61,10 @@ namespace LootingBots.Utilities
         }
 
         /** Triggers a container to open/close */
-        public static void InteractContainer(LootableContainer container, EInteractionType action)
+        public static void InteractContainer(LootableContainer container, IPlayer player, EInteractionType action)
         {
             InteractionResult result = new InteractionResult(action);
+            container?.InteractingPlayer = player;
             container?.Interact(result);
         }
 
