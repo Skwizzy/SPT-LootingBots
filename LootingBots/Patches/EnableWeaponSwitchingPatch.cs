@@ -16,12 +16,12 @@ public class EnableWeaponSwitchingPatch : ModulePatch
     private static void PatchPostfix(
         BotLocationModifier modifier,
         ref BotSettings __instance,
-        ref WildSpawnType ___WildSpawnType_0
+        ref WildSpawnType ____role
     )
     {
-        var corpseLootEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
-        var containerLootEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
-        var itemLootEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(___WildSpawnType_0);
+        var corpseLootEnabled = LootingBots.CorpseLootingEnabled.Value.IsBotEnabled(____role);
+        var containerLootEnabled = LootingBots.ContainerLootingEnabled.Value.IsBotEnabled(____role);
+        var itemLootEnabled = LootingBots.LooseItemLootingEnabled.Value.IsBotEnabled(____role);
 
         if (corpseLootEnabled || containerLootEnabled || itemLootEnabled)
         {
