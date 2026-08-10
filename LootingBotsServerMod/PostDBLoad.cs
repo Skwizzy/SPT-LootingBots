@@ -4,16 +4,20 @@ using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Spt.Config;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Servers;
+using SPTarkov.Common.Models.Logging;
+using SPTarkov.Server.Core.Helpers.Server;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Utils;
 
 namespace LootingBotsServerMod;
 
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class PostDBLoad(
-    DatabaseServer databaseServer,
-    ConfigServer configServer,
+    TemplateTable templateTable,
+    GlobalTable globalTable,
+    BotTable botTable,
+    PmcConfig pmcConfig,
+    BotConfig botConfig,
     JsonUtil jsonUtil,
     ModHelper modHelper,
     ISptLogger<PostDBLoad> logger
@@ -23,10 +27,10 @@ public class PostDBLoad(
         jsonUtil.DeserializeFromFile<ConfigModel>(
             Path.Join(modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly()), "config", "config.json")
         ) ?? new();
-    private readonly PmcConfig _pmcConfig = configServer.GetConfig<PmcConfig>();
-    private readonly BotConfig _botConfig = configServer.GetConfig<BotConfig>();
+    private readonly PmcConfig _pmcConfig = pmcConfig;
+    private readonly BotConfig _botConfig = botConfig;
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         if (!_config.PmcSpawnWithLoot)
         {
@@ -52,7 +56,7 @@ public class PostDBLoad(
 
         logger.Info("[LootingBots-ServerMod] Marking items with DiscardLimits as InsuranceDisabled");
 
-        foreach ((_, var template) in databaseServer.GetTables().Templates.Items)
+        foreach ((_, var template) in templateTable.Items)
         {
             /**
            * When we set DiscardLimitsEnabled to false further down, this will cause some items to be able to be insured when they normally should not be.
@@ -72,7 +76,7 @@ public class PostDBLoad(
             }
         }
 
-        databaseServer.GetTables().Globals.Configuration.DiscardLimitsEnabled = false;
+        globalTable.Configuration.DiscardLimitsEnabled = false;
         logger.Info("[LootingBots-ServerMod] Global config DiscardLimitsEnabled set to false");
 
         return Task.CompletedTask;
@@ -83,9 +87,9 @@ public class PostDBLoad(
         foreach (var botType in botTypes)
         {
             logger.Info($"[LootingBots-ServerMod] Removing loot from {botType}");
-            var backpackWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.BackpackLoot.Weights;
-            var vestWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.VestLoot.Weights;
-            var pocketLootWeights = databaseServer.GetTables().Bots.Types[botType].BotGeneration.Items.PocketLoot.Weights;
+            var backpackWeights = botTable.Types[botType].BotGeneration.Items.BackpackLoot.Weights;
+            var vestWeights = botTable.Types[botType].BotGeneration.Items.VestLoot.Weights;
+            var pocketLootWeights = botTable.Types[botType].BotGeneration.Items.PocketLoot.Weights;
 
             ClearWeights(backpackWeights);
             ClearWeights(vestWeights);
