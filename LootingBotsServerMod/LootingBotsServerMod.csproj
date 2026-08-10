@@ -11,10 +11,10 @@
     <PackageReference Include="SPTarkov.Server.Core" Version="4.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Config\" />
+    <Folder Include="config\" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="Config\config.json">
+    <None Update="config\config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

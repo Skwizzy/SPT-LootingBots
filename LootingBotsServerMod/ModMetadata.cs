@@ -8,7 +8,7 @@ namespace LootingBotsServerMod;
 // property implementations rather than overrides. IsBundleMod is gone; HasPrepatcher is new.
 public record ModMetadata : IModMetadata
 {
-    public string ModGuid { get; init; } = "me.skwizzy.lootingbots_servermod";
+    public string ModGuid { get; init; } = "me.skwizzy.lootingbotsservermod";
     public string Name { get; init; } = "LootingBots-ServerMod";
     public string Author { get; init; } = "Skwizzy";
     public List<string>? Contributors { get; init; }
