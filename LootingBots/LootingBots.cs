@@ -17,7 +17,7 @@ public class LootingBots : BaseUnityPlugin
 
     private const string MOD_GUID = "me.skwizzy.lootingbots";
     private const string MOD_NAME = "LootingBots";
-    private const string MOD_VERSION = "1.7.0";
+    private const string MOD_VERSION = "1.8.0";
 
     public const BotType SettingsDefaults = BotType.Scav | BotType.Pmc | BotType.PlayerScav | BotType.Raider;
 
@@ -514,7 +514,7 @@ public class LootingBots : BaseUnityPlugin
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-        if (GClass2340.InRaid)
+        if (EFT.InGameStatus.InRaid)
 #pragma warning restore CS0618 // Type or member is obsolete
         {
             return;
@@ -536,7 +536,7 @@ public class LootingBots : BaseUnityPlugin
             }
         }
 
-        if (Singleton<HandbookClass>.Instance == null || Singleton<ClientApplication<ISession>>.Instance == null)
+        if (Singleton<EFT.HandBook.Handbook>.Instance == null || Singleton<ClientApplication<EFT.IEftSession>>.Instance == null)
         {
             return;
         }

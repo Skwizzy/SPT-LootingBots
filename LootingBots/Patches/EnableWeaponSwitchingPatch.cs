@@ -9,13 +9,13 @@ public class EnableWeaponSwitchingPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(BotDifficultySettingsClass).GetMethod(nameof(BotDifficultySettingsClass.ApplyPresetLocation));
+        return typeof(BotSettings).GetMethod(nameof(BotSettings.ApplyPresetLocation));
     }
 
     [PatchPostfix]
     private static void PatchPostfix(
         BotLocationModifier modifier,
-        ref BotDifficultySettingsClass __instance,
+        ref BotSettings __instance,
         ref WildSpawnType ___WildSpawnType_0
     )
     {

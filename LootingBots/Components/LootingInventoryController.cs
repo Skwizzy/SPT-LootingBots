@@ -101,7 +101,7 @@ public class LootingInventoryController
     {
         get
         {
-            var tacVest = (SearchableItemItemClass)
+            var tacVest = (EFT.InventoryLogic.SearchableItem)
                 _botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
             return tacVest?.GetItemComponent<ArmorComponent>();
         }
@@ -226,7 +226,7 @@ public class LootingInventoryController
     public void CalculateInitialNetWorth()
     {
         Stats.NetWorth = 0f;
-        foreach (var slot in _botInventoryController.Inventory.Equipment.CachedSlots)
+        foreach (var slot in _botInventoryController.Inventory.Equipment._cachedSlots)
         {
             var containedItem = slot.ContainedItem;
             if (containedItem == null)
@@ -234,7 +234,7 @@ public class LootingInventoryController
                 continue;
             }
 
-            if (containedItem is SearchableItemItemClass searchableItem)
+            if (containedItem is EFT.InventoryLogic.SearchableItem searchableItem)
             {
                 foreach (var nestedItem in searchableItem.GetFirstLevelItems())
                 {
@@ -254,10 +254,10 @@ public class LootingInventoryController
     /// </summary>
     public void UpdateGridStats()
     {
-        var tacVest = (SearchableItemItemClass)
+        var tacVest = (EFT.InventoryLogic.SearchableItem)
             _botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
-        var backpack = (SearchableItemItemClass)_botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
-        var pockets = (SearchableItemItemClass)_botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Pockets).ContainedItem;
+        var backpack = (EFT.InventoryLogic.SearchableItem)_botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
+        var pockets = (EFT.InventoryLogic.SearchableItem)_botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Pockets).ContainedItem;
 
         var freePockets = LootUtils.GetAvailableGridSlots(pockets?.Grids);
         var freeTacVest = LootUtils.GetAvailableGridSlots(tacVest?.Grids);
@@ -273,14 +273,14 @@ public class LootingInventoryController
     // /// </summary>
     // public async Task SortTacVestAsync()
     // {
-    //     var tacVest = (SearchableItemItemClass)
+    //     var tacVest = (EFT.InventoryLogic.SearchableItem)
     //         _botInventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
     //
     //     ShouldSort = false;
     //
     //     if (tacVest != null)
     //     {
-    //         var result = InteractionsHandlerClass.Sort(tacVest, _botInventoryController, true);
+    //         var result = EFT.InventoryLogic.ItemManipulator.Sort(tacVest, _botInventoryController, true);
     //
     //         await Task.Yield(); // Sorting can be expensive
     //
@@ -343,7 +343,7 @@ public class LootingInventoryController
                 }
 
                 // Ignore magazines that a bot cannot actively use
-                if (item is MagazineItemClass mag && !IsUsableMag(mag))
+                if (item is EFT.InventoryLogic.Magazine mag && !IsUsableMag(mag))
                 {
                     if (_log.DebugEnabled)
                     {
@@ -450,7 +450,7 @@ public class LootingInventoryController
 
                 // Try to pick up any nested items before trying to pick up the item.
                 // This helps when looting rigs to transfer ammo to the bots active rig
-                if (item is SearchableItemItemClass searchableItem)
+                if (item is EFT.InventoryLogic.SearchableItem searchableItem)
                 {
                     var success = await LootNestedItemsAsync(searchableItem, token);
 
@@ -619,12 +619,12 @@ public class LootingInventoryController
         return lootingActions.Count > 0;
     }
 
-    public bool IsUsableMag(MagazineItemClass mag)
+    public bool IsUsableMag(EFT.InventoryLogic.Magazine mag)
     {
         return mag != null && HasAcceptableMagazineSlot(_botInventoryController.Inventory.Equipment, mag);
     }
 
-    public bool IsUsableAmmo(AmmoItemClass ammo)
+    public bool IsUsableAmmo(EFT.InventoryLogic.Ammo ammo)
     {
         return ammo != null && HasAcceptableAmmoSlot(_botInventoryController.Inventory.Equipment, ammo);
     }
@@ -636,7 +636,7 @@ public class LootingInventoryController
         EquipmentSlot.Holster,
     ];
 
-    private static bool HasAcceptableMagazineSlot(InventoryEquipment equipment, MagazineItemClass mag)
+    private static bool HasAcceptableMagazineSlot(InventoryEquipment equipment, EFT.InventoryLogic.Magazine mag)
     {
         foreach (var weaponSlot in _weaponSlots)
         {
@@ -656,7 +656,7 @@ public class LootingInventoryController
         return false;
     }
 
-    private static bool HasAcceptableAmmoSlot(InventoryEquipment equipment, AmmoItemClass ammo)
+    private static bool HasAcceptableAmmoSlot(InventoryEquipment equipment, EFT.InventoryLogic.Ammo ammo)
     {
         foreach (var weaponSlot in _weaponSlots)
         {
@@ -678,7 +678,7 @@ public class LootingInventoryController
         return false;
     }
 
-    private readonly List<MagazineItemClass> _throwUselessMagsScratch = [];
+    private readonly List<EFT.InventoryLogic.Magazine> _throwUselessMagsScratch = [];
 
     /// <summary>
     /// Throws all magazines from the rig that are not used by any of the weapons that the bot currently has equipped.
@@ -935,8 +935,8 @@ public class LootingInventoryController
         // If the item is a container, calculate the size and see if it's bigger than what is equipped
         if (equipped.IsContainer)
         {
-            var equippedSize = (equipped as SearchableItemItemClass).GetContainerSize();
-            var itemToLootSize = (itemToLoot as SearchableItemItemClass).GetContainerSize();
+            var equippedSize = (equipped as EFT.InventoryLogic.SearchableItem).GetContainerSize();
+            var itemToLootSize = (itemToLoot as EFT.InventoryLogic.SearchableItem).GetContainerSize();
 
             foundBiggerContainer = itemToLootSize > equippedSize;
         }
@@ -967,7 +967,7 @@ public class LootingInventoryController
     /// <summary>
     /// Given a piece of armor, compare it against what is current
     /// </summary>
-    public bool IsBetterArmorThanEquipped(ArmoredEquipmentItemClass newArmor)
+    public bool IsBetterArmorThanEquipped(EFT.InventoryLogic.ArmoredEquipment newArmor)
     {
         var equippedArmor = EquipmentTypeUtils.IsHelmet(newArmor) ? CurrentHeadArmor : CurrentTorsoArmor;
         return GetArmorDifference(equippedArmor?.Item, newArmor) > 0;
@@ -988,12 +988,12 @@ public class LootingInventoryController
     public static int GetArmorDifference(Item equippedItem, Item itemToLoot)
     {
         var currentArmorClass = equippedItem?.GetItemComponent<ArmorComponent>()?.ArmorClass ?? 0;
-        if (equippedItem is ArmoredEquipmentItemClass equippedArmorItem)
+        if (equippedItem is EFT.InventoryLogic.ArmoredEquipment equippedArmorItem)
         {
             // Also check Plates inside armor slots
             foreach (var slot in equippedArmorItem.Slots)
             {
-                if (slot is not GClass3125 { ContainedItem: ArmorPlateItemClass armorPlate })
+                if (slot is not ArmorSlot { ContainedItem: EFT.InventoryLogic.ArmorPlate armorPlate })
                 {
                     // Slot is not an armor slot
                     continue;
@@ -1012,11 +1012,11 @@ public class LootingInventoryController
         }
 
         var newArmorClass = itemToLoot.GetItemComponent<ArmorComponent>()?.ArmorClass ?? 0;
-        if (itemToLoot is ArmoredEquipmentItemClass newArmorItem)
+        if (itemToLoot is EFT.InventoryLogic.ArmoredEquipment newArmorItem)
         {
             foreach (var slot in newArmorItem.Slots)
             {
-                if (slot is not GClass3125 { ContainedItem: ArmorPlateItemClass armorPlate })
+                if (slot is not ArmorSlot { ContainedItem: EFT.InventoryLogic.ArmorPlate armorPlate })
                 {
                     // Slot is not an armor slot and/or not containing an armor plate
                     continue;
@@ -1044,14 +1044,14 @@ public class LootingInventoryController
     {
         token.ThrowIfCancellationRequested();
 
-        // Do not limit to SearchableItemItemClass
+        // Do not limit to EFT.InventoryLogic.SearchableItem
         // So we can loot slots of thrown/swapped out helmets, etc., they can be valuable
         if (item is not CompoundItem parentItem)
         {
             return true;
         }
 
-        var items = ListPool<Item>.Get();
+        var items = UnityEngine.Pool.ListPool<Item>.Get();
         try
         {
             foreach (var nestedItem in parentItem.GetFirstLevelItems())
@@ -1085,21 +1085,21 @@ public class LootingInventoryController
         }
         finally
         {
-            ListPool<Item>.Release(items);
+            UnityEngine.Pool.ListPool<Item>.Release(items);
         }
     }
 
     /// <summary>
     /// Searches through the child items of a container and attempts to throw them
     /// </summary>
-    /// <param name="item">Only throws items of a container of type <see cref="SearchableItemItemClass"/></param>
+    /// <param name="item">Only throws items of a container of type <see cref="EFT.InventoryLogic.SearchableItem"/></param>
     public async Task ThrowUndervaluedItemsAsync(Item item, CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
 
-        // Limit to only SearchableItemItemClass
+        // Limit to only EFT.InventoryLogic.SearchableItem
         // As opposed to LootNestedItems, we only need to throw away its children if it's a container
-        if (item is not SearchableItemItemClass parentItem)
+        if (item is not EFT.InventoryLogic.SearchableItem parentItem)
         {
             return;
         }
@@ -1117,9 +1117,9 @@ public class LootingInventoryController
                     nestedItem.Id == parentItem.Id
                     || nestedItem.QuestItem
                     || (nestedItem.CurrentAddress?.Container is Slot slot && slot.Locked) // Slot is locked
-                    || (nestedItem is MagazineItemClass mag && IsUsableMag(mag)) // Mag can be used
-                    || (nestedItem is AmmoItemClass ammo && IsUsableAmmo(ammo)) // Ammo can be used
-                    || nestedItem is MedsItemClass // Do not throw med items
+                    || (nestedItem is EFT.InventoryLogic.Magazine mag && IsUsableMag(mag)) // Mag can be used
+                    || (nestedItem is EFT.InventoryLogic.Ammo ammo && IsUsableAmmo(ammo)) // Ammo can be used
+                    || nestedItem is EFT.InventoryLogic.Meds // Do not throw med items
                 )
                 {
                     continue;
@@ -1179,7 +1179,7 @@ public class LootingInventoryController
     /// </summary>
     public async Task<bool> StripWeaponAsync(Weapon weapon, CancellationToken token = default)
     {
-        var itemsToAdd = ListPool<Item>.Get();
+        var itemsToAdd = UnityEngine.Pool.ListPool<Item>.Get();
         try
         {
             foreach (var weaponSlot in weapon.Slots)
@@ -1223,7 +1223,7 @@ public class LootingInventoryController
         }
         finally
         {
-            ListPool<Item>.Release(itemsToAdd);
+            UnityEngine.Pool.ListPool<Item>.Release(itemsToAdd);
         }
     }
 
@@ -1272,11 +1272,11 @@ public class LootingInventoryController
         var pickupNotRestricted = isPmc
             ? LootingBots.PMCGearToPickup.Value.IsItemEligible(lootItem, true)
             : LootingBots.ScavGearToPickup.Value.IsItemEligible(lootItem, true);
-        var isMoney = lootItem.Template is MoneyTemplateClass;
+        var isMoney = lootItem.Template is EFT.InventoryLogic.MoneyTemplate;
 
         // All usable mags and money should be considered eligible to loot. Otherwise, all other items fall subject to the mod settings for restricting pickup and loot value thresholds
-        return IsUsableMag(lootItem as MagazineItemClass)
-            || IsUsableAmmo(lootItem as AmmoItemClass)
+        return IsUsableMag(lootItem as EFT.InventoryLogic.Magazine)
+            || IsUsableAmmo(lootItem as EFT.InventoryLogic.Ammo)
             || isMoney
             || (
                 pickupNotRestricted
@@ -1330,7 +1330,7 @@ public class LootingInventoryController
             if (allFine)
             {
                 RefillAndReload();
-                weaponSelector.ErrorCounter = 0;
+                weaponSelector._errorCounter = 0;
 
                 if (_log.DebugEnabled)
                 {
@@ -1338,7 +1338,7 @@ public class LootingInventoryController
                 }
                 return;
             }
-            if (++weaponSelector.ErrorCounter >= 20)
+            if (++weaponSelector._errorCounter >= 20)
             {
                 if (_log.DebugEnabled)
                 {

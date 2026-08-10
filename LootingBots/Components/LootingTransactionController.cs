@@ -2,7 +2,7 @@ using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Utilities;
-using InventoryControllerResultStruct = GStruct153;
+using InventoryControllerResultStruct = Diz.LanguageExtensions.OperationResult;
 
 namespace LootingBots.Components;
 
@@ -20,7 +20,7 @@ public class LootingTransactionController(InventoryController inventoryControlle
     {
         try
         {
-            var secureContainer = (SearchableItemItemClass)
+            var secureContainer = (EFT.InventoryLogic.SearchableItem)
                 inventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
 
             var container = secureContainer.Grids.FirstOrDefault();
@@ -29,14 +29,14 @@ public class LootingTransactionController(InventoryController inventoryControlle
             // If it's empty, try to create an instance of the ammo using the Weapon's CurrentAmmoTemplate
             var ammoToAdd =
                 weapon.GetCurrentMagazine()?.FirstRealAmmo()
-                ?? Singleton<ItemFactoryClass>.Instance.CreateItem(MongoID.Generate(), weapon.CurrentAmmoTemplate._id, null);
+                ?? Singleton<EFT.ItemFactory>.Instance.CreateItem(MongoID.Generate(), weapon.CurrentAmmoTemplate._id, null);
 
             // Check to see if there already is ammo that meets the weapon's caliber in the secure container
             var alreadyHasAmmo = false;
 
             foreach (var item in secureContainer.GetAllItems())
             {
-                if (item is AmmoItemClass bullet && bullet.Caliber.Equals(((AmmoItemClass)ammoToAdd).Caliber))
+                if (item is EFT.InventoryLogic.Ammo bullet && bullet.Caliber.Equals(((EFT.InventoryLogic.Ammo)ammoToAdd).Caliber))
                 {
                     alreadyHasAmmo = true;
                     break; // Early exit as soon as a match is found
@@ -192,7 +192,7 @@ public class LootingTransactionController(InventoryController inventoryControlle
 
         await SimulatePlayerDelayAsync(token: token);
 
-        var moveResult = InteractionsHandlerClass.Move(item, location, inventoryController, true);
+        var moveResult = EFT.InventoryLogic.ItemManipulator.Move(item, location, inventoryController, true);
         if (moveResult.Failed)
         {
             if (log.ErrorEnabled)
@@ -242,7 +242,7 @@ public class LootingTransactionController(InventoryController inventoryControlle
 
         await SimulatePlayerDelayAsync(token: token);
 
-        var swapResult = InteractionsHandlerClass.Swap(item, toSwap.CurrentAddress, toSwap, item.CurrentAddress, inventoryController, true);
+        var swapResult = EFT.InventoryLogic.ItemManipulator.Swap(item, toSwap.CurrentAddress, toSwap, item.CurrentAddress, inventoryController, true);
         if (swapResult.Failed)
         {
             if (log.WarningEnabled)
@@ -292,7 +292,7 @@ public class LootingTransactionController(InventoryController inventoryControlle
             );
         }
 
-        var mergeResult = InteractionsHandlerClass.Merge(toMove, toItem, inventoryController, true);
+        var mergeResult = EFT.InventoryLogic.ItemManipulator.Merge(toMove, toItem, inventoryController, true);
         if (mergeResult.Failed)
         {
             if (log.ErrorEnabled)
@@ -388,7 +388,7 @@ public class LootingTransactionController(InventoryController inventoryControlle
             {
                 log.LogWarning("Timed out on network transaction, trying to fast forward...");
             }
-            playerInvCont.Player_0.FastForwardCurrentOperations();
+            playerInvCont.Player.FastForwardCurrentOperations();
         }
         else
         {

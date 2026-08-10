@@ -175,9 +175,9 @@ public static class EquipmentTypeUtils
             return allowedGear.HasDogtag();
         }
 
-        if (item is KnifeItemClass) { }
+        if (item is EFT.InventoryLogic.Knife) { }
 
-        if (item is ThrowWeapItemClass)
+        if (item is EFT.InventoryLogic.ThrowWeap)
         {
             return allowedGear.HasGrenade();
         }
@@ -197,17 +197,17 @@ public static class EquipmentTypeUtils
 
     public static bool IsTacticalRig(Item item)
     {
-        return item is VestItemClass;
+        return item is EFT.InventoryLogic.Vest;
     }
 
     public static bool IsArmoredRig(Item item)
     {
-        if (item is VestItemClass vest)
+        if (item is EFT.InventoryLogic.Vest vest)
         {
             foreach (var slot in vest.Slots)
             {
                 // If any slot is an armor slot
-                if (slot is GClass3125)
+                if (slot is ArmorSlot)
                 {
                     return true;
                 }
@@ -219,46 +219,46 @@ public static class EquipmentTypeUtils
 
     public static bool IsBackpack(Item item)
     {
-        return item is BackpackItemClass;
+        return item is EFT.InventoryLogic.Backpack;
     }
 
     public static bool IsHelmet(Item item)
     {
-        return item is HeadwearItemClass;
+        return item is EFT.InventoryLogic.Headwear;
     }
 
     public static bool IsChestArmor(Item item)
     {
-        return item is ArmorItemClass;
+        return item is EFT.InventoryLogic.Armor;
     }
 
     public static bool IsFaceCover(Item item)
     {
-        return item is FaceCoverItemClass;
+        return item is EFT.InventoryLogic.FaceCover;
     }
 
     public static bool IsEyewear(Item item)
     {
-        return item is VisorsItemClass;
+        return item is EFT.InventoryLogic.Visors;
     }
 
     public static bool IsArmorPlate(Item item)
     {
-        return item is ArmorPlateItemClass;
+        return item is EFT.InventoryLogic.ArmorPlate;
     }
 
     public static bool IsDogtag(Item item)
     {
-        return item is OtherItemClass;
+        return item is EFT.InventoryLogic.BarterOther;
     }
 
     public static bool IsEarpiece(Item item)
     {
-        return item is HeadphonesItemClass;
+        return item is EFT.InventoryLogic.Headphones;
     }
 
     public static bool IsArmband(Item item)
     {
-        return item is ArmBandItemClass;
+        return item is EFT.InventoryLogic.ArmBand;
     }
 }

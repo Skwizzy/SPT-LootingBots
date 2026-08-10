@@ -214,7 +214,7 @@ public class LootingBrain : MonoBehaviour
                     // if (InventoryController.ShouldSort)
                     // {
                     //     // Sort items in tacVest for better space management
-                    //     SearchableItemItemClass tacVest = (SearchableItemItemClass)
+                    //     EFT.InventoryLogic.SearchableItem tacVest = (EFT.InventoryLogic.SearchableItem)
                     //         BotOwner.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem;
                     //
                     //     StartCoroutine(InventoryController.SortSearchableItem(tacVest));

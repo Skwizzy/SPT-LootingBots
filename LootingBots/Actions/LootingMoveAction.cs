@@ -10,7 +10,7 @@ namespace LootingBots.Actions;
 /// </summary>
 public class LootingMoveAction : LootingAction
 {
-    private static readonly ObjectPool<LootingMoveAction> _pool = new(
+    private static readonly UnityEngine.Pool.ObjectPool<LootingMoveAction> _pool = new(
         Create,
         null,
         a => a.Reset(),

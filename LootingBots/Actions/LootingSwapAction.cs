@@ -11,7 +11,7 @@ namespace LootingBots.Actions;
 /// <inheritdoc/>
 public class LootingSwapAction : LootingAction
 {
-    private static readonly ObjectPool<LootingSwapAction> _pool = new(
+    private static readonly UnityEngine.Pool.ObjectPool<LootingSwapAction> _pool = new(
         Create,
         null,
         a => a.Reset(),
@@ -59,8 +59,8 @@ public class LootingSwapAction : LootingAction
         // then rollback since we're not simulating
         var toSwapAddress = ToSwap.CurrentAddress;
         var inventoryController = ToSwap.Owner as InventoryController;
-        var removeResult = InteractionsHandlerClass.Remove(ToSwap, inventoryController, false);
-        var moveResult = InteractionsHandlerClass.Move(Item, toSwapAddress, inventoryController, false);
+        var removeResult = EFT.InventoryLogic.ItemManipulator.Remove(ToSwap, inventoryController, false);
+        var moveResult = EFT.InventoryLogic.ItemManipulator.Move(Item, toSwapAddress, inventoryController, false);
 
         moveResult.Value?.RollBack();
         removeResult.Value?.RollBack();

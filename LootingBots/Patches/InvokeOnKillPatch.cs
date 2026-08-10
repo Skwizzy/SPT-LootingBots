@@ -18,7 +18,7 @@ public class InvokeOnKillPatch : ModulePatch
     protected static void Postfix(
         LocalPlayer __instance,
         IPlayer aggressor,
-        DamageInfoStruct damageInfo,
+        EFT.Ballistics.DamageInfo damageInfo,
         EBodyPart bodyPart,
         EDamageType lethalDamageType
     )

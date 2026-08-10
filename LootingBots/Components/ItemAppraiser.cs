@@ -25,7 +25,7 @@ public class ItemAppraiser(Log _log)
             if (LootingBots.UseMarketPrices.Value)
             {
                 var tcs = new TaskCompletionSource<Result<Dictionary<string, float>>>();
-                Singleton<ClientApplication<ISession>>.Instance.GetClientBackEndSession().RagfairGetPrices(tcs.SetResult);
+                Singleton<ClientApplication<EFT.IEftSession>>.Instance.GetClientBackEndSession().RagfairGetPrices(tcs.SetResult);
                 var ragfairPrices = await tcs.Task;
                 if (ragfairPrices.Succeed)
                 {
@@ -39,7 +39,7 @@ public class ItemAppraiser(Log _log)
             else
             {
                 // This is the handbook instance which is initialized when the client first starts.
-                HandbookData = Singleton<HandbookClass>.Instance.Items.ToDictionary(item => new MongoID(item.Id));
+                HandbookData = Singleton<EFT.HandBook.Handbook>.Instance.Items.ToDictionary(item => new MongoID(item.Id));
                 if (HandbookData is null)
                 {
                     _log.LogError("Failed to get handbook data");

@@ -1,7 +1,7 @@
 ﻿using DrakiaXYZ.BigBrain.Brains;
 using EFT;
 //Check in CreateNode(BotLogicDecision type, BotOwner bot) (BotActionNodesClass on 4.0 to set this)
-using PeacefulNodeClass = GClass266;
+using PeacefulNodeClass = PeacefulNode;
 
 namespace LootingBots.Logic;
 
