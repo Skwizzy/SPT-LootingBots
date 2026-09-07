@@ -47,12 +47,6 @@ internal class FindLootLogic : CustomLogic
                 );
             }
 
-            // Need to disable LockUntilNextScan if the bot has no free space and brain is force enabled to prevent an infinite looting loop
-            if (_lootingBrain.ForceBrainEnabled)
-            {
-                _lootFinder.SetLockUntilNextScan(false);
-            }
-
             _lootFinder.BeginSearch(ticket);
         }
     }
