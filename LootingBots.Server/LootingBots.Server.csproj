@@ -7,6 +7,8 @@
     <RootNamespace>LootingBots</RootNamespace>
     <AssemblyName>Skwizzy.LootingBots</AssemblyName>
     <ReleaseOutputDir>..\Build\SPT_Runtime\user\mods\Skwizzy.LootingBots\</ReleaseOutputDir>
+    <DebugType>portable</DebugType>
+    <PathMap Condition="'$(Configuration)' == 'Release'">$(MSBuildProjectDirectory)=/src/</PathMap>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SPTushonka.Common" Version="4.1.3" />
@@ -29,6 +31,7 @@
     <MakeDir Directories="$(ReleaseOutputDir)" />
     <ItemGroup>
       <RemainingFiles Include="$(OutputPath)**\*" />
+      <RemainingFiles Include="..\LICENSE" />
     </ItemGroup>
     <Copy
       SourceFiles="@(RemainingFiles)"

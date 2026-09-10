@@ -5,9 +5,11 @@
     <Nullable>disable</Nullable>
     <LangVersion>preview</LangVersion>
     <RootNamespace>LootingBots</RootNamespace>
-    <AssemblyName>skwizzy.LootingBots</AssemblyName>
+    <AssemblyName>Skwizzy.LootingBots</AssemblyName>
     <Version>1.8.0</Version>
-    <ReleaseOutputDir>..\Build\BepInEx\plugins\</ReleaseOutputDir>
+    <ReleaseOutputDir>..\Build\BepInEx\plugins\Skwizzy.LootingBots\</ReleaseOutputDir>
+    <DebugType>portable</DebugType>
+    <PathMap Condition="'$(Configuration)' == 'Release'">$(MSBuildProjectDirectory)=/src/</PathMap>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
@@ -70,6 +72,7 @@
     <MakeDir Directories="$(ReleaseOutputDir)" />
     <ItemGroup>
       <RemainingFiles Include="$(OutputPath)**\*" />
+      <RemainingFiles Include="..\LICENSE" />
     </ItemGroup>
     <Copy
       SourceFiles="@(RemainingFiles)"
