@@ -15,20 +15,22 @@ public static class FikaHandler
     private static readonly Version _minimumVersion = new(2, 4, 3);
 
     public static bool IsPresent { get; private set; }
+    public static bool CanUseInterop { get; private set; }
 
     public static void Init()
     {
-        if (Chainloader.PluginInfos.TryGetValue("com.fika.core", out var pluginInfo) && pluginInfo.Metadata.Version >= _minimumVersion)
+        IsPresent = Chainloader.PluginInfos.TryGetValue("com.fika.core", out var pluginInfo);
+        if (IsPresent && pluginInfo!.Metadata.Version >= _minimumVersion)
         {
             LootingBots.LootLog.LogInfo("Initializing Fika compatibility");
 
-            IsPresent = true;
+            CanUseInterop = true;
         }
     }
 
     public static void TrySendAmmoAddedPacket(Player player, Item item)
     {
-        if (!IsPresent)
+        if (!CanUseInterop)
         {
             return;
         }

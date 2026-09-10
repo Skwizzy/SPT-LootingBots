@@ -36,6 +36,11 @@ public class LootingTransactionController
     /// </summary>
     public void AddExtraAmmo(Weapon weapon)
     {
+        if (FikaHandler.IsPresent && !FikaHandler.CanUseInterop)
+        {
+            return;
+        }
+
         var securedContainer = (SearchableItem)
             _inventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.SecuredContainer).ContainedItem;
         if (securedContainer is null)
