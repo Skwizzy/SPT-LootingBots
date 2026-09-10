@@ -3,6 +3,7 @@ using Diz.LanguageExtensions;
 using EFT;
 using EFT.InventoryLogic;
 using LootingBots.Utilities;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace LootingBots.Components;
@@ -90,7 +91,9 @@ public class LootingTransactionController
         for (var i = 0; i < 10; i++)
         {
             var ammo = ammoToAdd.CloneItem();
-            ammo.StackObjectsCount = ammo.StackMaxSize;
+
+            // Limit the stack to 60, some mods modify the max stack size to huge amounts
+            ammo.StackObjectsCount = Mathf.Min(60, ammo.StackMaxSize);
 
             var location = container.FindFreeSpace(ammo);
             if (location != null)
